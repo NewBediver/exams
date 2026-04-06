@@ -140,8 +140,8 @@ x ^ \sigma =
 \begin{equation*}
 k_\sigma(x) = 
   \begin{cases}
-    1, \mbox{если } \sigma = 1 \\
-    0, \mbox{если } \sigma = 0
+    1, \mbox{если } x = \sigma \\
+    0, \mbox{если } x \neq \sigma
   \end{cases}
 \end{equation*}
 
@@ -155,8 +155,6 @@ k_\sigma(x) =
 
 Доказательство: Из определения элементарной конъюнкции легко следует, что:
 \[\bigvee_{\sigma_1, \ldots, \sigma_k} \alpha_1 ^ {\sigma_1} \cdots \alpha_k ^ {\sigma_k} \cdot f(\sigma_1, \ldots, \sigma_k, \alpha_{k+1}, \ldots, \alpha_n) = \alpha_1 ^ {\alpha_1} \cdots \alpha_k ^ {\alpha_k} \cdot f(\alpha_1, \ldots, \alpha_n) = f(\alpha_1, \ldots, \alpha_n)\]
-
-\textcolor{red}{РАЗОБРАТЬ}
 
 \subsection{Нормальные формы}
 
@@ -354,8 +352,6 @@ k_\sigma(x) =
 \[f(x_1, x_2, \ldots, x_n) \leq f(y_1, y_2, \ldots, y_n)\]
 
 \textbf{\emph{Докажем замкнутость множества монотонных функций.}} Пусть \(f_0, \ldots, f_k\) - произвольные монотонные функции. Очевидно, что добавление фиктивной переменной оставляет монотонную функцию монотонной. Поэтому без ограничения общности будем полагать, что все функции \(f_i\) зависят от одних и тех же переменных \((x_1, \ldots, x_n)\). Пусть \(a, b\) - такие наборы из \(B^n\), что \(a \leq b\). Рассмотрим новую функцию \(f = f_0(f_1, \ldots, f_k)\). Так как \(f_i(a) \leq f_i(b)\), то \((f_1(a), \ldots, f_k(a)) \leq (f_1(b), \ldots, f_k(b))\), и поэтому \(f(a) = f_0(f_1(a), \ldots, f_k(a)) \leq f_0(f_1(b), \ldots, f_k(b)) = f(b)\). Следовательно, функция \(f\) - монотонная. Таким образом, множество \(M\) замкнуто.
-
-\textcolor{red}{РАЗОБРАТЬ}
 
 \subsection{Полнота систем}
 
