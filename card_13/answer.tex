@@ -1,0 +1,1074 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{stmaryrd}
+\usepackage{mathrsfs}
+
+\geometry{margin=2.2cm}
+
+\title{Ответ на экзаменационный вопрос:\\
+$\lambda$-исчисление, правила редукции, единственность нормальной формы\\
+и правила её достижения, представление рекурсивных функций}
+\author{}
+\date{}
+
+\newtheorem{definition}{Определение}
+\newtheorem{theorem}{Теорема}
+\newtheorem{proposition}{Утверждение}
+\newtheorem{lemma}{Лемма}
+\newtheorem{corollary}{Следствие}
+\theoremstyle{remark}
+\newtheorem*{remark}{Замечание}
+\newtheorem*{example}{Пример}
+
+
+\title{Билет №13 \\ \small $\lambda$-исчисление, правила редукции, единственность нормальной формы и правила ее достижения, представление рекурсивных функций. (СПбГУ)}
+\author{Сериков Владислав Александрович}
+\date{28 апреля 2026}
+
+
+\begin{document}
+\maketitle
+
+\section*{Введение}
+
+$\lambda$-исчисление Чёрча --- одна из базовых формальных моделей вычисления.
+Оно важно сразу по двум причинам:
+
+\begin{itemize}
+    \item с \emph{математической} точки зрения оно даёт строгое определение вычисления;
+    \item с \emph{программистской} точки зрения оно лежит в основе функционального программирования.
+\end{itemize}
+
+Главная идея проста: вычисление интерпретируется как \emph{редукция выражения}, то есть последовательность локальных преобразований термов.
+При этом функции рассматриваются как значения первого класса, а вычисление функции от аргумента реализуется через \emph{подстановку} аргумента в тело функции.
+
+Ниже последовательно изложены:
+
+\begin{enumerate}[label=\arabic*)]
+    \item определения $\lambda$-термов;
+    \item свободные и связанные переменные;
+    \item корректная подстановка;
+    \item $\beta$-редукция и стратегии редукции;
+    \item нормальные формы, их единственность и достижение;
+    \item представление данных и рекурсивных функций в $\lambda$-исчислении.
+\end{enumerate}
+
+\section{Синтаксис $\lambda$-исчисления}
+
+\subsection{Определение $\lambda$-термов}
+
+\begin{definition}
+Пусть задано счётное множество переменных
+\[
+x,y,z,u,v,\dots
+\]
+Множество $\lambda$-термов определяется индуктивно:
+\begin{enumerate}
+    \item любая переменная $x$ есть $\lambda$-терм;
+    \item если $M$ и $N$ --- $\lambda$-термы, то $(MN)$ --- $\lambda$-терм (применение, \emph{application});
+    \item если $x$ --- переменная, а $M$ --- $\lambda$-терм, то $(\lambda x.M)$ --- $\lambda$-терм (абстракция, \emph{abstraction}).
+\end{enumerate}
+\end{definition}
+
+\paragraph{Интуиция.}
+\begin{itemize}
+    \item $\lambda x.M$ --- функция одного аргумента $x$ с телом $M$;
+    \item $MN$ --- применение функции $M$ к аргументу $N$.
+\end{itemize}
+
+\subsection{Соглашения о скобках}
+
+Обычно используются следующие сокращения:
+
+\begin{itemize}
+    \item применение левоассоциативно:
+    \[
+    MNP \equiv (MN)P;
+    \]
+    \item абстракция правоассоциативна:
+    \[
+    \lambda x.\lambda y.\lambda z.M \equiv \lambda x.(\lambda y.(\lambda z.M));
+    \]
+    \item область действия символа $\lambda$ максимально велика:
+    \[
+    \lambda x.MN \equiv \lambda x.(MN).
+    \]
+\end{itemize}
+
+\paragraph{Минимальные примеры.}
+\[
+x,\qquad xy,\qquad \lambda x.x,\qquad \lambda x.\lambda y.xy,\qquad (\lambda x.x)y.
+\]
+
+\section{Свободные и связанные переменные}
+
+\begin{definition}
+Вхождение переменной $x$ в терм называется:
+\begin{itemize}
+    \item \emph{связанным}, если оно находится в области действия некоторой абстракции $\lambda x$ или само стоит сразу после символа $\lambda$;
+    \item \emph{свободным} --- во всех остальных случаях.
+\end{itemize}
+\end{definition}
+
+\begin{definition}
+Множество свободных переменных $FV(M)$ определяется рекурсивно:
+\[
+FV(x)=\{x\},
+\]
+\[
+FV(MN)=FV(M)\cup FV(N),
+\]
+\[
+FV(\lambda x.M)=FV(M)\setminus\{x\}.
+\]
+\end{definition}
+
+\begin{definition}
+Множество связанных переменных $BV(M)$ определяется рекурсивно:
+\[
+BV(x)=\varnothing,
+\]
+\[
+BV(MN)=BV(M)\cup BV(N),
+\]
+\[
+BV(\lambda x.M)=BV(M)\cup\{x\}.
+\]
+\end{definition}
+
+\paragraph{Минимальные примеры.}
+\begin{enumerate}
+    \item Для терма $x$:
+    \[
+    FV(x)=\{x\},\qquad BV(x)=\varnothing.
+    \]
+    \item Для терма $\lambda x.x$:
+    \[
+    FV(\lambda x.x)=\varnothing,\qquad BV(\lambda x.x)=\{x\}.
+    \]
+    \item Для терма $x(\lambda x.x)$:
+    \[
+    FV(x(\lambda x.x))=\{x\},\qquad BV(x(\lambda x.x))=\{x\}.
+    \]
+\end{enumerate}
+
+\begin{remark}
+Одна и та же переменная может иметь и свободные, и связанные вхождения в одном терме.
+\end{remark}
+
+\section{Подстановка}
+
+\subsection{Почему наивное определение неверно}
+
+Если понимать подстановку как ``замену всех вхождений $x$ на $N$'', возникают две проблемы:
+
+\begin{enumerate}
+    \item \textbf{исчезновение связанной переменной};
+    \item \textbf{захват свободной переменной}.
+\end{enumerate}
+
+\paragraph{Пример 1: исчезновение связанной переменной.}
+Если формально подставить $t$ вместо $x$ в $\lambda x.x$, то получится $\lambda x.t$, а тождественная функция превратится в константу. Это неправильно.
+
+\paragraph{Пример 2: захват свободной переменной.}
+Если подставить $y$ вместо $x$ в $\lambda y.x$, то наивно вышло бы $\lambda y.y$. Но свободная переменная $y$ стала связанной, и смысл терма изменился.
+
+Следовательно, подстановка должна учитывать структуру связывания переменных.
+
+\subsection{Корректное определение подстановки}
+
+\begin{definition}
+Подстановка $[N/x]M$ определяется рекурсивно:
+\begin{align*}
+[N/x]x &= N,\\
+[N/x]y &= y,\qquad y\neq x,\\
+[N/x](PQ) &= ([N/x]P)([N/x]Q),\\
+[N/x](\lambda x.P) &= \lambda x.P.
+\end{align*}
+
+Если $y\neq x$, то:
+\begin{itemize}
+    \item если $y\notin FV(N)$, то
+    \[
+    [N/x](\lambda y.P)=\lambda y.([N/x]P);
+    \]
+    \item если $y\in FV(N)$, то предварительно выполняется переименование связанной переменной:
+    \[
+    [N/x](\lambda y.P)=\lambda z.([N/x]([z/y]P)),
+    \]
+    где $z$ --- свежая переменная, не входящая свободно ни в $N$, ни в $P$.
+\end{itemize}
+\end{definition}
+
+\subsection{$\alpha$-конверсия}
+
+\begin{definition}
+Переименование связанной переменной:
+\[
+\lambda x.M \rightsquigarrow \lambda y.[y/x]M,
+\]
+если $y$ не конфликтует со свободными переменными, называется \emph{$\alpha$-конверсией}.
+\end{definition}
+
+\begin{definition}
+Термы $M$ и $N$ называются \emph{$\alpha$-эквивалентными}, если один получается из другого конечным числом $\alpha$-конверсий. Обозначение:
+\[
+M\equiv_\alpha N.
+\]
+\end{definition}
+
+\paragraph{Минимальные примеры.}
+\[
+\lambda x.x \equiv_\alpha \lambda y.y,
+\qquad
+\lambda x.\lambda y.x \equiv_\alpha \lambda z.\lambda y.z.
+\]
+
+\subsection{Алгоритм корректной подстановки}
+
+\paragraph{Шаги алгоритма подстановки $[N/x]M$.}
+\begin{enumerate}
+    \item Если $M$ --- переменная:
+    \begin{itemize}
+        \item если $M=x$, вернуть $N$;
+        \item иначе вернуть $M$.
+    \end{itemize}
+    \item Если $M=P\,Q$, рекурсивно подставить в оба подтерма:
+    \[
+    [N/x](PQ)=([N/x]P)([N/x]Q).
+    \]
+    \item Если $M=\lambda x.P$, остановиться:
+    \[
+    [N/x](\lambda x.P)=\lambda x.P,
+    \]
+    потому что внутри этой абстракции $x$ уже связан.
+    \item Если $M=\lambda y.P$ и $y\neq x$:
+    \begin{itemize}
+        \item если $y\notin FV(N)$, подставить в тело:
+        \[
+        [N/x](\lambda y.P)=\lambda y.([N/x]P);
+        \]
+        \item если $y\in FV(N)$, выбрать свежую переменную $z$, выполнить $\alpha$-переименование
+        \[
+        \lambda y.P \equiv_\alpha \lambda z.([z/y]P),
+        \]
+        и затем продолжить подстановку.
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{Иллюстрация.}
+Вычислим:
+\[
+[y/x](\lambda y.x).
+\]
+Поскольку $y\in FV(y)$, возникает захват. Поэтому сначала переименуем:
+\[
+\lambda y.x \equiv_\alpha \lambda z.x.
+\]
+Теперь
+\[
+[y/x](\lambda z.x)=\lambda z.[y/x]x=\lambda z.y.
+\]
+
+\subsection{Корректность подстановки}
+
+\begin{proposition}
+Корректная подстановка не захватывает свободные переменные подставляемого терма.
+\end{proposition}
+
+\begin{proof}
+Доказывается по индукции по структуре терма $M$.
+
+\textbf{База.}
+\begin{itemize}
+    \item Если $M=x$, то $[N/x]x=N$; захвата нет, так как новых связывающих абстракций не появляется.
+    \item Если $M=y\neq x$, то $[N/x]y=y$; ничего не меняется.
+\end{itemize}
+
+\textbf{Индукционный переход.}
+\begin{itemize}
+    \item Для применения $M=PQ$ подстановка выполняется независимо в $P$ и $Q$. По предположению индукции в каждом из них захвата не возникает, следовательно, не возникает и во всём $PQ$.
+    \item Для абстракции $M=\lambda x.P$ подстановка внутрь не идёт; значит, захват невозможен.
+    \item Для абстракции $M=\lambda y.P$, $y\neq x$:
+    \begin{itemize}
+        \item если $y\notin FV(N)$, то связывающая переменная $y$ не может захватить свободные переменные терма $N$;
+        \item если $y\in FV(N)$, то перед подстановкой выполняется $\alpha$-переименование в свежую переменную $z$, которая не входит свободно ни в $N$, ни в $P$. Следовательно, после переименования захват невозможен.
+    \end{itemize}
+\end{itemize}
+Тем самым подстановка определена корректно.
+\end{proof}
+
+\section{$\beta$-редукция и вычисление}
+
+\subsection{Редексы}
+
+\begin{definition}
+Терм вида
+\[
+(\lambda x.M)N
+\]
+называется \emph{$\beta$-редексом} или \emph{редуцируемым выражением}.
+\end{definition}
+
+Смысл: это явное применение функции $\lambda x.M$ к аргументу $N$.
+
+\subsection{$\beta$-редукция}
+
+\begin{definition}
+\emph{$\beta$-редукцией} называется преобразование
+\[
+(\lambda x.M)N \;\to_\beta\; [N/x]M.
+\]
+\end{definition}
+
+\paragraph{Минимальные примеры.}
+\[
+(\lambda x.x)y \to_\beta y,
+\]
+\[
+(\lambda x.y)t \to_\beta y,
+\]
+\[
+(\lambda x.x(xy))N \to_\beta N(Ny).
+\]
+
+\subsection{Алгоритм одного шага $\beta$-редукции}
+
+\paragraph{Шаги.}
+\begin{enumerate}
+    \item Найти в терме подвыражение вида $(\lambda x.M)N$.
+    \item Убедиться, что подстановка $[N/x]M$ выполняется корректно (при необходимости сделать $\alpha$-переименование).
+    \item Заменить редекс результатом подстановки.
+\end{enumerate}
+
+\paragraph{Иллюстрация.}
+\[
+(\lambda x.\lambda y.yx)zv
+\]
+Сначала редуцируем самый левый внешний редекс:
+\[
+(\lambda x.\lambda y.yx)zv \to_\beta (\lambda y.yz)v \to_\beta vz.
+\]
+
+\section{Нормальные формы}
+
+\begin{definition}
+$\lambda$-терм находится в \emph{нормальной форме}, если не содержит ни одного $\beta$-редекса.
+\end{definition}
+
+\paragraph{Примеры.}
+\begin{itemize}
+    \item $x$, $\lambda x.x$, $\lambda x.\lambda y.xy$ --- нормальные формы;
+    \item $(\lambda x.x)y$ --- не нормальная форма.
+\end{itemize}
+
+\subsection{Слабая и полная нормальная форма}
+
+\begin{definition}
+Терм находится в \emph{слабой (головной) нормальной форме}, если у него нет \emph{внешних} редексов.
+\end{definition}
+
+Это важно, потому что некоторые стратегии не редуцируют внутри абстракций.
+
+\section{Стратегии редукции}
+
+Поскольку в одном терме может быть несколько редексов, надо уточнить, \emph{какой} редекс редуцировать.
+
+\subsection{Нормальный порядок}
+
+\begin{definition}
+\emph{Нормальный порядок редукции} --- это стратегия, при которой на каждом шаге выбирается \emph{самый левый внешний} редекс.
+\end{definition}
+
+\paragraph{Что значит ``самый левый внешний''.}
+\begin{itemize}
+    \item \emph{внешний} --- не содержащийся внутри другого редекса;
+    \item \emph{левый} --- первый слева среди внешних.
+\end{itemize}
+
+\subsection{Вызов по имени}
+
+\begin{definition}
+\emph{Вызов по имени} (\emph{call by name}) --- как нормальный порядок, но без редукции внутри абстракций.
+\end{definition}
+
+\subsection{Вызов по необходимости}
+
+\begin{definition}
+\emph{Вызов по необходимости} (\emph{call by need}) --- ленивый вариант вызова по имени с мемоизацией: если аргумент вычислен один раз, затем используется уже вычисленное значение.
+\end{definition}
+
+\subsection{Вызов по значению}
+
+\begin{definition}
+\emph{Вызов по значению} (\emph{call by value}) --- сначала вычисляются аргументы, затем применяется функция.
+\end{definition}
+
+Это \emph{строгая} стратегия: аргумент вычисляется даже тогда, когда в теле функции он не используется.
+
+\subsection{Сравнение стратегий на минимальном примере}
+
+Рассмотрим
+\[
+(\lambda y.v)\big((\lambda x.xxy)(\lambda x.xxy)\big).
+\]
+
+\paragraph{Нормальный порядок.}
+Сначала редуцируется внешний редекс:
+\[
+(\lambda y.v)\Omega \to_\beta v,
+\]
+где
+\[
+\Omega=((\lambda x.xxy)(\lambda x.xxy)).
+\]
+Результат получен сразу.
+
+\paragraph{Аппликативный порядок (вызов по значению).}
+Сначала пытаемся редуцировать аргумент $\Omega$:
+\[
+\Omega \to_\beta \Omega y \to_\beta \Omega yy \to_\beta \cdots
+\]
+Получаем бесконечное вычисление.
+
+\paragraph{Вывод.}
+Неправильная стратегия может не привести к нормальной форме даже тогда, когда нормальная форма существует.
+
+\section{Единственность нормальной формы}
+
+\subsection{Проблема}
+
+Если редексов несколько, можно выбирать их по-разному. Возникают вопросы:
+
+\begin{enumerate}
+    \item Всегда ли разные последовательности редукций приводят к одному и тому же результату?
+    \item Если нормальная форма существует, можно ли её гарантированно достичь?
+\end{enumerate}
+
+Ключ к ответу --- теорема Чёрча--Россера.
+
+\subsection{Теорема Чёрча--Россера}
+
+\begin{theorem}[Чёрча--Россера]
+Если
+\[
+P \to_\beta^* N
+\qquad\text{и}\qquad
+P \to_\beta^* M,
+\]
+то существует такой терм $T$, что
+\[
+N \to_\beta^* T
+\qquad\text{и}\qquad
+M \to_\beta^* T.
+\]
+\end{theorem}
+
+Это свойство также называют \emph{свойством ромба} или \emph{конфлюэнтностью}.
+
+\subsection{Следствие: единственность нормальной формы}
+
+\begin{corollary}
+Если терм имеет нормальную форму, то она единственна с точностью до $\alpha$-эквивалентности.
+\end{corollary}
+
+\begin{proof}
+Пусть терм $P$ имеет две нормальные формы $N$ и $M$, то есть
+\[
+P \to_\beta^* N,
+\qquad
+P \to_\beta^* M,
+\]
+причём $N$ и $M$ редексов не содержат.
+
+По теореме Чёрча--Россера существует терм $T$, такой что
+\[
+N \to_\beta^* T,
+\qquad
+M \to_\beta^* T.
+\]
+Но $N$ --- нормальная форма, значит, из неё уже нельзя сделать ни одного $\beta$-шага. Следовательно, единственно возможна пустая цепочка редукций, то есть
+\[
+N \equiv_\alpha T.
+\]
+Аналогично
+\[
+M \equiv_\alpha T.
+\]
+Отсюда
+\[
+N \equiv_\alpha M.
+\]
+Следовательно, нормальная форма единственна с точностью до переименования связанных переменных.
+\end{proof}
+
+\subsection{Почему это доказательство корректно}
+
+Оно использует два факта:
+
+\begin{enumerate}
+    \item теорема Чёрча--Россера гарантирует \emph{сходимость} любых двух путей редукции;
+    \item нормальная форма \emph{не редуцируется дальше}.
+\end{enumerate}
+
+Значит, если два пути привели к двум нормальным формам, они обязаны совпасть с точностью до $\alpha$-конверсии.
+
+\section{Правила достижения нормальной формы}
+
+\subsection{Главная теорема о нормальном порядке}
+
+\begin{theorem}
+Если терм имеет нормальную форму, то нормальный порядок редукции обязательно приведёт к ней.
+\end{theorem}
+
+Это один из центральных результатов: \emph{нормальный порядок нормализует}, если нормализация вообще возможна.
+
+\subsection{Смысл теоремы}
+
+\begin{itemize}
+    \item Не всякая стратегия годится.
+    \item Но стратегия ``левый внешний редекс'' годится всегда.
+\end{itemize}
+
+Именно поэтому нормальный порядок считается \emph{правилом достижения нормальной формы}.
+
+\subsection{Практический алгоритм приведения к нормальной форме}
+
+\paragraph{Алгоритм.}
+Для терма $M$:
+\begin{enumerate}
+    \item Найти самый левый внешний редекс.
+    \item Выполнить один $\beta$-шаг.
+    \item Повторять, пока редексов не останется.
+\end{enumerate}
+
+\paragraph{Корректность алгоритма.}
+\begin{itemize}
+    \item Если алгоритм завершился, полученный терм не содержит редексов, то есть является нормальной формой.
+    \item Если у исходного терма нормальная форма существовала, теорема о нормальном порядке гарантирует, что алгоритм завершится именно на ней.
+    \item По единственности нормальной формы результат не зависит от других возможных успешных путей редукции.
+\end{itemize}
+
+\paragraph{Следовательно:}
+нормальный порядок --- корректное и полное правило достижения нормальной формы.
+
+\subsection{Минимальная иллюстрация}
+
+Рассмотрим терм
+\[
+(\lambda x.(\lambda y.yx)z)v.
+\]
+
+\paragraph{Шаг 1.}
+Самый левый внешний редекс:
+\[
+(\lambda x.(\lambda y.yx)z)v \to_\beta (\lambda y.yv)z.
+\]
+
+\paragraph{Шаг 2.}
+Следующий редекс:
+\[
+(\lambda y.yv)z \to_\beta zv.
+\]
+
+\paragraph{Шаг 3.}
+Терм $zv$ редексов не содержит, это нормальная форма.
+
+\section{Термы без нормальной формы}
+
+Не всякий терм нормализуем.
+
+\paragraph{Классический пример.}
+\[
+\Omega=(\lambda x.xx)(\lambda x.xx).
+\]
+Тогда
+\[
+\Omega \to_\beta \Omega.
+\]
+Значит, редукция бесконечна, и нормальной формы нет.
+
+\paragraph{Вывод.}
+Задача достижения нормальной формы имеет смысл только для тех термов, которые \emph{нормализуемы}.
+
+\section{Представление данных в $\lambda$-исчислении}
+
+\subsection{Булевы значения}
+
+Определим:
+\[
+\mathsf{true}=\lambda x.\lambda y.x,
+\qquad
+\mathsf{false}=\lambda x.\lambda y.y.
+\]
+
+\paragraph{Интерпретация.}
+\begin{itemize}
+    \item $\mathsf{true}$ возвращает первый аргумент;
+    \item $\mathsf{false}$ возвращает второй аргумент.
+\end{itemize}
+
+\subsection{Условный оператор}
+
+\[
+\mathsf{if}\ C\ \mathsf{then}\ E_1\ \mathsf{else}\ E_2
+\;:=\;
+C\,E_1\,E_2.
+\]
+
+\paragraph{Проверка.}
+\[
+\mathsf{true}\ E_1\ E_2
+=
+(\lambda x.\lambda y.x)E_1E_2
+\to_\beta E_1,
+\]
+\[
+\mathsf{false}\ E_1\ E_2
+=
+(\lambda x.\lambda y.y)E_1E_2
+\to_\beta E_2.
+\]
+
+\subsection{Логические операции}
+
+\[
+\mathsf{not}\ P := P\ \mathsf{false}\ \mathsf{true},
+\]
+\[
+P\ \mathsf{and}\ Q := P\ Q\ \mathsf{false},
+\]
+\[
+P\ \mathsf{or}\ Q := P\ \mathsf{true}\ Q.
+\]
+
+\subsection{Пары}
+
+\[
+(E_1,E_2):=\lambda z.zE_1E_2.
+\]
+
+\[
+\mathsf{fst}\ P := P\ \mathsf{true},
+\qquad
+\mathsf{snd}\ P := P\ \mathsf{false}.
+\]
+
+\paragraph{Проверка.}
+\[
+\mathsf{fst}(E_1,E_2)
+=
+(\lambda z.zE_1E_2)\mathsf{true}
+\to_\beta
+\mathsf{true}E_1E_2
+\to_\beta E_1.
+\]
+Аналогично
+\[
+\mathsf{snd}(E_1,E_2)\to_\beta E_2.
+\]
+
+\section{Нумералы Чёрча}
+
+\subsection{Определение}
+
+Натуральное число $n$ кодируется термом
+\[
+\overline{n}:=\lambda f.\lambda x.f^n x,
+\]
+то есть
+\[
+\overline{0}=\lambda f.\lambda x.x,
+\]
+\[
+\overline{1}=\lambda f.\lambda x.fx,
+\]
+\[
+\overline{2}=\lambda f.\lambda x.f(fx),
+\]
+\[
+\overline{3}=\lambda f.\lambda x.f(f(fx)),
+\]
+и т.д.
+
+\subsection{Интуиция}
+
+Число $\overline{n}$ означает: \emph{применить функцию $f$ к $x$ ровно $n$ раз}.
+
+\paragraph{Минимальный пример.}
+\[
+\overline{2}ft
+=
+(\lambda f.\lambda x.f(fx))ft
+\to_\beta
+f(ft).
+\]
+
+\section{Арифметика в $\lambda$-исчислении}
+
+\subsection{Функция следования}
+
+\[
+\mathsf{succ}
+=
+\lambda n.\lambda f.\lambda x.f(nfx).
+\]
+
+\paragraph{Проверка на примере.}
+\[
+\mathsf{succ}\ \overline{2}
+=
+\lambda f.\lambda x.f(\overline{2}fx)
+\to_\beta
+\lambda f.\lambda x.f(f(fx))
+=
+\overline{3}.
+\]
+
+\subsection{Сложение}
+
+\[
+\mathsf{add}
+=
+\lambda m.\lambda n.\lambda f.\lambda x.mf(nfx).
+\]
+
+\paragraph{Интуиция.}
+Сначала $n$ раз применяем $f$ к $x$, затем ещё $m$ раз.
+
+\paragraph{Минимальный пример.}
+\[
+\mathsf{add}\ \overline{1}\ \overline{2}
+\to_\beta
+\overline{3}.
+\]
+
+\subsection{Умножение}
+
+\[
+\mathsf{mul}
+=
+\lambda m.\lambda n.\lambda f.\lambda x.m(nf)x.
+\]
+
+\paragraph{Интуиция.}
+Функция $nf$ означает ``применить $f$ $n$ раз'', а затем $m$ раз применить этот блок.
+
+\section{Проверка нуля}
+
+\[
+\mathsf{isZero}
+=
+\lambda n.n(\lambda x.\mathsf{false})\mathsf{true}.
+\]
+
+\paragraph{Корректность.}
+\begin{itemize}
+    \item Для $\overline{0}$:
+    \[
+    \mathsf{isZero}\ \overline{0}
+    =
+    (\lambda n.n(\lambda x.\mathsf{false})\mathsf{true})\overline{0}
+    \to_\beta
+    \mathsf{true}.
+    \]
+    \item Для любого $\overline{n}$, $n>0$, функция $(\lambda x.\mathsf{false})$ применяется хотя бы один раз, и результатом будет $\mathsf{false}$.
+\end{itemize}
+
+\section{Предшественник и вычитание}
+
+\subsection{Идея Клини}
+
+Предшественник кодируется существенно сложнее, чем следование. Используется вспомогательная функция
+\[
+\mathsf{step}(m,n)=(n,n+1),
+\]
+которая по паре строит следующую.
+
+Если начать с пары $(0,0)$ и применить $\mathsf{step}$ $m$ раз, получим
+\[
+(0,0)\mapsto (0,1)\mapsto (1,2)\mapsto (2,3)\mapsto \cdots \mapsto (m-1,m).
+\]
+Тогда первый компонент и будет предшественником.
+
+\subsection{Определения}
+
+\[
+\mathsf{step}
+=
+\lambda p.(\mathsf{snd}\ p,\ \mathsf{succ}(\mathsf{snd}\ p)).
+\]
+
+\[
+\mathsf{pred}
+=
+\lambda m.\mathsf{fst}(m\ \mathsf{step}\ (0,0)).
+\]
+
+\[
+\mathsf{sub}
+=
+\lambda m.\lambda n.n\ \mathsf{pred}\ m.
+\]
+
+\paragraph{Интуиция.}
+Чтобы вычесть $n$ из $m$, достаточно $n$ раз применить $\mathsf{pred}$ к $m$.
+
+\section{Представление рекурсивных функций}
+
+\subsection{Проблема рекурсии}
+
+В обычном языке программирования можно написать:
+\[
+\mathsf{fact}(n)=
+\begin{cases}
+1,& n=0,\\
+n\cdot \mathsf{fact}(n-1),& n>0.
+\end{cases}
+\]
+Но в чистом $\lambda$-исчислении у функций \emph{нет имён}, поэтому нельзя просто сослаться на $\mathsf{fact}$ внутри её же тела.
+
+\subsection{Комбинатор неподвижной точки}
+
+\begin{definition}
+Терм $Y$ называется \emph{комбинатором неподвижной точки}, если для любого $f$
+\[
+Yf =_\beta f(Yf).
+\]
+\end{definition}
+
+Смысл: $Yf$ --- неподвижная точка функции $f$.
+
+\subsection{Комбинатор Тьюринга}
+
+Положим
+\[
+A=\lambda x.\lambda y.y(xxy),
+\qquad
+Y_T=AA.
+\]
+
+\begin{proposition}
+$Y_T$ является комбинатором неподвижной точки.
+\end{proposition}
+
+\begin{proof}
+\[
+Y_Tf
+=
+AAf
+=
+(\lambda x.\lambda y.y(xxy))Af
+\to_\beta
+(\lambda y.y(AAy))f
+\to_\beta
+f(AAf)
+=
+f(Y_Tf).
+\]
+\end{proof}
+
+\subsection{Как из этого получается рекурсия}
+
+Пусть
+\[
+H=
+\lambda f.\lambda n.\mathsf{if}\ (\mathsf{isZero}\ n)\ \mathsf{then}\ \overline{1}\ \mathsf{else}\ \mathsf{mul}\ n\ (f(\mathsf{pred}\ n)).
+\]
+
+Тогда факториал определяется как
+\[
+\mathsf{fact}=Y_T H.
+\]
+
+Действительно,
+\[
+\mathsf{fact}
+=
+Y_T H
+=_\beta
+H(Y_T H)
+=
+H(\mathsf{fact}),
+\]
+то есть
+\[
+\mathsf{fact}(n)
+=
+\mathsf{if}\ (\mathsf{isZero}\ n)\ \mathsf{then}\ \overline{1}\ \mathsf{else}\ \mathsf{mul}\ n\ (\mathsf{fact}(\mathsf{pred}\ n)).
+\]
+
+Это в точности рекурсивное определение факториала.
+
+\subsection{Алгоритм представления рекурсивной функции}
+
+\paragraph{Шаги.}
+Пусть требуется определить рекурсивную функцию
+\[
+F(x)=\Phi(F,x).
+\]
+Тогда:
+
+\begin{enumerate}
+    \item Выделяем \emph{шаговый функционал}
+    \[
+    H=\lambda f.\lambda x.\Phi(f,x),
+    \]
+    где рекурсивный вызов заменён параметром $f$.
+    \item Применяем комбинатор неподвижной точки:
+    \[
+    F=YH.
+    \]
+    \item Проверяем:
+    \[
+    F=YH=_\beta H(YH)=H(F),
+    \]
+    то есть рекурсивное уравнение выполнено.
+\end{enumerate}
+
+\subsection{Минимальный пример: сумма чисел от $1$ до $n$}
+
+Определим
+\[
+H_{\Sigma}
+=
+\lambda f.\lambda n.
+\mathsf{if}\ (\mathsf{isZero}\ n)\ \mathsf{then}\ \overline{0}\ \mathsf{else}\ \mathsf{add}\ n\bigl(f(\mathsf{pred}\ n)\bigr).
+\]
+Тогда
+\[
+\mathsf{sum}=YH_{\Sigma}.
+\]
+Получаем
+\[
+\mathsf{sum}(n)=
+\begin{cases}
+0,& n=0,\\
+n+\mathsf{sum}(n-1),& n>0.
+\end{cases}
+\]
+
+\section{Корректность представления рекурсивных функций}
+
+\begin{proposition}
+Если $Y$ --- комбинатор неподвижной точки, то терм $F:=YH$ является решением функционального уравнения
+\[
+F=HF.
+\]
+\end{proposition}
+
+\begin{proof}
+По определению комбинатора неподвижной точки
+\[
+YH =_\beta H(YH).
+\]
+Положив $F:=YH$, получаем
+\[
+F =_\beta HF.
+\]
+То есть $F$ действительно является фиксированной точкой функционала $H$.
+\end{proof}
+
+\begin{proposition}
+Если функционал $H$ построен из уже корректно представленных операций над числами, булевыми значениями и парами, то $YH$ корректно представляет соответствующую рекурсивную функцию.
+\end{proposition}
+
+\begin{proof}
+Индукция по схеме определения функции.
+
+\textbf{База.}
+Элементарные операции ($\mathsf{isZero}$, $\mathsf{succ}$, $\mathsf{add}$, $\mathsf{mul}$, $\mathsf{pred}$ и т.д.) уже заданы термами, корректность которых проверяется непосредственной $\beta$-редукцией.
+
+\textbf{Переход.}
+Пусть функция определяется рекурсивно как фиксированная точка функционала $H$. Тогда по предыдущему утверждению терм $F=YH$ удовлетворяет уравнению $F=_\beta HF$. Но правая часть $HF$ реализует ровно тот рекурсивный шаг, который был задан в определении функции. Следовательно, $F$ вычисляет ту же самую функцию.
+\end{proof}
+
+\section{Связь с частично рекурсивными функциями}
+
+В теории вычислимости под \emph{рекурсивными функциями} обычно понимают вычислимые числовые функции, строящиеся из базовых функций с помощью композиции, примитивной рекурсии и минимизации.
+
+В рамках $\lambda$-исчисления эти функции представимы потому, что:
+
+\begin{enumerate}
+    \item данные (числа, булевы значения, пары) кодируются термами;
+    \item элементарные арифметические и логические операции выражаются $\lambda$-термами;
+    \item рекурсия реализуется через комбинаторы неподвижной точки.
+\end{enumerate}
+
+Следовательно, $\lambda$-исчисление способно выражать общий рекурсивный процесс и потому является полноценной моделью вычислений.
+
+\section*{Краткий конспективный итог}
+
+\begin{enumerate}
+    \item $\lambda$-термы строятся из переменных, применения и абстракции.
+    \item Вычисление в $\lambda$-исчислении --- это $\beta$-редукция:
+    \[
+    (\lambda x.M)N \to_\beta [N/x]M.
+    \]
+    \item Подстановка должна быть \emph{корректной}, то есть не допускать захвата свободных переменных; для этого используется $\alpha$-конверсия.
+    \item Нормальная форма --- терм без редексов.
+    \item По теореме Чёрча--Россера нормальная форма, если существует, единственна с точностью до $\alpha$-эквивалентности.
+    \item Нормальный порядок редукции (левый внешний редекс) всегда достигает нормальной формы, если она существует.
+    \item Булевы значения, пары и натуральные числа кодируются внутри самого $\lambda$-исчисления.
+    \item Рекурсивные функции представляются с помощью комбинаторов неподвижной точки:
+    \[
+    F=YH.
+    \]
+\end{enumerate}
+
+\section*{Минимальный набор формул для запоминания}
+
+\[
+(\lambda x.M)N \to_\beta [N/x]M
+\]
+
+\[
+FV(x)=\{x\},\qquad
+FV(MN)=FV(M)\cup FV(N),\qquad
+FV(\lambda x.M)=FV(M)\setminus\{x\}
+\]
+
+\[
+\mathsf{true}=\lambda x.\lambda y.x,
+\qquad
+\mathsf{false}=\lambda x.\lambda y.y
+\]
+
+\[
+\overline{0}=\lambda f.\lambda x.x,
+\qquad
+\overline{n}=\lambda f.\lambda x.f^n x
+\]
+
+\[
+\mathsf{succ}=\lambda n.\lambda f.\lambda x.f(nfx)
+\]
+
+\[
+\mathsf{add}=\lambda m.\lambda n.\lambda f.\lambda x.mf(nfx)
+\]
+
+\[
+\mathsf{mul}=\lambda m.\lambda n.\lambda f.\lambda x.m(nf)x
+\]
+
+\[
+\mathsf{isZero}=\lambda n.n(\lambda x.\mathsf{false})\mathsf{true}
+\]
+
+\[
+Yf =_\beta f(Yf)
+\]
+
+\[
+\mathsf{fact}=Y\Bigl(\lambda f.\lambda n.\mathsf{if}\ (\mathsf{isZero}\ n)\ \mathsf{then}\ \overline{1}\ \mathsf{else}\ \mathsf{mul}\ n\bigl(f(\mathsf{pred}\ n)\bigr)\Bigr)
+\]
+
+\end{document}
