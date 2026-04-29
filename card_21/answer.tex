@@ -1,0 +1,174 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{stmaryrd}
+\usepackage{mathrsfs}
+\usepackage{graphicx} % Для вставки картинок
+\usepackage{float}    % Для жесткой фиксации картинок и схем на месте
+\usepackage{tikz}     % Для рисования блок-схем
+\usetikzlibrary{positioning, arrows.meta}
+
+\geometry{margin=2.2cm}
+
+\newtheorem{definition}{Определение}
+\newtheorem{theorem}{Теорема}
+\newtheorem{proposition}{Утверждение}
+\newtheorem{lemma}{Лемма}
+\newtheorem{corollary}{Следствие}
+\theoremstyle{remark}
+\newtheorem*{remark}{Замечание}
+\newtheorem*{example}{Пример}
+
+\title{Билет №21 \\ \small Докомпьютерные вычислительные устройства. Первые компьютеры 1930–40-х. Гарвардская (Эйкена) и Принстонская (Фон Неймана) архитектуры ЭВМ. Поколения ЭВМ. (СПбГУ)}
+\author{Сериков Владислав Александрович}
+\date{29 апреля 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Докомпьютерные вычислительные устройства}
+История вычислений началась с попыток автоматизировать рутинные математические операции. Развитие можно разбить на четыре логических этапа.
+
+\subsection{Инструментальный счет и ранняя механика}
+\begin{itemize}
+    \item \textbf{Абак и счеты (Древний мир -- Средние века):} Хранили промежуточные результаты вычислений, но алгоритм (перенос десятков) выполнял человек.
+    \item \textbf{Логарифмическая линейка (1622 г.):} Сведение умножения к сложению логарифмов ($ \log(a \times b) = \log(a) + \log(b) $). Пример: чтобы умножить 2 на 3, шкалы сдвигались так, чтобы отметка «1» совпадала с «2», и напротив «3» считывался ответ «6».
+    \item \textbf{Паскалина (1642 г.) и Арифмометры (XIX в.):} Первые устройства с \textit{аппаратным переносом десятка}. Пример: при прибавлении 1 к 009, шестеренка единиц, делая оборот, цепляла шестеренку десятков, выдавая 010.
+\end{itemize}
+
+\subsection{Программируемая механика (Архитектура Бэббиджа)}
+Чарльз Бэббидж (1834 г.) разработал \textbf{Аналитическую машину} — механический прообраз современного компьютера.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        box/.style={draw, rectangle, thick, minimum width=3cm, minimum height=1.5cm, align=center},
+        arrow/.style={-Latex, thick, blue}
+    ]
+        \node[box, fill=green!10] (store) {Склад\\(Память, регистры)};
+        \node[box, fill=red!10, right=2cm of store] (mill) {Мельница\\(АЛУ)};
+        \node[box, fill=yellow!10, below=1.5cm of mill] (control) {Устройство управления\\(Перфокарты Жаккарда)};
+        \node[box, fill=purple!10, left=2cm of control] (io) {Ввод / Вывод\\(Печать на медь)};
+
+        \draw[Latex-Latex, thick] (store) -- node[above]{\footnotesize Передача чисел} (mill);
+        \draw[arrow] (control) -- node[right]{\footnotesize Операции} (mill);
+        \draw[arrow] (control) -- node[above]{\footnotesize Адресация} (store);
+        \draw[arrow] (control) -- (io);
+        \draw[arrow] (store) -- (io);
+    \end{tikzpicture}
+    \caption{Логическая схема Аналитической машины Бэббиджа}
+\end{figure}
+
+\textbf{Шаги алгоритма машины Бэббиджа (пример: вычисление полинома):}
+\begin{enumerate}
+    \item УУ считывает операционную перфокарту (например, «Умножить»).
+    \item УУ считывает карту переменных: выбирает оси на «Складе» (значения $x$ и $a$).
+    \item Числа по шестереночным передачам поступают в «Мельницу».
+    \item Мельница совершает механическое умножение (серию сложений).
+    \item Результат отправляется обратно на Склад или на печатное устройство.
+\end{enumerate}
+
+\section{Первые компьютеры 1930--40-х годов}
+В 1930-е годы произошел переход от зубчатых колес к электромагнитным реле, а в 40-е — к электронным лампам.
+
+\begin{itemize}
+    \item \textbf{Z3 (Германия, 1941, К. Цузе):} Первый в мире программируемый компьютер. Работал на 2000 реле. \textit{Пример использования:} расчет матриц аэродинамики крыла самолета. Использовал двоичную арифметику с плавающей запятой.
+    \item \textbf{Colossus (Великобритания, 1943):} Первая электронная машина (на лампах). \textit{Пример использования:} криптоанализ. Искала шаблоны в зашифрованных сообщениях (шифр Лоренца) путем логического XOR перехваченного текста и генерируемой псевдослучайной последовательности.
+    \item \textbf{ENIAC (США, 1945):} Первый универсальный \textit{электронный} компьютер. Содержал 18 000 ламп. Работал в десятичной системе.
+    \textbf{Пример задачи:} Расчет баллистических таблиц. Траектория полета снаряда рассчитывалась вручную за 20 часов. ENIAC делал это за 30 секунд (быстрее времени самого полета снаряда). Программирование осуществлялось \textit{коммутацией штекеров} (аппаратно).
+\end{itemize}
+
+\section{Гарвардская и Принстонская архитектуры}
+Перепрограммирование ENIAC кабелями занимало недели. В 1945 году была предложена концепция \textbf{«хранимой в памяти программы»} — инструкции стали записываться в память как числа.
+
+\subsection{Принстонская архитектура (фон Неймана)}
+Код программы и данные лежат в одной линейной памяти.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.5cm,
+        box/.style={draw, rectangle, thick, minimum width=3cm, minimum height=1.5cm, align=center},
+        bus/.style={draw, ultra thick, fill=gray!20, minimum width=10cm, minimum height=0.5cm},
+        arrow/.style={Latex-Latex, thick}
+    ]
+        \node[bus] (sysbus) {Общая системная шина (Данные + Команды)};
+
+        \node[box, fill=blue!10, above=1cm of sysbus, xshift=-3cm] (cpu) {CPU\\(УУ + АЛУ)};
+        \node[box, fill=green!10, above=1cm of sysbus, xshift=3cm] (mem) {Общая ОЗУ\\(Код + Данные)};
+
+        \draw[arrow] (cpu) -- node[left]{\footnotesize Узкое горлышко} (cpu |- sysbus.north);
+        \draw[arrow] (mem) -- (mem |- sysbus.north);
+    \end{tikzpicture}
+    \caption{Архитектура фон Неймана}
+\end{figure}
+
+\textbf{Алгоритм фон-неймановского цикла команд (Instruction Cycle):}
+\begin{enumerate}
+    \item \textbf{Fetch (Выборка):} УУ выставляет на шину адреса значение из счетчика команд (PC). Из ОЗУ по шине данных приходит инструкция (например, `ADD A, B`).
+    \item \textbf{Decode (Дешифрация):} УУ понимает, что нужно сложить два числа.
+    \item \textbf{Operand Fetch (Выборка данных):} Процессор снова обращается к ОЗУ (по той же шине!), чтобы забрать значения A и B. \textit{Тут возникает простой — узкое горлышко.}
+    \item \textbf{Execute (Выполнение):} АЛУ складывает числа.
+    \item \textbf{Store (Запись):} Результат по той же шине отправляется в ОЗУ.
+\end{enumerate}
+
+\subsection*{3.2. Гарвардская архитектура и её модификация}
+Разработана Говардом Эйкеном (Mark I). Память команд и память данных физически разделены.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=2.5cm,
+        box/.style={draw, rectangle, thick, minimum width=2.5cm, minimum height=1.5cm, align=center},
+        arrow/.style={-Latex, thick}
+    ]
+        \node[box, fill=red!10] (imem) {Память\\ Команд};
+        \node[box, fill=blue!10, right=2cm of imem] (cpu) {CPU};
+        \node[box, fill=green!10, right=2cm of cpu] (dmem) {Память\\ Данных};
+
+        \draw[arrow] (imem) -- node[above]{\footnotesize Шина команд} (cpu);
+        \draw[Latex-Latex, thick] (cpu) -- node[above]{\footnotesize Шина данных} (dmem);
+    \end{tikzpicture}
+    \caption{Классическая Гарвардская архитектура}
+\end{figure}
+
+\textbf{Современный гибрид (Модифицированная гарвардская архитектура):}\\
+В чистом виде Гарвард применяется в микроконтроллерах (Arduino). В современных ПК (Intel Core, ARM) используется гибрид: основная память общая (по фон Нейману), но \textbf{внутри процессора} кэш первого уровня (L1) разделен на Кэш Инструкций (L1i) и Кэш Данных (L1d). Это позволяет АЛУ за один такт и читать команду, и брать данные.
+
+\section{Поколения ЭВМ}
+Разделение на поколения обусловлено радикальной сменой \textbf{элементной базы} (физических компонентов, из которых строятся логические вентили).
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.5cm,
+        genbox/.style={draw, rectangle, thick, minimum width=14cm, minimum height=1.2cm, align=left, text width=13cm, fill=blue!5}
+    ]
+        \node[genbox] (g1) {\textbf{I поколение (1945--1955): Электронные лампы.}\\ \textit{ПО:} Машинные коды. \textit{Носители:} Перфокарты. \textit{Примеры:} ENIAC, МЭСМ. Огромное энергопотребление, низкая надежность (лампы постоянно перегорали).};
+
+        \node[genbox, fill=green!5, below=of g1] (g2) {\textbf{II поколение (1955--1965): Транзисторы.}\\ \textit{ПО:} Ассемблер, FORTRAN, ALGOL. Появление систем пакетной обработки. \textit{Носители:} Магнитные ленты. \textit{Пример:} БЭСМ-6. Транзистор в сотни раз меньше лампы и не требует нагрева.};
+
+        \node[genbox, fill=yellow!5, below=of g2] (g3) {\textbf{III поколение (1965--1980): Интегральные схемы (ИС).}\\ \textit{ПО:} Операционные системы (UNIX), мультипрограммирование. Появление концепции \textit{семейств совместимых ЭВМ}. \textit{Пример:} IBM System/360, ЕС ЭВМ. На одном кристалле кремния размещались десятки транзисторов.};
+
+        \node[genbox, fill=red!5, below=of g3] (g4) {\textbf{IV поколение (1980--наст. время): Микропроцессоры (СБИС).}\\ \textit{ПО:} ОС с графическим интерфейсом, ООП, Интернет. \textit{Пример:} IBM PC, Apple Mac. СБИС содержат миллиарды транзисторов на одном кристалле. Компьютеры стали персональными.};
+
+        \node[genbox, fill=purple!5, below=of g4] (g5) {\textbf{V поколение (Перспективы): Не-фон-неймановские архитектуры.}\\ Искусственные нейронные сети (NPU, TPU), квантовые компьютеры (кубиты вместо битов), оптические ЭВМ. Фокус на массовом параллелизме и ИИ.};
+
+        \draw[->, ultra thick, gray] (g1.south west) ++(-0.5,0.5) -- ++(0, -7.5) node[below, black] {\textbf{Эволюция}};
+    \end{tikzpicture}
+    \caption{Хронология поколений ЭВМ}
+\end{figure}
+
+\textbf{Ключевой алгоритмический сдвиг между поколениями:}
+Если в I поколении программист вручную распределял регистры и адреса памяти (машинный код), то с III поколения эту задачу взяла на себя Операционная Система (виртуальная память, планировщик процессов), позволив программисту абстрагироваться от железа.
+
+\end{document}
