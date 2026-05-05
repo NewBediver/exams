@@ -1,0 +1,1588 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{algorithm}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{makecell}
+\usepackage{xcolor}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue
+}
+
+\newtheorem{definition}{Определение}
+\newtheorem{theorem}{Теорема}
+\newtheorem{lemma}{Лемма}
+\newtheorem{example}{Пример}
+
+\DeclareMathOperator{\Enc}{Enc}
+\DeclareMathOperator{\Dec}{Dec}
+\DeclareMathOperator{\Gen}{Gen}
+\DeclareMathOperator{\Sign}{Sign}
+\DeclareMathOperator{\Ver}{Ver}
+\DeclareMathOperator{\Mac}{Mac}
+\DeclareMathOperator{\KeyGen}{KeyGen}
+\DeclareMathOperator{\Hash}{Hash}
+\DeclareMathOperator{\Adv}{Adv}
+
+\title{Билет №18 \\ \small Основные понятия общей алгебры: алгебра, подалгебра, гомоморфизм, конгруэнтность, факторалгебра. Алгебра термов. (СпБПУ)}
+\author{Сериков Владислав Александрович}
+\date{5 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Основные понятия общей алгебры}
+
+\subsection{Сигнатура и алгебра}
+
+\begin{definition}[Сигнатура]
+\emph{Сигнатурой} или \emph{типом алгебр} называется множество функциональных символов
+\[
+\Omega=\{f_i\}_{i\in I},
+\]
+каждому из которых сопоставлено натуральное число
+\[
+\operatorname{ar}(f_i)\in \mathbb N_0,
+\]
+называемое \emph{арностью} символа $f_i$.
+
+Если $\operatorname{ar}(f)=n$, то $f$ называется $n$-арным функциональным символом.
+При $n=0$ символ называется \emph{константным}.
+\end{definition}
+
+\begin{example}
+\begin{enumerate}
+    \item Сигнатура групп:
+    \[
+    \Omega_{\mathrm{Grp}}=\{\cdot,{}^{-1},e\},
+    \]
+    где
+    \[
+    \operatorname{ar}(\cdot)=2,\qquad
+    \operatorname{ar}({}^{-1})=1,\qquad
+    \operatorname{ar}(e)=0.
+    \]
+
+    \item Сигнатура колец:
+    \[
+    \Omega_{\mathrm{Ring}}=\{+,-,\cdot,0,1\},
+    \]
+    где $+$ и $\cdot$ бинарны, $-$ унарен, $0$ и $1$ являются константами.
+
+    \item Сигнатура решёток:
+    \[
+    \Omega_{\mathrm{Lat}}=\{\vee,\wedge\},
+    \]
+    где $\vee$ и $\wedge$ бинарны.
+\end{enumerate}
+\end{example}
+
+\begin{definition}[Алгебра]
+Пусть $\Omega$ --- сигнатура. \emph{Алгеброй сигнатуры $\Omega$} называется пара
+\[
+\mathcal A=(A,(f^{\mathcal A})_{f\in\Omega}),
+\]
+где $A$ --- непустое множество, называемое \emph{носителем} или \emph{основным множеством} алгебры, а каждому $n$-арному символу $f\in\Omega$ сопоставлена операция
+\[
+f^{\mathcal A}\colon A^n\to A.
+\]
+Если $n=0$, то операция $f^{\mathcal A}\colon A^0\to A$ отождествляется с выделенным элементом множества $A$.
+\end{definition}
+
+Обычно, если ясно, о какой алгебре идёт речь, вместо $f^{\mathcal A}$ пишут просто $f$.
+
+\begin{example}
+Группа $(G,\cdot,{}^{-1},e)$ является алгеброй сигнатуры
+\[
+\{\cdot,{}^{-1},e\}.
+\]
+Кольцо $(R,+,-,\cdot,0,1)$ является алгеброй сигнатуры
+\[
+\{+,-,\cdot,0,1\}.
+\]
+\end{example}
+
+\subsection{Подалгебры}
+
+\begin{definition}[Замкнутое подмножество]
+Пусть
+\[
+\mathcal A=(A,(f^{\mathcal A})_{f\in\Omega})
+\]
+--- алгебра сигнатуры $\Omega$. Подмножество $B\subseteq A$ называется \emph{замкнутым относительно операций алгебры $\mathcal A$}, если для любого $n$-арного символа $f\in\Omega$ и любых элементов
+\[
+b_1,\dots,b_n\in B
+\]
+выполнено
+\[
+f^{\mathcal A}(b_1,\dots,b_n)\in B.
+\]
+Если $f$ --- константный символ, то условие означает, что
+\[
+f^{\mathcal A}\in B.
+\]
+\end{definition}
+
+\begin{definition}[Подалгебра]
+Пусть $\mathcal A$ --- алгебра сигнатуры $\Omega$. Алгебра
+\[
+\mathcal B=(B,(f^{\mathcal B})_{f\in\Omega})
+\]
+называется \emph{подалгеброй} алгебры $\mathcal A$, если:
+\begin{enumerate}
+    \item $B\subseteq A$;
+    \item $B$ замкнуто относительно всех операций $\mathcal A$;
+    \item для каждого $f\in\Omega$ операция $f^{\mathcal B}$ является ограничением операции $f^{\mathcal A}$ на $B$:
+    \[
+    f^{\mathcal B}=f^{\mathcal A}\big|_{B^n}.
+    \]
+\end{enumerate}
+Обозначение:
+\[
+\mathcal B\leqslant \mathcal A.
+\]
+\end{definition}
+
+\begin{example}
+Пусть $\mathcal A=(\mathbb Z,+,-,0)$ --- абелева группа целых чисел по сложению. Тогда
+\[
+2\mathbb Z=\{2k\mid k\in\mathbb Z\}
+\]
+замкнуто относительно сложения, взятия противоположного элемента и содержит $0$. Поэтому
+\[
+(2\mathbb Z,+,-,0)
+\]
+является подалгеброй алгебры $(\mathbb Z,+,-,0)$.
+\end{example}
+
+\begin{example}
+Множество $\mathbb N\subseteq \mathbb Z$ не является подалгеброй группы $(\mathbb Z,+,-,0)$, поскольку не замкнуто относительно операции $-$:
+\[
+1\in\mathbb N,\qquad -1\notin\mathbb N.
+\]
+\end{example}
+
+\subsection{Подалгебра, порождённая множеством}
+
+\begin{definition}[Порождающее множество]
+Пусть $\mathcal A$ --- алгебра, $X\subseteq A$. Наименьшая подалгебра алгебры $\mathcal A$, содержащая $X$, называется \emph{подалгеброй, порождённой множеством $X$}, и обозначается
+\[
+\langle X\rangle_{\mathcal A}.
+\]
+Если $\langle X\rangle_{\mathcal A}=A$, то говорят, что $X$ \emph{порождает} алгебру $\mathcal A$.
+\end{definition}
+
+\begin{theorem}[Существование порождённой подалгебры]
+Пусть $\mathcal A$ --- алгебра и $X\subseteq A$. Тогда существует наименьшая подалгебра $\langle X\rangle_{\mathcal A}$, содержащая $X$, причём
+\[
+\langle X\rangle_{\mathcal A}
+=
+\bigcap\{B\subseteq A\mid B \text{ является носителем подалгебры } \mathcal A,\ X\subseteq B\}.
+\]
+\end{theorem}
+
+\begin{proof}
+Рассмотрим семейство всех носителей подалгебр алгебры $\mathcal A$, содержащих $X$:
+\[
+\mathcal S=\{B\subseteq A\mid B \text{ замкнуто относительно всех операций } \mathcal A,\ X\subseteq B\}.
+\]
+Это семейство непусто, поскольку $A\in\mathcal S$.
+
+Положим
+\[
+C=\bigcap_{B\in\mathcal S}B.
+\]
+Очевидно, что $X\subseteq C$, так как $X$ содержится в каждом $B\in\mathcal S$.
+
+Докажем, что $C$ замкнуто относительно всех операций. Пусть $f\in\Omega$ --- $n$-арный символ и
+\[
+c_1,\dots,c_n\in C.
+\]
+Тогда для любого $B\in\mathcal S$ имеем
+\[
+c_1,\dots,c_n\in B.
+\]
+Так как $B$ замкнуто относительно $f$, то
+\[
+f^{\mathcal A}(c_1,\dots,c_n)\in B.
+\]
+Это верно для всех $B\in\mathcal S$, следовательно,
+\[
+f^{\mathcal A}(c_1,\dots,c_n)\in \bigcap_{B\in\mathcal S}B=C.
+\]
+Значит, $C$ замкнуто относительно всех операций, то есть является носителем подалгебры.
+
+По построению $C$ содержится в любой подалгебре, содержащей $X$. Следовательно, $C$ является наименьшей такой подалгеброй.
+\end{proof}
+
+\subsection{Алгоритм построения подалгебры, порождённой множеством}
+
+Пусть $\mathcal A$ --- конечная алгебра или алгебра, в которой можно эффективно вычислять значения операций, и пусть $X\subseteq A$.
+
+\begin{algorithm}
+\caption{Построение $\langle X\rangle_{\mathcal A}$}
+\leavevmode
+\begin{enumerate}
+    \item Положить
+    \[
+    B_0=X\cup C,
+    \]
+    где $C$ --- множество всех констант алгебры $\mathcal A$.
+    \item Для каждого $n$-арного символа $f\in\Omega$ вычислить все элементы вида
+    \[
+    f^{\mathcal A}(b_1,\dots,b_n),
+    \qquad b_1,\dots,b_n\in B_0.
+    \]
+    Добавить их к $B_0$. Получится множество $B_1$.
+    \item Повторять процесс:
+    \[
+    B_{k+1}=B_k\cup
+    \{f^{\mathcal A}(b_1,\dots,b_n)\mid f\in\Omega,\ b_1,\dots,b_n\in B_k\}.
+    \]
+    \item Если на некотором шаге
+    \[
+    B_{k+1}=B_k,
+    \]
+    то процесс стабилизировался, и
+    \[
+    \langle X\rangle_{\mathcal A}=B_k.
+    \]
+\end{enumerate}
+\end{algorithm}
+
+\begin{example}
+Рассмотрим алгебру
+\[
+\mathcal A=(\mathbb Z,+,-,0)
+\]
+и множество
+\[
+X=\{6,10\}.
+\]
+Подалгебра, порождённая $6$ и $10$, состоит из всех целочисленных линейных комбинаций этих элементов:
+\[
+\langle 6,10\rangle_{\mathcal A}
+=
+\{6m+10n\mid m,n\in\mathbb Z\}.
+\]
+Так как
+\[
+\gcd(6,10)=2,
+\]
+получаем
+\[
+\langle 6,10\rangle_{\mathcal A}=2\mathbb Z.
+\]
+
+Первые шаги:
+\[
+B_0=\{0,6,10\}.
+\]
+Замыкая относительно $-$, получаем
+\[
+-6,\ -10.
+\]
+Замыкая относительно $+$, получаем
+\[
+6+10=16,\qquad 10-6=4,\qquad 6-10=-4.
+\]
+Далее из $6$ и $4$ получаем
+\[
+6-4=2.
+\]
+После появления $2$ можно получить все элементы вида $2k$, то есть всю подгруппу $2\mathbb Z$.
+\end{example}
+
+\subsection{Гомоморфизмы}
+
+\begin{definition}[Гомоморфизм]
+Пусть
+\[
+\mathcal A=(A,(f^{\mathcal A})_{f\in\Omega}),
+\qquad
+\mathcal B=(B,(f^{\mathcal B})_{f\in\Omega})
+\]
+--- алгебры одной и той же сигнатуры $\Omega$.
+
+Отображение
+\[
+\varphi\colon A\to B
+\]
+называется \emph{гомоморфизмом} из $\mathcal A$ в $\mathcal B$, если для любого $n$-арного символа $f\in\Omega$ и любых элементов
+\[
+a_1,\dots,a_n\in A
+\]
+выполнено
+\[
+\varphi\bigl(f^{\mathcal A}(a_1,\dots,a_n)\bigr)
+=
+f^{\mathcal B}\bigl(\varphi(a_1),\dots,\varphi(a_n)\bigr).
+\]
+Для константного символа $c\in\Omega$ это условие имеет вид
+\[
+\varphi(c^{\mathcal A})=c^{\mathcal B}.
+\]
+\end{definition}
+
+\begin{definition}[Мономорфизм, эпиморфизм, изоморфизм]
+Гомоморфизм $\varphi\colon \mathcal A\to\mathcal B$ называется:
+\begin{enumerate}
+    \item \emph{мономорфизмом}, если $\varphi$ инъективен;
+    \item \emph{эпиморфизмом}, если $\varphi$ сюръективен;
+    \item \emph{изоморфизмом}, если $\varphi$ биективен.
+\end{enumerate}
+
+Если существует изоморфизм $\mathcal A\to\mathcal B$, то алгебры $\mathcal A$ и $\mathcal B$ называются \emph{изоморфными}. Обозначение:
+\[
+\mathcal A\cong\mathcal B.
+\]
+\end{definition}
+
+\begin{example}
+Отображение
+\[
+\varphi\colon \mathbb Z\to \mathbb Z_n,
+\qquad
+\varphi(k)=\overline{k}
+\]
+является гомоморфизмом групп:
+\[
+(\mathbb Z,+,-,0)\to(\mathbb Z_n,+,-,0).
+\]
+Действительно,
+\[
+\varphi(a+b)=\overline{a+b}=\overline a+\overline b=\varphi(a)+\varphi(b),
+\]
+\[
+\varphi(-a)=\overline{-a}=-\overline a=-\varphi(a),
+\]
+\[
+\varphi(0)=\overline 0.
+\]
+\end{example}
+
+\begin{theorem}[Образ гомоморфизма является подалгеброй]
+Пусть
+\[
+\varphi\colon \mathcal A\to\mathcal B
+\]
+--- гомоморфизм алгебр сигнатуры $\Omega$. Тогда
+\[
+\operatorname{Im}\varphi=\{\varphi(a)\mid a\in A\}
+\]
+является носителем подалгебры алгебры $\mathcal B$.
+\end{theorem}
+
+\begin{proof}
+Нужно доказать замкнутость $\operatorname{Im}\varphi$ относительно всех операций алгебры $\mathcal B$.
+
+Пусть $f\in\Omega$ --- $n$-арный символ и
+\[
+b_1,\dots,b_n\in \operatorname{Im}\varphi.
+\]
+Тогда существуют элементы
+\[
+a_1,\dots,a_n\in A
+\]
+такие, что
+\[
+b_i=\varphi(a_i),\qquad i=1,\dots,n.
+\]
+По определению гомоморфизма:
+\[
+f^{\mathcal B}(b_1,\dots,b_n)
+=
+f^{\mathcal B}(\varphi(a_1),\dots,\varphi(a_n))
+=
+\varphi(f^{\mathcal A}(a_1,\dots,a_n)).
+\]
+Последний элемент принадлежит $\operatorname{Im}\varphi$. Значит, образ замкнут относительно $f$.
+
+Для константного символа $c$ имеем
+\[
+c^{\mathcal B}=\varphi(c^{\mathcal A})\in \operatorname{Im}\varphi.
+\]
+Следовательно, $\operatorname{Im}\varphi$ является носителем подалгебры алгебры $\mathcal B$.
+\end{proof}
+
+\subsection{Конгруэнтности}
+
+\begin{definition}[Отношение эквивалентности]
+Бинарное отношение $\theta$ на множестве $A$ называется \emph{отношением эквивалентности}, если для всех $a,b,c\in A$ выполнены свойства:
+\begin{enumerate}
+    \item рефлексивность:
+    \[
+    a\mathrel{\theta}a;
+    \]
+    \item симметричность:
+    \[
+    a\mathrel{\theta}b \Rightarrow b\mathrel{\theta}a;
+    \]
+    \item транзитивность:
+    \[
+    a\mathrel{\theta}b,\ b\mathrel{\theta}c
+    \Rightarrow
+    a\mathrel{\theta}c.
+    \]
+\end{enumerate}
+\end{definition}
+
+Класс эквивалентности элемента $a\in A$ по отношению $\theta$ обозначается
+\[
+[a]_\theta=\{x\in A\mid x\mathrel{\theta}a\}.
+\]
+
+\begin{definition}[Конгруэнтность]
+Пусть
+\[
+\mathcal A=(A,(f^{\mathcal A})_{f\in\Omega})
+\]
+--- алгебра сигнатуры $\Omega$.
+
+Отношение эквивалентности $\theta$ на $A$ называется \emph{конгруэнтностью} алгебры $\mathcal A$, если оно согласовано со всеми операциями алгебры, то есть для любого $n$-арного символа $f\in\Omega$ и любых элементов
+\[
+a_1,\dots,a_n,b_1,\dots,b_n\in A
+\]
+из условий
+\[
+a_i\mathrel{\theta}b_i,\qquad i=1,\dots,n,
+\]
+следует
+\[
+f^{\mathcal A}(a_1,\dots,a_n)
+\mathrel{\theta}
+f^{\mathcal A}(b_1,\dots,b_n).
+\]
+\end{definition}
+
+Множество всех конгруэнтностей алгебры $\mathcal A$ обозначается
+\[
+\operatorname{Con}(\mathcal A).
+\]
+
+\begin{example}
+На группе $G$ конгруэнтности находятся во взаимно однозначном соответствии с нормальными подгруппами.
+
+Если $N\trianglelefteq G$, то отношение
+\[
+a\mathrel{\theta_N}b
+\Longleftrightarrow
+ab^{-1}\in N
+\]
+является конгруэнтностью группы $G$.
+
+В частности, для аддитивной группы $\mathbb Z$ и подгруппы $n\mathbb Z$ отношение
+\[
+a\equiv b\pmod n
+\]
+является конгруэнтностью.
+\end{example}
+
+\begin{example}
+Рассмотрим алгебру
+\[
+(\mathbb Z,+,-,0).
+\]
+Отношение сравнимости по модулю $3$:
+\[
+a\mathrel{\theta}b
+\Longleftrightarrow
+a-b\in 3\mathbb Z
+\]
+является конгруэнтностью.
+
+Действительно, если
+\[
+a\equiv b\pmod 3,
+\qquad
+c\equiv d\pmod 3,
+\]
+то
+\[
+a+c\equiv b+d\pmod 3,
+\]
+а также
+\[
+-a\equiv -b\pmod 3.
+\]
+Кроме того, $0\equiv 0\pmod 3$.
+\end{example}
+
+\begin{theorem}[Ядро гомоморфизма является конгруэнтностью]
+Пусть
+\[
+\varphi\colon \mathcal A\to\mathcal B
+\]
+--- гомоморфизм алгебр одной сигнатуры. Определим отношение
+\[
+\ker\varphi=\{(a,a')\in A^2\mid \varphi(a)=\varphi(a')\}.
+\]
+Тогда $\ker\varphi$ является конгруэнтностью алгебры $\mathcal A$.
+\end{theorem}
+
+\begin{proof}
+Сначала докажем, что $\ker\varphi$ является отношением эквивалентности.
+
+\textbf{Рефлексивность.} Для любого $a\in A$ имеем
+\[
+\varphi(a)=\varphi(a),
+\]
+следовательно,
+\[
+(a,a)\in\ker\varphi.
+\]
+
+\textbf{Симметричность.} Если
+\[
+(a,b)\in\ker\varphi,
+\]
+то
+\[
+\varphi(a)=\varphi(b).
+\]
+Следовательно,
+\[
+\varphi(b)=\varphi(a),
+\]
+то есть
+\[
+(b,a)\in\ker\varphi.
+\]
+
+\textbf{Транзитивность.} Если
+\[
+(a,b)\in\ker\varphi
+\quad\text{и}\quad
+(b,c)\in\ker\varphi,
+\]
+то
+\[
+\varphi(a)=\varphi(b),
+\qquad
+\varphi(b)=\varphi(c).
+\]
+Значит,
+\[
+\varphi(a)=\varphi(c),
+\]
+то есть
+\[
+(a,c)\in\ker\varphi.
+\]
+
+Теперь докажем согласованность с операциями. Пусть $f\in\Omega$ --- $n$-арный символ и
+\[
+(a_i,b_i)\in\ker\varphi,
+\qquad i=1,\dots,n.
+\]
+Тогда
+\[
+\varphi(a_i)=\varphi(b_i),
+\qquad i=1,\dots,n.
+\]
+Используя то, что $\varphi$ является гомоморфизмом, получаем:
+\[
+\varphi(f^{\mathcal A}(a_1,\dots,a_n))
+=
+f^{\mathcal B}(\varphi(a_1),\dots,\varphi(a_n)).
+\]
+Так как $\varphi(a_i)=\varphi(b_i)$, то
+\[
+f^{\mathcal B}(\varphi(a_1),\dots,\varphi(a_n))
+=
+f^{\mathcal B}(\varphi(b_1),\dots,\varphi(b_n)).
+\]
+Снова применяя свойство гомоморфизма:
+\[
+f^{\mathcal B}(\varphi(b_1),\dots,\varphi(b_n))
+=
+\varphi(f^{\mathcal A}(b_1,\dots,b_n)).
+\]
+Следовательно,
+\[
+\varphi(f^{\mathcal A}(a_1,\dots,a_n))
+=
+\varphi(f^{\mathcal A}(b_1,\dots,b_n)).
+\]
+Значит,
+\[
+\bigl(f^{\mathcal A}(a_1,\dots,a_n),
+f^{\mathcal A}(b_1,\dots,b_n)\bigr)\in\ker\varphi.
+\]
+Итак, $\ker\varphi$ является конгруэнтностью.
+\end{proof}
+
+\subsection{Факторалгебра}
+
+\begin{definition}[Факторалгебра]
+Пусть
+\[
+\mathcal A=(A,(f^{\mathcal A})_{f\in\Omega})
+\]
+--- алгебра сигнатуры $\Omega$, а $\theta\in\operatorname{Con}(\mathcal A)$.
+
+\emph{Факторалгеброй} алгебры $\mathcal A$ по конгруэнтности $\theta$ называется алгебра
+\[
+\mathcal A/\theta
+\]
+с носителем
+\[
+A/\theta=\{[a]_\theta\mid a\in A\}
+\]
+и операциями, заданными правилом
+\[
+f^{\mathcal A/\theta}([a_1]_\theta,\dots,[a_n]_\theta)
+=
+[f^{\mathcal A}(a_1,\dots,a_n)]_\theta.
+\]
+\end{definition}
+
+Необходимо проверить, что это определение корректно: результат не должен зависеть от выбора представителей классов.
+
+\begin{theorem}[Корректность определения операций на факторалгебре]
+Пусть $\theta$ --- конгруэнтность алгебры $\mathcal A$. Тогда операции на $A/\theta$, заданные формулой
+\[
+f^{\mathcal A/\theta}([a_1]_\theta,\dots,[a_n]_\theta)
+=
+[f^{\mathcal A}(a_1,\dots,a_n)]_\theta,
+\]
+определены корректно.
+\end{theorem}
+
+\begin{proof}
+Пусть
+\[
+[a_i]_\theta=[b_i]_\theta,
+\qquad i=1,\dots,n.
+\]
+Тогда
+\[
+a_i\mathrel{\theta}b_i,
+\qquad i=1,\dots,n.
+\]
+Так как $\theta$ является конгруэнтностью, то
+\[
+f^{\mathcal A}(a_1,\dots,a_n)
+\mathrel{\theta}
+f^{\mathcal A}(b_1,\dots,b_n).
+\]
+Следовательно,
+\[
+[f^{\mathcal A}(a_1,\dots,a_n)]_\theta
+=
+[f^{\mathcal A}(b_1,\dots,b_n)]_\theta.
+\]
+Значит, значение операции в факторалгебре не зависит от выбора представителей классов эквивалентности.
+\end{proof}
+
+\begin{definition}[Естественный гомоморфизм]
+Отображение
+\[
+\pi_\theta\colon A\to A/\theta,
+\qquad
+\pi_\theta(a)=[a]_\theta,
+\]
+называется \emph{естественным гомоморфизмом} или \emph{канонической проекцией}.
+\end{definition}
+
+\begin{theorem}
+Каноническая проекция
+\[
+\pi_\theta\colon \mathcal A\to \mathcal A/\theta
+\]
+является сюръективным гомоморфизмом, причём
+\[
+\ker\pi_\theta=\theta.
+\]
+\end{theorem}
+
+\begin{proof}
+Сюръективность очевидна: каждый элемент факторалгебры имеет вид $[a]_\theta$ для некоторого $a\in A$, и
+\[
+\pi_\theta(a)=[a]_\theta.
+\]
+
+Докажем, что $\pi_\theta$ сохраняет операции. Пусть $f\in\Omega$ --- $n$-арный символ. Тогда
+\[
+\pi_\theta(f^{\mathcal A}(a_1,\dots,a_n))
+=
+[f^{\mathcal A}(a_1,\dots,a_n)]_\theta.
+\]
+С другой стороны,
+\[
+f^{\mathcal A/\theta}(\pi_\theta(a_1),\dots,\pi_\theta(a_n))
+=
+f^{\mathcal A/\theta}([a_1]_\theta,\dots,[a_n]_\theta)
+=
+[f^{\mathcal A}(a_1,\dots,a_n)]_\theta.
+\]
+Следовательно,
+\[
+\pi_\theta(f^{\mathcal A}(a_1,\dots,a_n))
+=
+f^{\mathcal A/\theta}(\pi_\theta(a_1),\dots,\pi_\theta(a_n)).
+\]
+Значит, $\pi_\theta$ является гомоморфизмом.
+
+Наконец,
+\[
+(a,b)\in\ker\pi_\theta
+\Longleftrightarrow
+\pi_\theta(a)=\pi_\theta(b)
+\Longleftrightarrow
+[a]_\theta=[b]_\theta
+\Longleftrightarrow
+a\mathrel{\theta}b.
+\]
+Следовательно,
+\[
+\ker\pi_\theta=\theta.
+\]
+\end{proof}
+
+\begin{example}
+Рассмотрим группу
+\[
+(\mathbb Z,+,-,0)
+\]
+и конгруэнтность
+\[
+a\equiv b\pmod n.
+\]
+Тогда факторалгебра
+\[
+\mathbb Z/\theta
+\]
+есть обычная группа классов вычетов
+\[
+\mathbb Z_n.
+\]
+Операция задаётся правилом
+\[
+[a]+[b]=[a+b].
+\]
+\end{example}
+
+\subsection{Первая теорема об изоморфизме}
+
+\begin{theorem}[Первая теорема об изоморфизме]
+Пусть
+\[
+\varphi\colon \mathcal A\to\mathcal B
+\]
+--- гомоморфизм алгебр одной сигнатуры. Тогда
+\[
+\mathcal A/\ker\varphi\cong \operatorname{Im}\varphi.
+\]
+Более точно, отображение
+\[
+\overline{\varphi}\colon A/\ker\varphi\to \operatorname{Im}\varphi,
+\qquad
+\overline{\varphi}([a]_{\ker\varphi})=\varphi(a),
+\]
+является изоморфизмом.
+\end{theorem}
+
+\begin{proof}
+Обозначим
+\[
+\theta=\ker\varphi.
+\]
+Определим отображение
+\[
+\overline{\varphi}\colon A/\theta\to \operatorname{Im}\varphi
+\]
+формулой
+\[
+\overline{\varphi}([a]_\theta)=\varphi(a).
+\]
+
+\textbf{1. Корректность.}
+Пусть
+\[
+[a]_\theta=[b]_\theta.
+\]
+Тогда
+\[
+a\mathrel{\theta}b.
+\]
+Так как $\theta=\ker\varphi$, получаем
+\[
+\varphi(a)=\varphi(b).
+\]
+Следовательно, значение $\overline{\varphi}([a]_\theta)$ не зависит от выбора представителя класса.
+
+\textbf{2. Сюръективность.}
+Пусть
+\[
+y\in \operatorname{Im}\varphi.
+\]
+Тогда существует $a\in A$ такое, что
+\[
+y=\varphi(a).
+\]
+Но
+\[
+y=\overline{\varphi}([a]_\theta),
+\]
+следовательно, $\overline{\varphi}$ сюръективно.
+
+\textbf{3. Инъективность.}
+Пусть
+\[
+\overline{\varphi}([a]_\theta)=\overline{\varphi}([b]_\theta).
+\]
+Тогда
+\[
+\varphi(a)=\varphi(b).
+\]
+Следовательно,
+\[
+(a,b)\in\ker\varphi=\theta.
+\]
+Значит,
+\[
+[a]_\theta=[b]_\theta.
+\]
+Итак, $\overline{\varphi}$ инъективно.
+
+\textbf{4. Сохранение операций.}
+Пусть $f\in\Omega$ --- $n$-арный символ. Тогда
+\[
+\overline{\varphi}
+\left(
+f^{\mathcal A/\theta}([a_1]_\theta,\dots,[a_n]_\theta)
+\right)
+=
+\overline{\varphi}
+\left(
+[f^{\mathcal A}(a_1,\dots,a_n)]_\theta
+\right).
+\]
+По определению $\overline{\varphi}$:
+\[
+\overline{\varphi}
+\left(
+[f^{\mathcal A}(a_1,\dots,a_n)]_\theta
+\right)
+=
+\varphi(f^{\mathcal A}(a_1,\dots,a_n)).
+\]
+Так как $\varphi$ --- гомоморфизм,
+\[
+\varphi(f^{\mathcal A}(a_1,\dots,a_n))
+=
+f^{\mathcal B}(\varphi(a_1),\dots,\varphi(a_n)).
+\]
+Но
+\[
+\varphi(a_i)=\overline{\varphi}([a_i]_\theta),
+\]
+поэтому
+\[
+f^{\mathcal B}(\varphi(a_1),\dots,\varphi(a_n))
+=
+f^{\operatorname{Im}\varphi}
+(
+\overline{\varphi}([a_1]_\theta),
+\dots,
+\overline{\varphi}([a_n]_\theta)
+).
+\]
+Следовательно, $\overline{\varphi}$ является гомоморфизмом.
+
+Так как $\overline{\varphi}$ является биективным гомоморфизмом, оно является изоморфизмом.
+\end{proof}
+
+\begin{example}
+Рассмотрим гомоморфизм
+\[
+\varphi\colon \mathbb Z\to \mathbb Z_n,
+\qquad
+\varphi(k)=\overline{k}.
+\]
+Тогда
+\[
+\ker\varphi=n\mathbb Z.
+\]
+По первой теореме об изоморфизме:
+\[
+\mathbb Z/n\mathbb Z\cong \mathbb Z_n.
+\]
+\end{example}
+
+\subsection{Термы}
+
+\begin{definition}[Множество переменных]
+Пусть
+\[
+X=\{x_1,x_2,x_3,\dots\}
+\]
+--- множество переменных. Переменные используются как формальные символы, из которых с помощью операций сигнатуры строятся термы.
+\end{definition}
+
+\begin{definition}[Терм]
+Пусть $\Omega$ --- сигнатура, а $X$ --- множество переменных. Множество термов $T_\Omega(X)$ определяется индуктивно:
+\begin{enumerate}
+    \item всякая переменная $x\in X$ является термом;
+    \item если $c\in\Omega$ --- константный символ, то $c$ является термом;
+    \item если $f\in\Omega$ --- $n$-арный функциональный символ и $t_1,\dots,t_n$ --- термы, то выражение
+    \[
+    f(t_1,\dots,t_n)
+    \]
+    является термом;
+    \item других термов нет.
+\end{enumerate}
+\end{definition}
+
+\begin{example}
+Пусть сигнатура групп:
+\[
+\Omega=\{\cdot,{}^{-1},e\}.
+\]
+Тогда выражения
+\[
+x,\qquad e,\qquad x^{-1},\qquad x\cdot y,\qquad (x\cdot y^{-1})\cdot z
+\]
+являются термами.
+\end{example}
+
+\begin{example}
+Пусть сигнатура колец:
+\[
+\Omega=\{+,-,\cdot,0,1\}.
+\]
+Тогда термами являются:
+\[
+x+y,\qquad x\cdot y+1,\qquad -(x\cdot x+y).
+\]
+Формально, например, выражение
+\[
+x\cdot y+1
+\]
+записывается как
+\[
++( \cdot(x,y),1).
+\]
+\end{example}
+
+\subsection{Интерпретация термов в алгебре}
+
+Пусть
+\[
+\mathcal A=(A,(f^{\mathcal A})_{f\in\Omega})
+\]
+--- алгебра сигнатуры $\Omega$.
+
+Каждому терму
+\[
+t=t(x_1,\dots,x_n)
+\]
+соответствует операция на $A$, называемая \emph{термальной операцией}:
+\[
+t^{\mathcal A}\colon A^n\to A.
+\]
+
+Она определяется индукцией по построению терма:
+\begin{enumerate}
+    \item если $t=x_i$, то
+    \[
+    t^{\mathcal A}(a_1,\dots,a_n)=a_i;
+    \]
+    \item если $t=c$ --- константа, то
+    \[
+    t^{\mathcal A}(a_1,\dots,a_n)=c^{\mathcal A};
+    \]
+    \item если
+    \[
+    t=f(t_1,\dots,t_m),
+    \]
+    то
+    \[
+    t^{\mathcal A}(a_1,\dots,a_n)
+    =
+    f^{\mathcal A}
+    \bigl(
+    t_1^{\mathcal A}(a_1,\dots,a_n),
+    \dots,
+    t_m^{\mathcal A}(a_1,\dots,a_n)
+    \bigr).
+    \]
+\end{enumerate}
+
+\begin{example}
+В группе $G$ терм
+\[
+t(x,y)=xy^{-1}
+\]
+задаёт бинарную операцию
+\[
+t^G(a,b)=ab^{-1}.
+\]
+\end{example}
+
+\subsection{Алгебра термов}
+
+\begin{definition}[Алгебра термов]
+Пусть $\Omega$ --- сигнатура, а $X$ --- множество переменных. \emph{Алгеброй термов} называется алгебра
+\[
+\mathbf T_\Omega(X)
+=
+(T_\Omega(X),(f^{\mathbf T})_{f\in\Omega}),
+\]
+где носителем является множество всех термов $T_\Omega(X)$, а операции определяются формально:
+если $f\in\Omega$ имеет арность $n$, то
+\[
+f^{\mathbf T}(t_1,\dots,t_n)=f(t_1,\dots,t_n).
+\]
+\end{definition}
+
+Иными словами, операции в алгебре термов не вычисляют значения, а строят новые формальные выражения.
+
+\begin{example}
+Пусть
+\[
+\Omega=\{+,-,0\},
+\]
+где $+$ бинарен, $-$ унарен, $0$ --- константа. Тогда в алгебре термов:
+\[
++^{\mathbf T}(x,y)=+(x,y),
+\]
+\[
+-^{\mathbf T}(+(x,y))=-(+(x,y)).
+\]
+В привычной записи это:
+\[
+x+y,
+\qquad
+-(x+y).
+\]
+\end{example}
+
+\subsection{Свободность алгебры термов}
+
+Алгебра термов является фундаментальным примером свободной алгебры.
+
+\begin{definition}[Свободная алгебра]
+Пусть $\mathcal K$ --- класс алгебр сигнатуры $\Omega$. Алгебра $\mathcal F\in\mathcal K$ называется \emph{свободной в классе $\mathcal K$ с множеством свободных порождающих $X$}, если задано вложение
+\[
+\iota\colon X\to F
+\]
+и для любой алгебры $\mathcal A\in\mathcal K$ и любого отображения
+\[
+\alpha\colon X\to A
+\]
+существует единственный гомоморфизм
+\[
+\widehat{\alpha}\colon \mathcal F\to \mathcal A
+\]
+такой, что
+\[
+\widehat{\alpha}\circ\iota=\alpha.
+\]
+\end{definition}
+
+Для класса всех алгебр данной сигнатуры свободной алгеброй является алгебра термов.
+
+\begin{theorem}[Универсальное свойство алгебры термов]
+Пусть $\Omega$ --- сигнатура, $X$ --- множество переменных, а
+\[
+\mathbf T_\Omega(X)
+\]
+--- алгебра термов. Тогда для любой $\Omega$-алгебры $\mathcal A$ и любого отображения
+\[
+\alpha\colon X\to A
+\]
+существует единственный гомоморфизм
+\[
+\widehat{\alpha}\colon \mathbf T_\Omega(X)\to \mathcal A
+\]
+такой, что
+\[
+\widehat{\alpha}(x)=\alpha(x)
+\]
+для всех $x\in X$.
+\end{theorem}
+
+\begin{proof}
+Построим отображение $\widehat{\alpha}$ индукцией по построению терма.
+
+\textbf{1. Определение отображения.}
+
+Если $t=x\in X$, то полагаем
+\[
+\widehat{\alpha}(x)=\alpha(x).
+\]
+
+Если $t=c$, где $c$ --- константный символ, то полагаем
+\[
+\widehat{\alpha}(c)=c^{\mathcal A}.
+\]
+
+Если
+\[
+t=f(t_1,\dots,t_n),
+\]
+то полагаем
+\[
+\widehat{\alpha}(t)
+=
+f^{\mathcal A}
+\bigl(
+\widehat{\alpha}(t_1),\dots,\widehat{\alpha}(t_n)
+\bigr).
+\]
+
+Таким образом, $\widehat{\alpha}$ определено на всех термах.
+
+\textbf{2. Проверка, что $\widehat{\alpha}$ является гомоморфизмом.}
+
+Пусть $f\in\Omega$ --- $n$-арный символ, и пусть
+\[
+t_1,\dots,t_n\in T_\Omega(X).
+\]
+В алгебре термов
+\[
+f^{\mathbf T}(t_1,\dots,t_n)=f(t_1,\dots,t_n).
+\]
+Тогда по определению $\widehat{\alpha}$:
+\[
+\widehat{\alpha}
+\bigl(
+f^{\mathbf T}(t_1,\dots,t_n)
+\bigr)
+=
+\widehat{\alpha}(f(t_1,\dots,t_n))
+=
+f^{\mathcal A}
+\bigl(
+\widehat{\alpha}(t_1),\dots,\widehat{\alpha}(t_n)
+\bigr).
+\]
+Это и означает, что $\widehat{\alpha}$ сохраняет операцию $f$.
+
+\textbf{3. Согласование с $\alpha$.}
+
+Для каждой переменной $x\in X$ по построению:
+\[
+\widehat{\alpha}(x)=\alpha(x).
+\]
+
+\textbf{4. Единственность.}
+
+Пусть
+\[
+\psi\colon \mathbf T_\Omega(X)\to \mathcal A
+\]
+--- другой гомоморфизм такой, что
+\[
+\psi(x)=\alpha(x)
+\]
+для всех $x\in X$.
+
+Докажем индукцией по построению терма, что
+\[
+\psi(t)=\widehat{\alpha}(t)
+\]
+для любого терма $t$.
+
+Если $t=x\in X$, то
+\[
+\psi(x)=\alpha(x)=\widehat{\alpha}(x).
+\]
+
+Если $t=c$ --- константа, то, поскольку $\psi$ --- гомоморфизм,
+\[
+\psi(c)=c^{\mathcal A}=\widehat{\alpha}(c).
+\]
+
+Пусть
+\[
+t=f(t_1,\dots,t_n),
+\]
+и для термов $t_1,\dots,t_n$ уже доказано, что
+\[
+\psi(t_i)=\widehat{\alpha}(t_i),
+\qquad i=1,\dots,n.
+\]
+Тогда
+\[
+\psi(t)
+=
+\psi(f^{\mathbf T}(t_1,\dots,t_n)).
+\]
+Так как $\psi$ --- гомоморфизм,
+\[
+\psi(f^{\mathbf T}(t_1,\dots,t_n))
+=
+f^{\mathcal A}(\psi(t_1),\dots,\psi(t_n)).
+\]
+По предположению индукции:
+\[
+f^{\mathcal A}(\psi(t_1),\dots,\psi(t_n))
+=
+f^{\mathcal A}(\widehat{\alpha}(t_1),\dots,\widehat{\alpha}(t_n)).
+\]
+По определению $\widehat{\alpha}$:
+\[
+f^{\mathcal A}(\widehat{\alpha}(t_1),\dots,\widehat{\alpha}(t_n))
+=
+\widehat{\alpha}(f(t_1,\dots,t_n)).
+\]
+Следовательно,
+\[
+\psi(t)=\widehat{\alpha}(t).
+\]
+Значит, $\psi=\widehat{\alpha}$.
+
+Итак, требуемый гомоморфизм существует и единственен.
+\end{proof}
+
+\subsection{Связь термов, гомоморфизмов и конгруэнтностей}
+
+\begin{theorem}[Конгруэнтность сохраняется термами]
+Пусть $\theta$ --- конгруэнтность алгебры $\mathcal A$. Если
+\[
+a_i\mathrel{\theta}b_i,
+\qquad i=1,\dots,n,
+\]
+то для любого терма
+\[
+t(x_1,\dots,x_n)
+\]
+выполнено
+\[
+t^{\mathcal A}(a_1,\dots,a_n)
+\mathrel{\theta}
+t^{\mathcal A}(b_1,\dots,b_n).
+\]
+\end{theorem}
+
+\begin{proof}
+Докажем утверждение индукцией по построению терма $t$.
+
+\textbf{База индукции.}
+
+Если $t=x_i$, то
+\[
+t^{\mathcal A}(a_1,\dots,a_n)=a_i,
+\qquad
+t^{\mathcal A}(b_1,\dots,b_n)=b_i.
+\]
+По условию
+\[
+a_i\mathrel{\theta}b_i.
+\]
+
+Если $t=c$ --- константа, то
+\[
+t^{\mathcal A}(a_1,\dots,a_n)=c^{\mathcal A}
+=
+t^{\mathcal A}(b_1,\dots,b_n).
+\]
+Следовательно,
+\[
+c^{\mathcal A}\mathrel{\theta}c^{\mathcal A}
+\]
+по рефлексивности $\theta$.
+
+\textbf{Переход индукции.}
+
+Пусть
+\[
+t=f(t_1,\dots,t_m).
+\]
+Предположим, что для термов $t_1,\dots,t_m$ утверждение уже доказано:
+\[
+t_j^{\mathcal A}(a_1,\dots,a_n)
+\mathrel{\theta}
+t_j^{\mathcal A}(b_1,\dots,b_n),
+\qquad j=1,\dots,m.
+\]
+Так как $\theta$ является конгруэнтностью, то из этих соотношений следует
+\[
+f^{\mathcal A}
+\bigl(
+t_1^{\mathcal A}(a_1,\dots,a_n),
+\dots,
+t_m^{\mathcal A}(a_1,\dots,a_n)
+\bigr)
+\mathrel{\theta}
+f^{\mathcal A}
+\bigl(
+t_1^{\mathcal A}(b_1,\dots,b_n),
+\dots,
+t_m^{\mathcal A}(b_1,\dots,b_n)
+\bigr).
+\]
+Но левая часть есть
+\[
+t^{\mathcal A}(a_1,\dots,a_n),
+\]
+а правая часть есть
+\[
+t^{\mathcal A}(b_1,\dots,b_n).
+\]
+Следовательно,
+\[
+t^{\mathcal A}(a_1,\dots,a_n)
+\mathrel{\theta}
+t^{\mathcal A}(b_1,\dots,b_n).
+\]
+Теорема доказана.
+\end{proof}
+
+\subsection{Алгоритм проверки, является ли отношение конгруэнтностью}
+
+Пусть дана конечная алгебра
+\[
+\mathcal A=(A,(f^{\mathcal A})_{f\in\Omega})
+\]
+и бинарное отношение $\theta\subseteq A^2$.
+
+\begin{algorithm}
+\caption{Проверка конгруэнтности}
+\leavevmode
+\begin{enumerate}
+    \item Проверить, что $\theta$ является отношением эквивалентности:
+    \begin{enumerate}
+        \item для всех $a\in A$ проверить $(a,a)\in\theta$;
+        \item для всех $a,b\in A$ проверить:
+        \[
+        (a,b)\in\theta\Rightarrow (b,a)\in\theta;
+        \]
+        \item для всех $a,b,c\in A$ проверить:
+        \[
+        (a,b)\in\theta,\ (b,c)\in\theta
+        \Rightarrow
+        (a,c)\in\theta.
+        \]
+    \end{enumerate}
+
+    \item Для каждой операции $f\in\Omega$ арности $n$ проверить совместимость:
+    для всех наборов
+    \[
+    (a_1,\dots,a_n),\quad (b_1,\dots,b_n)\in A^n
+    \]
+    таких, что
+    \[
+    (a_i,b_i)\in\theta,\qquad i=1,\dots,n,
+    \]
+    проверить:
+    \[
+    \bigl(
+    f^{\mathcal A}(a_1,\dots,a_n),
+    f^{\mathcal A}(b_1,\dots,b_n)
+    \bigr)\in\theta.
+    \]
+
+    \item Если обе проверки успешны, то $\theta$ является конгруэнтностью. Иначе не является.
+\end{enumerate}
+\end{algorithm}
+
+\begin{example}
+Рассмотрим алгебру
+\[
+\mathcal A=(\mathbb Z_4,+,-,0).
+\]
+Пусть отношение $\theta$ разбивает $\mathbb Z_4$ на классы
+\[
+\{0,2\},\qquad \{1,3\}.
+\]
+Это отношение соответствует сравнению по модулю $2$:
+\[
+a\mathrel{\theta}b
+\Longleftrightarrow
+a\equiv b\pmod 2.
+\]
+
+Проверим совместимость со сложением. Если
+\[
+a\equiv b\pmod 2,
+\qquad
+c\equiv d\pmod 2,
+\]
+то
+\[
+a+c\equiv b+d\pmod 2.
+\]
+Значит,
+\[
+(a+c)\mathrel{\theta}(b+d).
+\]
+
+Проверим совместимость с унарной операцией $-$. Если
+\[
+a\equiv b\pmod 2,
+\]
+то
+\[
+-a\equiv -b\pmod 2.
+\]
+Константа $0$ автоматически совместима.
+
+Следовательно, $\theta$ является конгруэнтностью.
+\end{example}
+
+\subsection{Минимальная и максимальная конгруэнтности}
+
+Для любой алгебры $\mathcal A$ существуют две очевидные конгруэнтности.
+
+\begin{definition}
+\emph{Диагональная конгруэнтность}:
+\[
+\Delta_A=\{(a,a)\mid a\in A\}.
+\]
+Она отождествляет только равные элементы.
+
+\emph{Универсальная конгруэнтность}:
+\[
+\nabla_A=A\times A.
+\]
+Она отождествляет все элементы алгебры.
+\end{definition}
+
+Очевидно,
+\[
+\Delta_A\subseteq \theta\subseteq \nabla_A
+\]
+для любой конгруэнтности $\theta\in\operatorname{Con}(\mathcal A)$.
+
+Факторалгебры по этим конгруэнтностям имеют вид:
+\[
+\mathcal A/\Delta_A\cong \mathcal A,
+\]
+\[
+\mathcal A/\nabla_A
+\]
+--- одноэлементная алгебра.
+
+\subsection{Конгруэнтность, порождённая отношением}
+
+\begin{definition}
+Пусть $R\subseteq A^2$. \emph{Конгруэнтностью, порождённой отношением $R$}, называется наименьшая конгруэнтность $\theta$ алгебры $\mathcal A$, такая что
+\[
+R\subseteq \theta.
+\]
+Она обозначается
+\[
+\operatorname{Cg}^{\mathcal A}(R).
+\]
+\end{definition}
+
+\begin{theorem}[Существование порождённой конгруэнтности]
+Для любого отношения $R\subseteq A^2$ существует наименьшая конгруэнтность, содержащая $R$, причём
+\[
+\operatorname{Cg}^{\mathcal A}(R)
+=
+\bigcap\{\theta\in\operatorname{Con}(\mathcal A)\mid R\subseteq\theta\}.
+\]
+\end{theorem}
+
+\begin{proof}
+Семейство
+\[
+\{\theta\in\operatorname{Con}(\mathcal A)\mid R\subseteq\theta\}
+\]
+непусто, так как универсальная конгруэнтность $\nabla_A=A^2$ содержит $R$.
+
+Положим
+\[
+\Theta=
+\bigcap\{\theta\in\operatorname{Con}(\mathcal A)\mid R\subseteq\theta\}.
+\]
+
+Пересечение отношений эквивалентности снова является отношением эквивалентности. Проверим совместимость с операциями.
+
+Пусть $f\in\Omega$ --- $n$-арная операция, и пусть
+\[
+(a_i,b_i)\in\Theta,
+\qquad i=1,\dots,n.
+\]
+Это означает, что для любой конгруэнтности $\theta$, содержащей $R$, выполнено
+\[
+(a_i,b_i)\in\theta.
+\]
+Так как каждая такая $\theta$ является конгруэнтностью, получаем
+\[
+\bigl(
+f^{\mathcal A}(a_1,\dots,a_n),
+f^{\mathcal A}(b_1,\dots,b_n)
+\bigr)\in\theta
+\]
+для всех $\theta$, содержащих $R$. Следовательно,
+\[
+\bigl(
+f^{\mathcal A}(a_1,\dots,a_n),
+f^{\mathcal A}(b_1,\dots,b_n)
+\bigr)\in\Theta.
+\]
+Значит, $\Theta$ является конгруэнтностью.
+
+Она содержит $R$, поскольку каждое отношение из пересекаемого семейства содержит $R$. Кроме того, по построению $\Theta$ содержится в любой конгруэнтности, содержащей $R$. Следовательно, $\Theta$ является наименьшей такой конгруэнтностью.
+\end{proof}
+
+\subsection{Итоговая схема основных понятий}
+
+Основные конструкции общей алгебры связаны следующим образом:
+\[
+\boxed{
+\text{сигнатура}
+\Rightarrow
+\text{алгебра}
+\Rightarrow
+\text{подалгебры, гомоморфизмы, конгруэнтности}
+}
+\]
+
+\[
+\boxed{
+\text{конгруэнтность}
+\Rightarrow
+\text{факторалгебра}
+}
+\]
+
+\[
+\boxed{
+\text{гомоморфизм}
+\Rightarrow
+\text{ядро}
+\Rightarrow
+\text{конгруэнтность}
+}
+\]
+
+\[
+\boxed{
+\mathcal A/\ker\varphi\cong\operatorname{Im}\varphi
+}
+\]
+
+\[
+\boxed{
+\text{термы}
+\Rightarrow
+\text{алгебра термов}
+\Rightarrow
+\text{свободная алгебра}
+}
+\]
+
+Таким образом, общая алгебра изучает алгебраические структуры с произвольным набором операций, не завися от конкретной природы этих операций. Центральными объектами являются алгебры фиксированной сигнатуры, их подалгебры, гомоморфизмы, конгруэнтности и факторалгебры. Алгебра термов играет роль свободной алгебры и позволяет формально описывать все выражения, которые можно построить из переменных и операций данной сигнатуры.
+
+
+\end{document}
