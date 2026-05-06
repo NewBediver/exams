@@ -1,0 +1,1824 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{textcomp}
+\usepackage{amsmath,amssymb}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{geometry}
+\usepackage{hyperref}
+
+\geometry{left=2.5cm,right=2.0cm,top=2.0cm,bottom=2.0cm}
+\emergencystretch=2em
+
+\lstdefinelanguage{JavaScript}{
+    keywords={
+        const, let, var, function, return, if, else, for, while, do, break,
+        continue, switch, case, default, new, class, extends, import, export,
+        from, async, await, try, catch, finally, throw, document, window
+    },
+    sensitive=true,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]',
+    morestring=[b]",
+    morestring=[b]`
+}
+
+\lstdefinelanguage{CSS}{
+    keywords={
+        color, background, font-family, max-width, margin, padding, display,
+        flex, gap, flex-direction, column, border-radius
+    },
+    sensitive=true,
+    comment=[s]{/*}{*/},
+    morestring=[b]',
+    morestring=[b]"
+}
+
+\lstdefinelanguage{HTML}{
+    keywords={
+        html, head, body, title, meta, link, script, h1, h2, p, a, div, span,
+        header, nav, main, section, article, aside, footer, table, tr, th, td,
+        form, label, input, button, ol, ul, li, strong, em
+    },
+    sensitive=false,
+    comment=[s]{<!--}{-->},
+    morestring=[b]",
+    morestring=[b]'
+}
+
+\lstdefinelanguage{Python}{
+    keywords={
+        import, from, as, def, return, if, elif, else, for, while, break,
+        continue, class, try, except, finally, with, True, False, None, print
+    },
+    sensitive=true,
+    comment=[l]{\#},
+    morestring=[b]',
+    morestring=[b]"
+}
+
+\lstdefinestyle{code}{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    inputencoding=utf8,
+    extendedchars=true,
+    literate=
+        {А}{{\CYRA}}1 {Б}{{\CYRB}}1 {В}{{\CYRV}}1 {Г}{{\CYRG}}1
+        {Д}{{\CYRD}}1 {Е}{{\CYRE}}1 {Ё}{{\CYRYO}}1 {Ж}{{\CYRZH}}1
+        {З}{{\CYRZ}}1 {И}{{\CYRI}}1 {Й}{{\CYRISHRT}}1 {К}{{\CYRK}}1
+        {Л}{{\CYRL}}1 {М}{{\CYRM}}1 {Н}{{\CYRN}}1 {О}{{\CYRO}}1
+        {П}{{\CYRP}}1 {Р}{{\CYRR}}1 {С}{{\CYRS}}1 {Т}{{\CYRT}}1
+        {У}{{\CYRU}}1 {Ф}{{\CYRF}}1 {Х}{{\CYRH}}1 {Ц}{{\CYRC}}1
+        {Ч}{{\CYRCH}}1 {Ш}{{\CYRSH}}1 {Щ}{{\CYRSHCH}}1 {Ъ}{{\CYRHRDSN}}1
+        {Ы}{{\CYRERY}}1 {Ь}{{\CYRSFTSN}}1 {Э}{{\CYREREV}}1
+        {Ю}{{\CYRYU}}1 {Я}{{\CYRYA}}1
+        {а}{{\cyra}}1 {б}{{\cyrb}}1 {в}{{\cyrv}}1 {г}{{\cyrg}}1
+        {д}{{\cyrd}}1 {е}{{\cyre}}1 {ё}{{\cyryo}}1 {ж}{{\cyrzh}}1
+        {з}{{\cyrz}}1 {и}{{\cyri}}1 {й}{{\cyrishrt}}1 {к}{{\cyrk}}1
+        {л}{{\cyrl}}1 {м}{{\cyrm}}1 {н}{{\cyrn}}1 {о}{{\cyro}}1
+        {п}{{\cyrp}}1 {р}{{\cyrr}}1 {с}{{\cyrs}}1 {т}{{\cyrt}}1
+        {у}{{\cyru}}1 {ф}{{\cyrf}}1 {х}{{\cyrh}}1 {ц}{{\cyrc}}1
+        {ч}{{\cyrch}}1 {ш}{{\cyrsh}}1 {щ}{{\cyrshch}}1 {ъ}{{\cyrhrdsn}}1
+        {ы}{{\cyrery}}1 {ь}{{\cyrsftsn}}1 {э}{{\cyrerev}}1
+        {ю}{{\cyryu}}1 {я}{{\cyrya}}1
+        {—}{{---}}1
+        {–}{{--}}1
+        {«}{{``}}1
+        {»}{{''}}1
+        {№}{{\textnumero}}1
+        {…}{{\ldots}}1,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red!60!black}
+}
+
+\lstset{style=code}
+
+\title{Билет №29 \\ \small Удаленный доступ к ресурсам сети. Организация электронной почты, телеконференций. Протоколы передачи файлов FTP и HTTP, язык разметки гипертекста HTML, разработка WEB-страниц, WWW-серверы. (ИТМО)}
+\author{Сериков Владислав Александрович}
+\date{6 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Базовые понятия компьютерных сетей}
+
+\subsection{Ресурсы сети}
+
+\textbf{Сетевой ресурс} --- это аппаратный, программный или информационный объект, доступный пользователям или программам через компьютерную сеть.
+
+К сетевым ресурсам относятся:
+\begin{itemize}
+    \item файлы и каталоги на удалённых серверах;
+    \item базы данных;
+    \item почтовые ящики;
+    \item веб-страницы и веб-приложения;
+    \item вычислительные мощности удалённых машин;
+    \item принтеры, сетевые хранилища, камеры и другие устройства;
+    \item сервисы прикладного уровня: DNS, FTP, HTTP, SMTP, IMAP, SSH и др.
+\end{itemize}
+
+Доступ к ресурсам сети обычно осуществляется по модели ``клиент--сервер''.
+
+\subsection{Модель клиент--сервер}
+
+\textbf{Клиент} --- программа, инициирующая запрос к сетевому сервису.
+
+\textbf{Сервер} --- программа или узел сети, принимающий запросы клиентов и предоставляющий им некоторый сервис.
+
+Примеры:
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+Сервис & Клиент & Сервер \\
+\hline
+Web & браузер & HTTP-сервер, например Apache или Nginx \\
+\hline
+Электронная почта & почтовый клиент & SMTP/IMAP/POP3-сервер \\
+\hline
+Передача файлов & FTP-клиент & FTP-сервер \\
+\hline
+Удалённое управление & SSH-клиент & SSH-сервер \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Адресация в сети}
+
+Для доступа к ресурсу необходимо указать:
+\begin{enumerate}
+    \item адрес узла;
+    \item протокол доступа;
+    \item путь или идентификатор ресурса;
+    \item при необходимости --- порт и параметры.
+\end{enumerate}
+
+В Internet для идентификации ресурсов используется URI.
+
+\subsection{URI, URL и URN}
+
+\textbf{URI} --- Uniform Resource Identifier, единообразный идентификатор ресурса.
+
+\textbf{URL} --- Uniform Resource Locator, частный случай URI, указывающий не только имя ресурса, но и способ доступа к нему.
+
+Общий вид URL:
+\[
+\text{scheme://host:port/path?query\#fragment}
+\]
+
+Пример:
+\begin{lstlisting}
+https://example.org:443/docs/index.html?id=10#section1
+\end{lstlisting}
+
+Здесь:
+\begin{itemize}
+    \item \texttt{https} --- схема, то есть протокол;
+    \item \texttt{example.org} --- доменное имя узла;
+    \item \texttt{443} --- порт;
+    \item \texttt{/docs/index.html} --- путь к ресурсу;
+    \item \texttt{id=10} --- строка запроса;
+    \item \texttt{section1} --- фрагмент документа.
+\end{itemize}
+
+\subsection{DNS}
+
+\textbf{DNS} --- Domain Name System, распределённая система доменных имён, преобразующая человекочитаемые имена в IP-адреса.
+
+Например:
+\[
+\texttt{www.example.org} \rightarrow 93.184.216.34
+\]
+
+Упрощённый алгоритм разрешения доменного имени:
+\begin{enumerate}
+    \item Пользователь вводит адрес сайта в браузере.
+    \item Браузер проверяет локальный кэш DNS.
+    \item Если ответа нет, запрос передаётся системному DNS-резолверу.
+    \item Резолвер обращается к корневым DNS-серверам.
+    \item Затем --- к серверам домена верхнего уровня, например \texttt{.org}.
+    \item Затем --- к авторитетному DNS-серверу домена.
+    \item Полученный IP-адрес возвращается клиенту.
+    \item Клиент устанавливает соединение с найденным узлом.
+\end{enumerate}
+
+Схематически:
+\[
+\text{браузер} \rightarrow \text{DNS-резолвер} \rightarrow \text{root} \rightarrow \text{TLD} \rightarrow \text{authoritative DNS}
+\]
+
+\section{Удалённый доступ к ресурсам сети}
+
+\subsection{Понятие удалённого доступа}
+
+\textbf{Удалённый доступ} --- это возможность взаимодействовать с ресурсами компьютера или сети, физически находясь в другом месте.
+
+Удалённый доступ может быть:
+\begin{itemize}
+    \item интерактивным --- пользователь работает с удалённой системой почти как с локальной;
+    \item файловым --- пользователь передаёт, получает или изменяет файлы;
+    \item прикладным --- доступ к веб-приложению, почте, базе данных;
+    \item административным --- настройка и сопровождение серверов.
+\end{itemize}
+
+\subsection{Основные способы удалённого доступа}
+
+\begin{center}
+\begin{tabular}{|p{3cm}|p{4cm}|p{6cm}|}
+\hline
+Способ & Протоколы/технологии & Назначение \\
+\hline
+Терминальный доступ & Telnet, SSH & Работа в командной строке удалённого компьютера \\
+\hline
+Удалённый рабочий стол & RDP, VNC & Графическое управление удалённой машиной \\
+\hline
+Файловый доступ & FTP, SFTP, SMB, NFS, WebDAV & Передача и совместное использование файлов \\
+\hline
+Web-доступ & HTTP, HTTPS & Доступ к сайтам и веб-приложениям \\
+\hline
+Почтовый доступ & SMTP, POP3, IMAP & Отправка и получение электронной почты \\
+\hline
+VPN & IPsec, OpenVPN, WireGuard & Создание защищённого канала в удалённую сеть \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Telnet и SSH}
+
+\textbf{Telnet} --- старый протокол удалённого терминального доступа. Основной недостаток Telnet состоит в том, что данные, включая пароли, передаются в открытом виде.
+
+\textbf{SSH} --- Secure Shell, защищённый протокол удалённого доступа. Он обеспечивает:
+\begin{itemize}
+    \item аутентификацию сервера;
+    \item аутентификацию пользователя;
+    \item шифрование трафика;
+    \item контроль целостности данных;
+    \item возможность туннелирования других протоколов.
+\end{itemize}
+
+Пример подключения:
+\begin{lstlisting}
+ssh student@example.org
+\end{lstlisting}
+
+Пример копирования файла через SSH:
+\begin{lstlisting}
+scp report.pdf student@example.org:/home/student/
+\end{lstlisting}
+
+\subsection{VPN}
+
+\textbf{VPN} --- Virtual Private Network, виртуальная частная сеть. VPN создаёт защищённый логический канал поверх потенциально недоверенной сети.
+
+Типичные задачи VPN:
+\begin{itemize}
+    \item доступ сотрудников к внутренней сети организации;
+    \item защита трафика в публичных сетях;
+    \item объединение филиалов;
+    \item ограничение доступа к внутренним сервисам только через защищённый канал.
+\end{itemize}
+
+\subsection{Общие этапы удалённого доступа}
+
+Типичный алгоритм удалённого доступа к ресурсу:
+\begin{enumerate}
+    \item Пользователь указывает адрес ресурса.
+    \item Клиент определяет протокол доступа.
+    \item При необходимости выполняется DNS-разрешение имени.
+    \item Устанавливается сетевое соединение.
+    \item Выполняется аутентификация сервера.
+    \item Выполняется аутентификация пользователя, если она требуется.
+    \item Клиент отправляет запрос.
+    \item Сервер обрабатывает запрос.
+    \item Сервер возвращает результат.
+    \item Соединение закрывается или сохраняется для последующих запросов.
+\end{enumerate}
+
+\section{Электронная почта}
+
+\subsection{Общее понятие}
+
+\textbf{Электронная почта} --- система обмена электронными сообщениями между пользователями компьютерных сетей.
+
+Адрес электронной почты имеет вид:
+\[
+\texttt{local-part@domain}
+\]
+
+Пример:
+\begin{lstlisting}
+student@example.org
+\end{lstlisting}
+
+Здесь:
+\begin{itemize}
+    \item \texttt{student} --- локальная часть адреса, обычно имя почтового ящика;
+    \item \texttt{example.org} --- домен почтового сервиса.
+\end{itemize}
+
+\subsection{Основные компоненты почтовой системы}
+
+\begin{enumerate}
+    \item \textbf{MUA} --- Mail User Agent, пользовательский почтовый агент. Это почтовый клиент: Thunderbird, Outlook, Apple Mail, веб-интерфейс почты.
+    \item \textbf{MSA} --- Mail Submission Agent, агент отправки почты от клиента к серверу.
+    \item \textbf{MTA} --- Mail Transfer Agent, агент пересылки почты между серверами. Примеры: Postfix, Exim, Sendmail.
+    \item \textbf{MDA} --- Mail Delivery Agent, агент доставки письма в почтовый ящик получателя.
+    \item \textbf{Почтовое хранилище} --- место, где хранятся письма пользователя.
+\end{enumerate}
+
+\subsection{Протоколы электронной почты}
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+Протокол & Назначение & Типичные порты \\
+\hline
+SMTP & Отправка и пересылка почты & 25, 465, 587 \\
+\hline
+POP3 & Получение почты с сервера & 110, 995 \\
+\hline
+IMAP & Синхронизированный доступ к почтовому ящику & 143, 993 \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{SMTP}
+
+\textbf{SMTP} --- Simple Mail Transfer Protocol, протокол передачи электронной почты.
+
+SMTP применяется:
+\begin{itemize}
+    \item для отправки письма почтовым клиентом на сервер;
+    \item для передачи письма между почтовыми серверами.
+\end{itemize}
+
+Упрощённый диалог SMTP:
+\begin{lstlisting}
+S: 220 mail.example.org ESMTP
+C: EHLO client.example.com
+S: 250-mail.example.org
+S: 250 OK
+C: MAIL FROM:<alice@example.com>
+S: 250 OK
+C: RCPT TO:<bob@example.org>
+S: 250 OK
+C: DATA
+S: 354 End data with <CR><LF>.<CR><LF>
+C: Subject: Test
+C:
+C: Hello, Bob!
+C: .
+S: 250 Message accepted
+C: QUIT
+S: 221 Bye
+\end{lstlisting}
+
+Здесь:
+\begin{itemize}
+    \item \texttt{EHLO} --- приветствие клиента;
+    \item \texttt{MAIL FROM} --- адрес отправителя в SMTP-конверте;
+    \item \texttt{RCPT TO} --- адрес получателя;
+    \item \texttt{DATA} --- начало передачи содержимого письма;
+    \item точка на отдельной строке завершает тело письма.
+\end{itemize}
+
+\subsection{POP3}
+
+\textbf{POP3} --- Post Office Protocol version 3. Протокол предназначен для получения писем с почтового сервера.
+
+Типичная модель POP3:
+\begin{itemize}
+    \item клиент подключается к серверу;
+    \item проходит аутентификацию;
+    \item загружает письма;
+    \item при необходимости удаляет их с сервера;
+    \item завершает сеанс.
+\end{itemize}
+
+Пример POP3-сессии:
+\begin{lstlisting}
+S: +OK POP3 server ready
+C: USER student
+S: +OK
+C: PASS secret
+S: +OK mailbox locked and ready
+C: LIST
+S: +OK 2 messages
+S: 1 1200
+S: 2 980
+S: .
+C: RETR 1
+S: +OK message follows
+S: ...
+S: .
+C: QUIT
+S: +OK bye
+\end{lstlisting}
+
+\subsection{IMAP}
+
+\textbf{IMAP} --- Internet Message Access Protocol. В отличие от POP3, IMAP ориентирован на хранение писем на сервере и синхронизацию состояния между несколькими устройствами.
+
+IMAP поддерживает:
+\begin{itemize}
+    \item папки;
+    \item флаги сообщений, например \texttt{Seen}, \texttt{Answered};
+    \item выборочную загрузку частей письма;
+    \item поиск по почтовому ящику;
+    \item параллельную работу с нескольких устройств.
+\end{itemize}
+
+Пример IMAP-диалога:
+\begin{lstlisting}
+C: A001 LOGIN student secret
+S: A001 OK LOGIN completed
+C: A002 SELECT INBOX
+S: * 3 EXISTS
+S: A002 OK SELECT completed
+C: A003 FETCH 1 BODY[HEADER]
+S: * 1 FETCH ...
+S: A003 OK FETCH completed
+\end{lstlisting}
+
+\subsection{Формат электронного письма}
+
+Письмо состоит из:
+\begin{enumerate}
+    \item заголовков;
+    \item пустой строки;
+    \item тела сообщения.
+\end{enumerate}
+
+Пример:
+\begin{lstlisting}
+From: Alice <alice@example.com>
+To: Bob <bob@example.org>
+Subject: Meeting
+Date: Wed, 6 May 2026 10:00:00 +0300
+Content-Type: text/plain; charset=utf-8
+
+Hello, Bob!
+Let's meet tomorrow.
+\end{lstlisting}
+
+\subsection{MIME}
+
+\textbf{MIME} --- Multipurpose Internet Mail Extensions. MIME расширяет возможности электронной почты и позволяет передавать:
+\begin{itemize}
+    \item текст в разных кодировках;
+    \item HTML-сообщения;
+    \item изображения;
+    \item вложения;
+    \item составные сообщения.
+\end{itemize}
+
+Пример MIME-заголовков:
+\begin{lstlisting}
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="boundary123"
+\end{lstlisting}
+
+\subsection{Алгоритм доставки электронного письма}
+
+Пусть пользователь Alice отправляет письмо пользователю Bob на адрес:
+\[
+\texttt{bob@example.org}
+\]
+
+Алгоритм:
+\begin{enumerate}
+    \item Alice составляет письмо в MUA.
+    \item MUA передаёт письмо на SMTP-сервер отправителя.
+    \item SMTP-сервер определяет домен получателя: \texttt{example.org}.
+    \item Сервер отправителя выполняет DNS-запрос MX-записи для домена \texttt{example.org}.
+    \item Получив адрес почтового сервера домена, сервер отправителя открывает SMTP-соединение с сервером получателя.
+    \item Письмо передаётся по SMTP.
+    \item Сервер получателя принимает письмо и передаёт его MDA.
+    \item MDA помещает письмо в почтовый ящик Bob.
+    \item Bob получает доступ к письму через IMAP, POP3 или веб-интерфейс.
+\end{enumerate}
+
+Схема:
+\[
+\text{MUA}_A \rightarrow \text{SMTP}_A \rightarrow \text{DNS/MX} \rightarrow \text{SMTP}_B \rightarrow \text{Mailbox}_B \rightarrow \text{MUA}_B
+\]
+
+\subsection{Безопасность электронной почты}
+
+Основные проблемы:
+\begin{itemize}
+    \item перехват писем;
+    \item подделка адреса отправителя;
+    \item спам;
+    \item фишинг;
+    \item вредоносные вложения.
+\end{itemize}
+
+Средства защиты:
+\begin{itemize}
+    \item TLS для шифрования соединения;
+    \item SMTP AUTH для аутентификации отправителя;
+    \item SPF для указания разрешённых серверов отправки;
+    \item DKIM для криптографической подписи писем доменом;
+    \item DMARC для политики проверки SPF и DKIM;
+    \item S/MIME или OpenPGP для сквозного шифрования и подписи сообщений.
+\end{itemize}
+
+\section{Телеконференции и группы новостей}
+
+\subsection{Понятие телеконференции}
+
+\textbf{Телеконференция} --- форма сетевого общения, при которой сообщения распространяются среди группы участников, объединённых общей темой.
+
+Исторически важной системой телеконференций была \textbf{Usenet}.
+
+\subsection{Usenet}
+
+\textbf{Usenet} --- распределённая система обмена сообщениями в тематических группах новостей.
+
+Сообщения Usenet организуются в группы, например:
+\begin{lstlisting}
+comp.lang.c
+sci.math
+rec.music.classical
+\end{lstlisting}
+
+Иерархии:
+\begin{itemize}
+    \item \texttt{comp} --- компьютерная тематика;
+    \item \texttt{sci} --- наука;
+    \item \texttt{rec} --- отдых и развлечения;
+    \item \texttt{news} --- обсуждение самой системы новостей;
+    \item \texttt{soc} --- социальные темы;
+    \item \texttt{talk} --- дискуссионные темы.
+\end{itemize}
+
+\subsection{NNTP}
+
+\textbf{NNTP} --- Network News Transfer Protocol, протокол передачи сетевых новостей.
+
+NNTP используется:
+\begin{itemize}
+    \item для чтения сообщений групп новостей;
+    \item для публикации новых сообщений;
+    \item для обмена сообщениями между news-серверами.
+\end{itemize}
+
+Типичные команды NNTP:
+\begin{center}
+\begin{tabular}{|c|p{8cm}|}
+\hline
+Команда & Назначение \\
+\hline
+\texttt{GROUP} & выбор группы новостей \\
+\hline
+\texttt{ARTICLE} & получение статьи \\
+\hline
+\texttt{HEAD} & получение заголовков статьи \\
+\hline
+\texttt{BODY} & получение тела статьи \\
+\hline
+\texttt{POST} & публикация статьи \\
+\hline
+\texttt{QUIT} & завершение соединения \\
+\hline
+\end{tabular}
+\end{center}
+
+Пример NNTP-сессии:
+\begin{lstlisting}
+S: 200 news.example.org NNTP server ready
+C: GROUP comp.lang.c
+S: 211 123 1 123 comp.lang.c
+C: ARTICLE 10
+S: 220 10 <msgid@example.org> article follows
+S: From: user@example.org
+S: Subject: Question about pointers
+S:
+S: ...
+S: .
+C: QUIT
+S: 205 closing connection
+\end{lstlisting}
+
+\subsection{Сравнение электронной почты и телеконференций}
+
+\begin{center}
+\begin{tabular}{|p{4cm}|p{5cm}|p{5cm}|}
+\hline
+Критерий & Электронная почта & Телеконференции/Usenet \\
+\hline
+Модель общения & адресная: от отправителя к получателям & тематическая: сообщения публикуются в группе \\
+\hline
+Хранение & в почтовых ящиках пользователей & на news-серверах \\
+\hline
+Получатели & явно указаны в письме & все подписчики или читатели группы \\
+\hline
+Протоколы & SMTP, POP3, IMAP & NNTP \\
+\hline
+Основное назначение & личная и деловая переписка & публичные обсуждения по темам \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Протокол FTP}
+
+\subsection{Назначение FTP}
+
+\textbf{FTP} --- File Transfer Protocol, протокол передачи файлов. Он предназначен для обмена файлами между клиентом и сервером.
+
+FTP позволяет:
+\begin{itemize}
+    \item просматривать каталоги на сервере;
+    \item загружать файлы с сервера;
+    \item отправлять файлы на сервер;
+    \item удалять и переименовывать файлы;
+    \item создавать каталоги.
+\end{itemize}
+
+\subsection{Архитектура FTP}
+
+FTP использует два соединения:
+\begin{enumerate}
+    \item \textbf{управляющее соединение} --- для команд и ответов;
+    \item \textbf{соединение данных} --- для передачи содержимого файлов и списков каталогов.
+\end{enumerate}
+
+Обычно управляющее соединение устанавливается на порт:
+\[
+21
+\]
+
+Соединение данных в классическом активном режиме использует порт:
+\[
+20
+\]
+
+\subsection{Активный и пассивный режимы FTP}
+
+\subsubsection{Активный режим}
+
+В активном режиме:
+\begin{enumerate}
+    \item клиент подключается к серверу на порт 21;
+    \item клиент сообщает серверу свой адрес и порт командой \texttt{PORT};
+    \item сервер сам открывает соединение данных к клиенту.
+\end{enumerate}
+
+Схема:
+\[
+\text{Client} \xrightarrow{\text{control}} \text{Server:21}
+\]
+\[
+\text{Server:20} \xrightarrow{\text{data}} \text{Client}
+\]
+
+Недостаток: активный режим плохо работает через NAT и межсетевые экраны, поскольку сервер должен открыть входящее соединение к клиенту.
+
+\subsubsection{Пассивный режим}
+
+В пассивном режиме:
+\begin{enumerate}
+    \item клиент подключается к серверу на порт 21;
+    \item клиент отправляет команду \texttt{PASV};
+    \item сервер сообщает клиенту IP-адрес и порт для соединения данных;
+    \item клиент сам открывает соединение данных к серверу.
+\end{enumerate}
+
+Схема:
+\[
+\text{Client} \xrightarrow{\text{control}} \text{Server:21}
+\]
+\[
+\text{Client} \xrightarrow{\text{data}} \text{Server:passive port}
+\]
+
+Пассивный режим обычно удобнее при работе через NAT.
+
+\subsection{Основные FTP-команды}
+
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Команда & Назначение \\
+\hline
+\texttt{USER} & передача имени пользователя \\
+\hline
+\texttt{PASS} & передача пароля \\
+\hline
+\texttt{PWD} & вывод текущего каталога \\
+\hline
+\texttt{CWD} & смена каталога \\
+\hline
+\texttt{LIST} & получение списка файлов \\
+\hline
+\texttt{RETR} & загрузка файла с сервера \\
+\hline
+\texttt{STOR} & отправка файла на сервер \\
+\hline
+\texttt{DELE} & удаление файла \\
+\hline
+\texttt{MKD} & создание каталога \\
+\hline
+\texttt{RMD} & удаление каталога \\
+\hline
+\texttt{QUIT} & завершение сеанса \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Коды ответов FTP}
+
+FTP-сервер возвращает числовые коды ответов.
+
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Код & Значение \\
+\hline
+\texttt{1xx} & предварительный положительный ответ \\
+\hline
+\texttt{2xx} & успешное выполнение команды \\
+\hline
+\texttt{3xx} & команда принята, но требуется дополнительная информация \\
+\hline
+\texttt{4xx} & временная ошибка \\
+\hline
+\texttt{5xx} & постоянная ошибка \\
+\hline
+\end{tabular}
+\end{center}
+
+Примеры:
+\begin{lstlisting}
+220 Service ready
+331 User name okay, need password
+230 User logged in
+550 File unavailable
+\end{lstlisting}
+
+\subsection{Пример FTP-сеанса}
+
+\begin{lstlisting}
+S: 220 FTP server ready
+C: USER student
+S: 331 Password required
+C: PASS secret
+S: 230 User logged in
+C: PWD
+S: 257 "/home/student" is current directory
+C: PASV
+S: 227 Entering Passive Mode (192,0,2,1,195,80)
+C: LIST
+S: 150 Opening data connection
+S: 226 Transfer complete
+C: RETR report.txt
+S: 150 Opening data connection
+S: 226 Transfer complete
+C: QUIT
+S: 221 Goodbye
+\end{lstlisting}
+
+\subsection{Алгоритм загрузки файла по FTP в пассивном режиме}
+
+Пусть клиент хочет скачать файл \texttt{data.txt}.
+
+\begin{enumerate}
+    \item Клиент открывает управляющее TCP-соединение с сервером на порт 21.
+    \item Сервер отправляет приветствие.
+    \item Клиент отправляет \texttt{USER}.
+    \item Клиент отправляет \texttt{PASS}.
+    \item Сервер подтверждает вход.
+    \item Клиент отправляет \texttt{PASV}.
+    \item Сервер сообщает порт для соединения данных.
+    \item Клиент открывает второе TCP-соединение к указанному порту.
+    \item Клиент отправляет команду \texttt{RETR data.txt}.
+    \item Сервер передаёт содержимое файла по соединению данных.
+    \item После передачи соединение данных закрывается.
+    \item Управляющее соединение может использоваться для следующих команд или закрывается командой \texttt{QUIT}.
+\end{enumerate}
+
+\subsection{Недостатки FTP}
+
+Классический FTP имеет существенные недостатки:
+\begin{itemize}
+    \item логины и пароли передаются в открытом виде;
+    \item данные передаются без шифрования;
+    \item отдельное соединение данных осложняет работу через NAT и firewall;
+    \item отсутствует встроенная криптографическая проверка подлинности сервера.
+\end{itemize}
+
+Более безопасные альтернативы:
+\begin{itemize}
+    \item \textbf{FTPS} --- FTP поверх TLS;
+    \item \textbf{SFTP} --- протокол передачи файлов поверх SSH, не являющийся FTP;
+    \item \textbf{HTTPS} --- часто используется для скачивания файлов;
+    \item \textbf{rsync over SSH} --- эффективная синхронизация файлов.
+\end{itemize}
+
+\section{Протокол HTTP}
+
+\subsection{Назначение HTTP}
+
+\textbf{HTTP} --- Hypertext Transfer Protocol, прикладной протокол передачи гипертекстовых документов и других ресурсов.
+
+HTTP используется для:
+\begin{itemize}
+    \item загрузки HTML-страниц;
+    \item получения изображений, CSS, JavaScript и других ресурсов;
+    \item взаимодействия веб-клиентов с веб-приложениями;
+    \item построения REST API;
+    \item передачи файлов.
+\end{itemize}
+
+HTTP является протоколом прикладного уровня и обычно работает поверх TCP. HTTPS --- это HTTP, работающий поверх защищённого канала TLS.
+
+\subsection{Основные свойства HTTP}
+
+\begin{enumerate}
+    \item \textbf{Модель запрос--ответ.} Клиент отправляет запрос, сервер возвращает ответ.
+    \item \textbf{Отсутствие состояния на уровне протокола.} Каждый запрос самодостаточен; сервер не обязан помнить предыдущие запросы.
+    \item \textbf{Расширяемость.} Заголовки позволяют добавлять новые возможности.
+    \item \textbf{Универсальность представлений.} Через HTTP можно передавать HTML, JSON, XML, изображения, видео, архивы и др.
+\end{enumerate}
+
+\subsection{HTTP-запрос}
+
+HTTP-запрос состоит из:
+\begin{enumerate}
+    \item стартовой строки;
+    \item заголовков;
+    \item пустой строки;
+    \item необязательного тела.
+\end{enumerate}
+
+Пример:
+\begin{lstlisting}
+GET /index.html HTTP/1.1
+Host: example.org
+User-Agent: SimpleBrowser/1.0
+Accept: text/html
+
+\end{lstlisting}
+
+Стартовая строка:
+\[
+\texttt{GET /index.html HTTP/1.1}
+\]
+
+содержит:
+\begin{itemize}
+    \item метод \texttt{GET};
+    \item путь \texttt{/index.html};
+    \item версию протокола \texttt{HTTP/1.1}.
+\end{itemize}
+
+\subsection{HTTP-ответ}
+
+HTTP-ответ состоит из:
+\begin{enumerate}
+    \item строки состояния;
+    \item заголовков;
+    \item пустой строки;
+    \item тела ответа.
+\end{enumerate}
+
+Пример:
+\begin{lstlisting}
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 72
+
+<!doctype html>
+<html>
+  <body>Hello, world!</body>
+</html>
+\end{lstlisting}
+
+\subsection{Методы HTTP}
+
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Метод & Назначение \\
+\hline
+\texttt{GET} & получение ресурса \\
+\hline
+\texttt{HEAD} & получение только заголовков ответа \\
+\hline
+\texttt{POST} & отправка данных на сервер, часто создание подчинённого ресурса или выполнение действия \\
+\hline
+\texttt{PUT} & замена или создание ресурса по заданному URI \\
+\hline
+\texttt{PATCH} & частичное изменение ресурса \\
+\hline
+\texttt{DELETE} & удаление ресурса \\
+\hline
+\texttt{OPTIONS} & получение информации о поддерживаемых возможностях \\
+\hline
+\texttt{CONNECT} & установление туннеля, например для HTTPS через прокси \\
+\hline
+\texttt{TRACE} & диагностический метод, обычно отключается из соображений безопасности \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Безопасные и идемпотентные методы}
+
+\textbf{Безопасный метод} --- метод, который не должен изменять состояние сервера с точки зрения семантики запроса. Примеры: \texttt{GET}, \texttt{HEAD}, \texttt{OPTIONS}.
+
+\textbf{Идемпотентный метод} --- метод, повторное выполнение которого имеет тот же эффект, что и однократное выполнение.
+
+Идемпотентные методы:
+\[
+\texttt{GET}, \texttt{HEAD}, \texttt{PUT}, \texttt{DELETE}, \texttt{OPTIONS}
+\]
+
+Метод \texttt{POST} в общем случае не является идемпотентным.
+
+Пример:
+\begin{itemize}
+    \item \texttt{PUT /users/10} с одним и тем же телом несколько раз приводит к одному и тому же состоянию ресурса;
+    \item \texttt{POST /orders} несколько раз может создать несколько разных заказов.
+\end{itemize}
+
+\subsection{Коды состояния HTTP}
+
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Класс & Значение \\
+\hline
+\texttt{1xx} & информационные ответы \\
+\hline
+\texttt{2xx} & успешная обработка запроса \\
+\hline
+\texttt{3xx} & перенаправление \\
+\hline
+\texttt{4xx} & ошибка клиента \\
+\hline
+\texttt{5xx} & ошибка сервера \\
+\hline
+\end{tabular}
+\end{center}
+
+Часто используемые коды:
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Код & Значение \\
+\hline
+\texttt{200 OK} & запрос успешно выполнен \\
+\hline
+\texttt{201 Created} & ресурс создан \\
+\hline
+\texttt{301 Moved Permanently} & ресурс перемещён постоянно \\
+\hline
+\texttt{302 Found} & временное перенаправление \\
+\hline
+\texttt{304 Not Modified} & ресурс не изменился, можно использовать кэш \\
+\hline
+\texttt{400 Bad Request} & некорректный запрос \\
+\hline
+\texttt{401 Unauthorized} & требуется аутентификация \\
+\hline
+\texttt{403 Forbidden} & доступ запрещён \\
+\hline
+\texttt{404 Not Found} & ресурс не найден \\
+\hline
+\texttt{500 Internal Server Error} & внутренняя ошибка сервера \\
+\hline
+\texttt{502 Bad Gateway} & ошибка шлюза \\
+\hline
+\texttt{503 Service Unavailable} & сервис временно недоступен \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Заголовки HTTP}
+
+HTTP-заголовки передают метаданные запроса или ответа.
+
+Примеры заголовков запроса:
+\begin{lstlisting}
+Host: example.org
+User-Agent: Mozilla/5.0
+Accept: text/html
+Accept-Language: ru
+Cookie: sessionid=abc123
+\end{lstlisting}
+
+Примеры заголовков ответа:
+\begin{lstlisting}
+Content-Type: text/html; charset=utf-8
+Content-Length: 1024
+Set-Cookie: sessionid=abc123; HttpOnly; Secure
+Cache-Control: max-age=3600
+Location: https://example.org/new-page
+\end{lstlisting}
+
+\subsection{Cookies}
+
+\textbf{Cookie} --- небольшой фрагмент данных, который сервер передаёт браузеру, а браузер затем отправляет обратно этому серверу.
+
+Cookies используются для:
+\begin{itemize}
+    \item хранения идентификатора сессии;
+    \item сохранения пользовательских настроек;
+    \item аналитики;
+    \item авторизации.
+\end{itemize}
+
+Пример установки cookie:
+\begin{lstlisting}
+Set-Cookie: sessionid=abc123; HttpOnly; Secure; SameSite=Lax
+\end{lstlisting}
+
+Важные атрибуты:
+\begin{itemize}
+    \item \texttt{HttpOnly} --- запрещает доступ к cookie из JavaScript;
+    \item \texttt{Secure} --- cookie передаётся только по HTTPS;
+    \item \texttt{SameSite} --- ограничивает отправку cookie при межсайтовых запросах.
+\end{itemize}
+
+\subsection{Кэширование HTTP}
+
+HTTP поддерживает кэширование для уменьшения задержек и нагрузки на сервер.
+
+Основные механизмы:
+\begin{itemize}
+    \item \texttt{Cache-Control};
+    \item \texttt{ETag};
+    \item \texttt{Last-Modified};
+    \item условные запросы с \texttt{If-None-Match} и \texttt{If-Modified-Since}.
+\end{itemize}
+
+Пример:
+\begin{lstlisting}
+GET /style.css HTTP/1.1
+Host: example.org
+If-None-Match: "abc123"
+\end{lstlisting}
+
+Ответ:
+\begin{lstlisting}
+HTTP/1.1 304 Not Modified
+ETag: "abc123"
+\end{lstlisting}
+
+В этом случае тело ресурса не передаётся, браузер использует локальную копию.
+
+\subsection{Алгоритм загрузки веб-страницы браузером}
+
+Пусть пользователь вводит:
+\begin{lstlisting}
+https://example.org/index.html
+\end{lstlisting}
+
+Алгоритм:
+\begin{enumerate}
+    \item Браузер разбирает URL.
+    \item Проверяет кэш, HSTS-политику и другие локальные данные.
+    \item Выполняет DNS-разрешение имени \texttt{example.org}.
+    \item Устанавливает TCP-соединение с сервером.
+    \item Для HTTPS выполняет TLS-рукопожатие.
+    \item Формирует HTTP-запрос.
+    \item Отправляет запрос серверу.
+    \item Сервер обрабатывает запрос.
+    \item Сервер возвращает HTTP-ответ.
+    \item Браузер анализирует заголовки ответа.
+    \item Браузер разбирает HTML.
+    \item При обнаружении внешних ресурсов, например CSS, JS, изображений, браузер отправляет дополнительные запросы.
+    \item Строятся DOM, CSSOM и дерево рендеринга.
+    \item Выполняется раскладка элементов на странице.
+    \item Выполняется отрисовка.
+\end{enumerate}
+
+\subsection{HTTPS и TLS}
+
+\textbf{HTTPS} --- это использование HTTP поверх TLS.
+
+TLS обеспечивает:
+\begin{itemize}
+    \item конфиденциальность передаваемых данных;
+    \item целостность;
+    \item аутентификацию сервера с помощью сертификата;
+    \item при необходимости аутентификацию клиента.
+\end{itemize}
+
+Упрощённые этапы TLS-соединения:
+\begin{enumerate}
+    \item Клиент отправляет \texttt{ClientHello}: поддерживаемые версии TLS, наборы шифров, случайные данные.
+    \item Сервер отправляет \texttt{ServerHello}: выбранные параметры.
+    \item Сервер передаёт сертификат.
+    \item Клиент проверяет сертификат.
+    \item Стороны согласуют общий секрет.
+    \item Из общего секрета выводятся симметричные ключи.
+    \item Дальнейший HTTP-трафик передаётся в зашифрованном виде.
+\end{enumerate}
+
+\section{Язык HTML}
+
+\subsection{Понятие HTML}
+
+\textbf{HTML} --- HyperText Markup Language, язык гипертекстовой разметки. HTML используется для описания структуры веб-документов.
+
+HTML не является языком программирования, поскольку не задаёт алгоритмы вычислений. Он описывает смысловую и структурную организацию документа.
+
+\subsection{HTML-документ}
+
+Минимальный HTML-документ:
+\begin{lstlisting}[language=HTML]
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Минимальная страница</title>
+</head>
+<body>
+    <h1>Привет, мир!</h1>
+    <p>Это пример HTML-документа.</p>
+</body>
+</html>
+\end{lstlisting}
+
+Назначение элементов:
+\begin{itemize}
+    \item \texttt{<!doctype html>} --- объявление типа документа;
+    \item \texttt{html} --- корневой элемент;
+    \item \texttt{head} --- служебная информация;
+    \item \texttt{meta charset} --- кодировка;
+    \item \texttt{title} --- заголовок вкладки браузера;
+    \item \texttt{body} --- видимое содержимое страницы.
+\end{itemize}
+
+\subsection{Элементы и атрибуты}
+
+HTML-документ состоит из элементов.
+
+Общий вид элемента:
+\begin{lstlisting}[language=HTML]
+<tag attribute="value">content</tag>
+\end{lstlisting}
+
+Пример:
+\begin{lstlisting}[language=HTML]
+<a href="https://example.org">Ссылка</a>
+\end{lstlisting}
+
+Здесь:
+\begin{itemize}
+    \item \texttt{a} --- элемент ссылки;
+    \item \texttt{href} --- атрибут;
+    \item \texttt{https://example.org} --- значение атрибута;
+    \item \texttt{Ссылка} --- содержимое элемента.
+\end{itemize}
+
+\subsection{Основные группы HTML-элементов}
+
+\subsubsection{Структурные элементы}
+
+\begin{lstlisting}[language=HTML]
+<header>Шапка сайта</header>
+<nav>Навигация</nav>
+<main>Основное содержимое</main>
+<section>Раздел</section>
+<article>Самостоятельная статья</article>
+<aside>Боковая информация</aside>
+<footer>Подвал</footer>
+\end{lstlisting}
+
+\subsubsection{Заголовки и текст}
+
+\begin{lstlisting}[language=HTML]
+<h1>Главный заголовок</h1>
+<h2>Подзаголовок</h2>
+<p>Абзац текста.</p>
+<strong>Важный текст</strong>
+<em>Смысловое выделение</em>
+\end{lstlisting}
+
+\subsubsection{Списки}
+
+Нумерованный список:
+\begin{lstlisting}[language=HTML]
+<ol>
+    <li>Первый пункт</li>
+    <li>Второй пункт</li>
+</ol>
+\end{lstlisting}
+
+Маркированный список:
+\begin{lstlisting}[language=HTML]
+<ul>
+    <li>Элемент</li>
+    <li>Ещё элемент</li>
+</ul>
+\end{lstlisting}
+
+\subsubsection{Таблицы}
+
+\begin{lstlisting}[language=HTML]
+<table>
+    <tr>
+        <th>Имя</th>
+        <th>Оценка</th>
+    </tr>
+    <tr>
+        <td>Анна</td>
+        <td>5</td>
+    </tr>
+</table>
+\end{lstlisting}
+
+\subsubsection{Формы}
+
+\begin{lstlisting}[language=HTML]
+<form action="/login" method="post">
+    <label>
+        Логин:
+        <input type="text" name="username">
+    </label>
+    <label>
+        Пароль:
+        <input type="password" name="password">
+    </label>
+    <button type="submit">Войти</button>
+</form>
+\end{lstlisting}
+
+Элемент \texttt{form} задаёт форму, а атрибуты:
+\begin{itemize}
+    \item \texttt{action} --- адрес отправки данных;
+    \item \texttt{method} --- HTTP-метод отправки.
+\end{itemize}
+
+\subsection{Гипертекстовые ссылки}
+
+Гипертекстовая ссылка создаётся элементом \texttt{a}:
+\begin{lstlisting}[language=HTML]
+<a href="page.html">Перейти на страницу</a>
+\end{lstlisting}
+
+Абсолютная ссылка:
+\begin{lstlisting}[language=HTML]
+<a href="https://example.org/docs/page.html">Документация</a>
+\end{lstlisting}
+
+Относительная ссылка:
+\begin{lstlisting}[language=HTML]
+<a href="../index.html">На главную</a>
+\end{lstlisting}
+
+Ссылка на фрагмент страницы:
+\begin{lstlisting}[language=HTML]
+<a href="#chapter1">К главе 1</a>
+
+<h2 id="chapter1">Глава 1</h2>
+\end{lstlisting}
+
+\subsection{HTML и DOM}
+
+\textbf{DOM} --- Document Object Model, объектная модель документа. Браузер разбирает HTML-код и строит дерево DOM.
+
+Пример HTML:
+\begin{lstlisting}[language=HTML]
+<html>
+  <body>
+    <h1>Title</h1>
+    <p>Hello</p>
+  </body>
+</html>
+\end{lstlisting}
+
+Соответствующее дерево:
+\[
+\texttt{html}
+\rightarrow
+\texttt{body}
+\rightarrow
+\{\texttt{h1}, \texttt{p}\}
+\]
+
+DOM позволяет JavaScript изменять документ во время работы страницы:
+\begin{lstlisting}[language=JavaScript]
+document.querySelector("h1").textContent = "Новый заголовок";
+\end{lstlisting}
+
+\subsection{Семантическая разметка}
+
+\textbf{Семантическая разметка} --- использование HTML-элементов в соответствии с их смыслом.
+
+Например, правильно:
+\begin{lstlisting}[language=HTML]
+<nav>
+    <a href="/">Главная</a>
+    <a href="/about">О сайте</a>
+</nav>
+\end{lstlisting}
+
+Менее правильно:
+\begin{lstlisting}[language=HTML]
+<div>
+    <span>Главная</span>
+    <span>О сайте</span>
+</div>
+\end{lstlisting}
+
+Преимущества семантической разметки:
+\begin{itemize}
+    \item улучшение доступности;
+    \item лучшая индексация поисковыми системами;
+    \item понятная структура документа;
+    \item облегчение сопровождения кода.
+\end{itemize}
+
+\section{Разработка Web-страниц}
+
+\subsection{Основные технологии Web}
+
+Современная веб-страница обычно строится на трёх базовых технологиях:
+\begin{enumerate}
+    \item \textbf{HTML} --- структура документа;
+    \item \textbf{CSS} --- внешний вид;
+    \item \textbf{JavaScript} --- поведение и интерактивность.
+\end{enumerate}
+
+\subsection{CSS}
+
+\textbf{CSS} --- Cascading Style Sheets, каскадные таблицы стилей.
+
+Пример:
+\begin{lstlisting}[language=HTML]
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>CSS example</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            color: navy;
+        }
+    </style>
+</head>
+<body>
+    <h1>Заголовок</h1>
+    <p>Текст страницы.</p>
+</body>
+</html>
+\end{lstlisting}
+
+\subsection{Подключение внешнего CSS}
+
+\begin{lstlisting}[language=HTML]
+<link rel="stylesheet" href="style.css">
+\end{lstlisting}
+
+Файл \texttt{style.css}:
+\begin{lstlisting}[language=CSS]
+body {
+    font-family: Arial, sans-serif;
+}
+
+main {
+    max-width: 800px;
+    margin: 0 auto;
+}
+\end{lstlisting}
+
+\subsection{JavaScript}
+
+\textbf{JavaScript} --- язык программирования, используемый в браузере для создания интерактивных веб-страниц.
+
+Пример:
+\begin{lstlisting}[language=HTML]
+<button id="btn">Нажми меня</button>
+<p id="result"></p>
+
+<script>
+    const button = document.getElementById("btn");
+    const result = document.getElementById("result");
+
+    button.addEventListener("click", function () {
+        result.textContent = "Кнопка нажата";
+    });
+</script>
+\end{lstlisting}
+
+\subsection{Статические и динамические страницы}
+
+\textbf{Статическая веб-страница} --- файл, который сервер отдаёт клиенту без генерации на стороне сервера.
+
+Пример:
+\begin{lstlisting}
+index.html
+style.css
+script.js
+\end{lstlisting}
+
+\textbf{Динамическая веб-страница} --- страница, содержимое которой формируется программой, часто с использованием базы данных.
+
+Примеры серверных технологий:
+\begin{itemize}
+    \item PHP;
+    \item Python с Django или Flask;
+    \item Java с Spring;
+    \item JavaScript/TypeScript с Node.js;
+    \item Ruby on Rails;
+    \item Go;
+    \item ASP.NET.
+\end{itemize}
+
+\subsection{Минимальный пример сайта}
+
+Структура проекта:
+\begin{lstlisting}
+site/
+  index.html
+  style.css
+  script.js
+\end{lstlisting}
+
+Файл \texttt{index.html}:
+\begin{lstlisting}[language=HTML]
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Мини-сайт</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main>
+        <h1>Мини-сайт</h1>
+        <p id="message">Добро пожаловать!</p>
+        <button id="change">Изменить текст</button>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
+\end{lstlisting}
+
+Файл \texttt{style.css}:
+\begin{lstlisting}[language=CSS]
+body {
+    font-family: sans-serif;
+    background: #eeeeee;
+}
+
+main {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+}
+\end{lstlisting}
+
+Файл \texttt{script.js}:
+\begin{lstlisting}[language=JavaScript]
+document.getElementById("change").addEventListener("click", () => {
+    document.getElementById("message").textContent = "Текст изменён!";
+});
+\end{lstlisting}
+
+\subsection{Этапы разработки Web-страницы}
+
+\begin{enumerate}
+    \item Определить цель страницы.
+    \item Спроектировать структуру содержимого.
+    \item Написать HTML-разметку.
+    \item Добавить CSS-стили.
+    \item Добавить JavaScript при необходимости.
+    \item Проверить отображение в разных браузерах.
+    \item Проверить адаптивность на разных размерах экрана.
+    \item Проверить доступность.
+    \item Оптимизировать изображения и ресурсы.
+    \item Разместить сайт на веб-сервере.
+\end{enumerate}
+
+\subsection{Адаптивная вёрстка}
+
+\textbf{Адаптивная вёрстка} --- подход, при котором страница корректно отображается на устройствах с разной шириной экрана.
+
+Пример CSS media query:
+\begin{lstlisting}[language=CSS]
+.container {
+    display: flex;
+    gap: 20px;
+}
+
+@media (max-width: 600px) {
+    .container {
+        flex-direction: column;
+    }
+}
+\end{lstlisting}
+
+\subsection{Доступность Web-страниц}
+
+\textbf{Доступность} означает, что сайтом могут пользоваться люди с различными ограничениями возможностей.
+
+Основные рекомендации:
+\begin{itemize}
+    \item использовать семантические HTML-элементы;
+    \item указывать альтернативный текст для изображений;
+    \item обеспечивать достаточный контраст;
+    \item делать сайт доступным с клавиатуры;
+    \item правильно связывать \texttt{label} и \texttt{input};
+    \item не полагаться только на цвет для передачи смысла.
+\end{itemize}
+
+Пример:
+\begin{lstlisting}[language=HTML]
+<label for="email">Email</label>
+<input id="email" name="email" type="email">
+\end{lstlisting}
+
+\section{WWW и WWW-серверы}
+
+\subsection{World Wide Web}
+
+\textbf{World Wide Web} --- глобальная распределённая гипертекстовая информационная система, работающая поверх Internet.
+
+Не следует отождествлять Internet и Web:
+\begin{itemize}
+    \item \textbf{Internet} --- глобальная сеть сетей, инфраструктура передачи данных;
+    \item \textbf{WWW} --- один из сервисов Internet, основанный на HTTP, URL и HTML.
+\end{itemize}
+
+Основные компоненты WWW:
+\begin{enumerate}
+    \item URL/URI --- идентификация ресурсов;
+    \item HTTP/HTTPS --- протокол доступа;
+    \item HTML --- формат гипертекстовых документов;
+    \item браузеры --- клиенты Web;
+    \item web-серверы --- поставщики ресурсов.
+\end{enumerate}
+
+\subsection{WWW-сервер}
+
+\textbf{WWW-сервер} или \textbf{Web-сервер} --- программа, принимающая HTTP-запросы и возвращающая HTTP-ответы.
+
+Популярные Web-серверы:
+\begin{itemize}
+    \item Apache HTTP Server;
+    \item Nginx;
+    \item Microsoft IIS;
+    \item Caddy;
+    \item Lighttpd.
+\end{itemize}
+
+\subsection{Основные функции Web-сервера}
+
+Web-сервер выполняет:
+\begin{itemize}
+    \item приём TCP-соединений;
+    \item приём и разбор HTTP-запросов;
+    \item определение нужного ресурса;
+    \item выдачу статических файлов;
+    \item передачу запросов приложению через FastCGI, WSGI, reverse proxy и др.;
+    \item формирование HTTP-ответов;
+    \item ведение журналов доступа и ошибок;
+    \item сжатие данных;
+    \item TLS-терминацию;
+    \item балансировку нагрузки;
+    \item кэширование;
+    \item ограничение доступа.
+\end{itemize}
+
+\subsection{Статический и динамический Web-сервер}
+
+\textbf{Статическая выдача}:
+\[
+\text{HTTP-запрос} \rightarrow \text{файл на диске} \rightarrow \text{HTTP-ответ}
+\]
+
+\textbf{Динамическая выдача}:
+\[
+\text{HTTP-запрос} \rightarrow \text{серверное приложение} \rightarrow \text{БД} \rightarrow \text{HTML/JSON-ответ}
+\]
+
+\subsection{CGI}
+
+\textbf{CGI} --- Common Gateway Interface, ранний стандарт взаимодействия Web-сервера с внешними программами.
+
+Алгоритм работы CGI:
+\begin{enumerate}
+    \item Web-сервер получает HTTP-запрос.
+    \item Определяет, что запрос должен быть обработан CGI-программой.
+    \item Запускает внешний процесс.
+    \item Передаёт ему параметры запроса через переменные окружения и стандартный ввод.
+    \item CGI-программа формирует ответ.
+    \item Web-сервер передаёт ответ клиенту.
+\end{enumerate}
+
+Недостаток CGI: запуск отдельного процесса на каждый запрос создаёт большие накладные расходы.
+
+\subsection{Reverse proxy}
+
+\textbf{Обратный прокси-сервер} принимает запросы от клиентов и перенаправляет их внутренним серверам.
+
+Схема:
+\[
+\text{Client} \rightarrow \text{Nginx} \rightarrow \text{Application Server}
+\]
+
+Задачи reverse proxy:
+\begin{itemize}
+    \item TLS-терминация;
+    \item балансировка нагрузки;
+    \item кэширование;
+    \item защита внутренних серверов;
+    \item маршрутизация запросов;
+    \item сжатие ответов.
+\end{itemize}
+
+\subsection{Минимальный учебный HTTP-сервер}
+
+Ниже приведён минимальный пример HTTP-сервера на Python. Он принимает соединение, читает запрос и возвращает HTML-страницу.
+
+\begin{lstlisting}[language=Python]
+import socket
+
+HOST = "127.0.0.1"
+PORT = 8080
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind((HOST, PORT))
+server.listen(1)
+
+print(f"Server started at http://{HOST}:{PORT}")
+
+while True:
+    conn, addr = server.accept()
+    request = conn.recv(4096).decode("utf-8", errors="ignore")
+    print(request)
+
+    body = """<!doctype html>
+<html>
+<body>
+<h1>Hello from simple server</h1>
+</body>
+</html>"""
+
+    response = (
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/html; charset=utf-8\r\n"
+        f"Content-Length: {len(body.encode('utf-8'))}\r\n"
+        "\r\n"
+        f"{body}"
+    )
+
+    conn.sendall(response.encode("utf-8"))
+    conn.close()
+\end{lstlisting}
+
+Этот пример иллюстрирует базовый принцип HTTP, но не является полноценным сервером: он не обрабатывает параллельные соединения, ошибки, TLS, разные методы и MIME-типы.
+
+\section{Сравнение FTP и HTTP}
+
+\begin{center}
+\begin{tabular}{|p{4cm}|p{5cm}|p{5cm}|}
+\hline
+Критерий & FTP & HTTP \\
+\hline
+Основное назначение & Передача файлов & Передача гипертекстовых и других ресурсов \\
+\hline
+Модель соединений & Управляющее соединение и соединение данных & Обычно одно логическое соединение для запросов/ответов \\
+\hline
+Состояние сеанса & Более выраженное состояние: вход, текущий каталог, режим передачи & Протокол сам по себе stateless \\
+\hline
+Типичные порты & 21, 20 & 80, 443 \\
+\hline
+Работа через NAT & Может быть сложной, особенно в активном режиме & Обычно проще \\
+\hline
+Защита & В классическом FTP отсутствует & HTTPS широко применяет TLS \\
+\hline
+Использование в Web & Ограниченное, историческое & Основной протокол Web \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Безопасность удалённого доступа и Web}
+
+\subsection{Основные угрозы}
+
+\begin{itemize}
+    \item перехват трафика;
+    \item подбор паролей;
+    \item атаки ``человек посередине'';
+    \item эксплуатация уязвимостей серверов;
+    \item фишинг;
+    \item межсайтовый скриптинг;
+    \item SQL-инъекции;
+    \item утечка сессионных cookie;
+    \item неправильная настройка прав доступа.
+\end{itemize}
+
+\subsection{Общие меры защиты}
+
+\begin{enumerate}
+    \item Использовать защищённые протоколы: SSH вместо Telnet, HTTPS вместо HTTP для конфиденциальных данных.
+    \item Применять сильную аутентификацию.
+    \item Использовать многофакторную аутентификацию.
+    \item Обновлять серверное ПО.
+    \item Ограничивать доступ по IP или через VPN.
+    \item Настраивать firewall.
+    \item Хранить пароли в виде криптографических хэшей с солью.
+    \item Проверять и фильтровать пользовательский ввод.
+    \item Использовать принцип минимальных привилегий.
+    \item Вести журналы событий и анализировать их.
+\end{enumerate}
+
+\subsection{Web-угрозы}
+
+\subsubsection{XSS}
+
+\textbf{XSS} --- Cross-Site Scripting, внедрение вредоносного JavaScript-кода в страницу.
+
+Пример опасной ситуации:
+\begin{lstlisting}[language=HTML]
+<p>Здравствуйте, <script>alert('XSS')</script></p>
+\end{lstlisting}
+
+Защита:
+\begin{itemize}
+    \item экранирование HTML;
+    \item Content Security Policy;
+    \item запрет вставки непроверенного HTML;
+    \item использование фреймворков с автоматическим escaping.
+\end{itemize}
+
+\subsubsection{SQL-инъекция}
+
+SQL-инъекция возникает при включении пользовательского ввода непосредственно в SQL-запрос.
+
+Плохой пример:
+\begin{lstlisting}[language=Python]
+query = "SELECT * FROM users WHERE name = '" + username + "'"
+\end{lstlisting}
+
+Правильный подход --- параметризованные запросы:
+\begin{lstlisting}[language=Python]
+cursor.execute(
+    "SELECT * FROM users WHERE name = ?",
+    (username,)
+)
+\end{lstlisting}
+
+\subsubsection{CSRF}
+
+\textbf{CSRF} --- Cross-Site Request Forgery, подделка межсайтового запроса. Суть атаки: браузер авторизованного пользователя автоматически отправляет запрос на доверенный сайт по инициативе вредоносной страницы.
+
+Защита:
+\begin{itemize}
+    \item CSRF-токены;
+    \item атрибут cookie \texttt{SameSite};
+    \item проверка заголовков \texttt{Origin} и \texttt{Referer};
+    \item требование повторного подтверждения важных операций.
+\end{itemize}
+
+\section{Итоговая связка технологий}
+
+Работа типичной веб-системы включает несколько уровней:
+
+\[
+\text{Пользователь}
+\rightarrow
+\text{Браузер}
+\rightarrow
+\text{DNS}
+\rightarrow
+\text{TCP/TLS}
+\rightarrow
+\text{HTTP}
+\rightarrow
+\text{Web-сервер}
+\rightarrow
+\text{Приложение}
+\rightarrow
+\text{База данных}
+\]
+
+HTML, CSS и JavaScript формируют клиентскую часть. HTTP/HTTPS обеспечивает обмен данными между клиентом и сервером. Web-сервер принимает запросы, отдаёт статические ресурсы или передаёт запросы приложению. Электронная почта и телеконференции являются другими важными прикладными сервисами Internet, использующими собственные протоколы: SMTP, POP3, IMAP и NNTP. FTP исторически применялся для передачи файлов, но в современных системах часто заменяется более безопасными механизмами: SFTP, FTPS и HTTPS.
+
+\end{document}
