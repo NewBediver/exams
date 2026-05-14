@@ -1,0 +1,2407 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+
+\geometry{left=2cm,right=2cm,top=2cm,bottom=2cm}
+
+\lstdefinestyle{code}{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red!60!black},
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    numbersep=8pt,
+    frame=single,
+    breaklines=true,
+    tabsize=4,
+    showstringspaces=false,
+    inputencoding=utf8,
+    extendedchars=true,
+    literate=
+        {А}{{\CYRA}}1
+        {Б}{{\CYRB}}1
+        {В}{{\CYRV}}1
+        {Г}{{\CYRG}}1
+        {Д}{{\CYRD}}1
+        {Е}{{\CYRE}}1
+        {Ё}{{\CYRYO}}1
+        {Ж}{{\CYRZH}}1
+        {З}{{\CYRZ}}1
+        {И}{{\CYRI}}1
+        {Й}{{\CYRISHRT}}1
+        {К}{{\CYRK}}1
+        {Л}{{\CYRL}}1
+        {М}{{\CYRM}}1
+        {Н}{{\CYRN}}1
+        {О}{{\CYRO}}1
+        {П}{{\CYRP}}1
+        {Р}{{\CYRR}}1
+        {С}{{\CYRS}}1
+        {Т}{{\CYRT}}1
+        {У}{{\CYRU}}1
+        {Ф}{{\CYRF}}1
+        {Х}{{\CYRH}}1
+        {Ц}{{\CYRC}}1
+        {Ч}{{\CYRCH}}1
+        {Ш}{{\CYRSH}}1
+        {Щ}{{\CYRSHCH}}1
+        {Ъ}{{\CYRHRDSN}}1
+        {Ы}{{\CYRERY}}1
+        {Ь}{{\CYRSFTSN}}1
+        {Э}{{\CYREREV}}1
+        {Ю}{{\CYRYU}}1
+        {Я}{{\CYRYA}}1
+        {а}{{\cyra}}1
+        {б}{{\cyrb}}1
+        {в}{{\cyrv}}1
+        {г}{{\cyrg}}1
+        {д}{{\cyrd}}1
+        {е}{{\cyre}}1
+        {ё}{{\cyryo}}1
+        {ж}{{\cyrzh}}1
+        {з}{{\cyrz}}1
+        {и}{{\cyri}}1
+        {й}{{\cyrishrt}}1
+        {к}{{\cyrk}}1
+        {л}{{\cyrl}}1
+        {м}{{\cyrm}}1
+        {н}{{\cyrn}}1
+        {о}{{\cyro}}1
+        {п}{{\cyrp}}1
+        {р}{{\cyrr}}1
+        {с}{{\cyrs}}1
+        {т}{{\cyrt}}1
+        {у}{{\cyru}}1
+        {ф}{{\cyrf}}1
+        {х}{{\cyrh}}1
+        {ц}{{\cyrc}}1
+        {ч}{{\cyrch}}1
+        {ш}{{\cyrsh}}1
+        {щ}{{\cyrshch}}1
+        {ъ}{{\cyrhrdsn}}1
+        {ы}{{\cyrery}}1
+        {ь}{{\cyrsftsn}}1
+        {э}{{\cyrerev}}1
+        {ю}{{\cyryu}}1
+        {я}{{\cyrya}}1
+}
+
+\lstset{style=code}
+
+\title{Билет №44 \\ \small Объектно-ориентированное программирование. Шаблоны проектирования, их применение. Классификация шаблонов проектирования. Примеры шаблонов проектирования. (ИТМО) \\ Объектно-ориентированное программирование. Классы и объекты, наследование, интерфейсы. Понятие об объектном окружении. Рефлексия. Библиотеки классов. Средства обработки объектов (контейнеры, итераторы, сопроцедуры). (СпБГУ) \\ Основные принципы объектно-ориентированного программирования. (СпБПУ)}
+\author{Сериков Владислав Александрович}
+\date{13 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Объектно-ориентированное программирование}
+
+\subsection{Общая идея ООП}
+
+\textbf{Объектно-ориентированное программирование} --- это парадигма программирования, в которой программа рассматривается как совокупность взаимодействующих объектов.
+
+\textbf{Объект} объединяет:
+\begin{itemize}
+    \item \textbf{состояние} --- данные, хранящиеся в полях;
+    \item \textbf{поведение} --- операции, реализованные методами;
+    \item \textbf{идентичность} --- способность отличать один объект от другого даже при одинаковом состоянии.
+\end{itemize}
+
+Например, объект \texttt{bankAccount} может иметь состояние:
+\[
+\texttt{balance = 1000}
+\]
+и поведение:
+\[
+\texttt{deposit()}, \quad \texttt{withdraw()}, \quad \texttt{getBalance()}.
+\]
+
+ООП удобно применять там, где предметная область естественно описывается сущностями и их взаимодействием: банковские системы, графические интерфейсы, игры, информационные системы, компиляторы, системы моделирования.
+
+\subsection{Класс и объект}
+
+\textbf{Класс} --- это описание множества объектов с одинаковой структурой и поведением.
+
+\textbf{Объект} --- это экземпляр класса, созданный во время выполнения программы.
+
+\begin{lstlisting}[language=Java,caption={Пример класса и объекта}]
+class Point {
+    private int x;
+    private int y;
+
+    public Point(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public void move(int dx, int dy) {
+        x += dx;
+        y += dy;
+    }
+
+    public String toString() {
+        return "(" + x + ", " + y + ")";
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Point p = new Point(2, 3);
+        p.move(1, -1);
+        System.out.println(p); // (3, 2)
+    }
+}
+\end{lstlisting}
+
+Здесь \texttt{Point} --- класс, а \texttt{p} --- объект.
+
+\subsection{Атрибуты, методы и конструкторы}
+
+\textbf{Атрибуты} или \textbf{поля} класса задают состояние объекта.
+
+\textbf{Методы} описывают действия, которые объект может выполнять.
+
+\textbf{Конструктор} --- специальный метод, вызываемый при создании объекта. Его задача --- привести объект в корректное начальное состояние.
+
+\begin{lstlisting}[language=Java,caption={Конструктор и методы}]
+class User {
+    private String name;
+    private int age;
+
+    public User(String name, int age) {
+        if (age < 0) {
+            throw new IllegalArgumentException("age must be non-negative");
+        }
+        this.name = name;
+        this.age = age;
+    }
+
+    public String getName() {
+        return name;
+    }
+}
+\end{lstlisting}
+
+\subsection{Основные принципы ООП}
+
+Классически выделяют четыре основных принципа ООП:
+\begin{enumerate}
+    \item абстракция;
+    \item инкапсуляция;
+    \item наследование;
+    \item полиморфизм.
+\end{enumerate}
+
+Иногда дополнительно выделяют:
+\begin{itemize}
+    \item композицию;
+    \item динамическое связывание;
+    \item посылку сообщений;
+    \item модульность;
+    \item повторное использование кода.
+\end{itemize}
+
+\section{Абстракция}
+
+\subsection{Понятие абстракции}
+
+\textbf{Абстракция} --- это выделение существенных свойств объекта и игнорирование несущественных деталей реализации.
+
+В программировании абстракция позволяет работать с объектом через его интерфейс, не зная внутреннего устройства.
+
+Например, при использовании списка важно знать, что у него есть операции:
+\[
+\texttt{add}, \quad \texttt{remove}, \quad \texttt{get}, \quad \texttt{size},
+\]
+но не обязательно знать, хранится ли список в массиве, связном списке или дереве.
+
+\subsection{Пример абстракции}
+
+\begin{lstlisting}[language=Java,caption={Абстрактный тип данных}]
+interface Stack<T> {
+    void push(T value);
+    T pop();
+    T peek();
+    boolean isEmpty();
+}
+\end{lstlisting}
+
+Интерфейс \texttt{Stack} описывает поведение стека, но не задаёт конкретный способ хранения элементов.
+
+\subsection{Абстрактные классы}
+
+\textbf{Абстрактный класс} --- класс, который может содержать как реализованные методы, так и абстрактные методы без реализации.
+
+\begin{lstlisting}[language=Java,caption={Абстрактный класс}]
+abstract class Shape {
+    public abstract double area();
+
+    public void printArea() {
+        System.out.println("Area = " + area());
+    }
+}
+
+class Circle extends Shape {
+    private double r;
+
+    public Circle(double r) {
+        this.r = r;
+    }
+
+    public double area() {
+        return Math.PI * r * r;
+    }
+}
+\end{lstlisting}
+
+Абстрактный класс полезен, когда разные классы имеют общую часть реализации.
+
+\section{Инкапсуляция}
+
+\subsection{Понятие инкапсуляции}
+
+\textbf{Инкапсуляция} --- это объединение данных и методов, работающих с этими данными, внутри одной программной единицы, а также сокрытие внутреннего состояния объекта от внешнего кода.
+
+Идея инкапсуляции выражается следующим правилом:
+
+\[
+\text{внешний код должен зависеть от интерфейса объекта, а не от его реализации.}
+\]
+
+\subsection{Модификаторы доступа}
+
+В объектно-ориентированных языках обычно существуют средства управления доступом:
+\begin{itemize}
+    \item \texttt{public} --- доступно всем;
+    \item \texttt{private} --- доступно только внутри класса;
+    \item \texttt{protected} --- доступно внутри класса, его наследников и иногда внутри пакета;
+    \item package-private или internal-доступ --- доступ в пределах модуля или пакета.
+\end{itemize}
+
+\subsection{Пример инкапсуляции}
+
+\begin{lstlisting}[language=Java,caption={Инкапсуляция состояния}]
+class BankAccount {
+    private int balance;
+
+    public BankAccount(int initialBalance) {
+        if (initialBalance < 0) {
+            throw new IllegalArgumentException("Negative balance");
+        }
+        this.balance = initialBalance;
+    }
+
+    public void deposit(int amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
+        balance += amount;
+    }
+
+    public void withdraw(int amount) {
+        if (amount <= 0 || amount > balance) {
+            throw new IllegalArgumentException("Invalid amount");
+        }
+        balance -= amount;
+    }
+
+    public int getBalance() {
+        return balance;
+    }
+}
+\end{lstlisting}
+
+Поле \texttt{balance} закрыто от прямого изменения. Это позволяет гарантировать инвариант:
+\[
+\texttt{balance} \geq 0.
+\]
+
+\subsection{Инвариант класса}
+
+\textbf{Инвариант класса} --- логическое условие, которое должно быть истинно для каждого корректного объекта класса после завершения конструктора и после выполнения каждого публичного метода.
+
+Для класса \texttt{BankAccount} инвариант:
+\[
+balance \geq 0.
+\]
+
+Инкапсуляция помогает поддерживать инварианты, потому что запрещает внешнему коду напрямую менять внутренние поля объекта.
+
+\section{Наследование}
+
+\subsection{Понятие наследования}
+
+\textbf{Наследование} --- механизм, позволяющий определить новый класс на основе уже существующего.
+
+Существующий класс называется:
+\begin{itemize}
+    \item базовым классом;
+    \item родительским классом;
+    \item суперклассом.
+\end{itemize}
+
+Новый класс называется:
+\begin{itemize}
+    \item производным классом;
+    \item дочерним классом;
+    \item подклассом.
+\end{itemize}
+
+Наследование выражает отношение:
+\[
+\text{``является''} \quad \text{или} \quad is\text{-}a.
+\]
+
+Например:
+\[
+\texttt{Circle is a Shape}.
+\]
+
+\subsection{Пример наследования}
+
+\begin{lstlisting}[language=Java,caption={Наследование}]
+class Animal {
+    public void eat() {
+        System.out.println("Animal eats");
+    }
+}
+
+class Dog extends Animal {
+    public void bark() {
+        System.out.println("Dog barks");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Dog dog = new Dog();
+        dog.eat();
+        dog.bark();
+    }
+}
+\end{lstlisting}
+
+Класс \texttt{Dog} наследует метод \texttt{eat} от класса \texttt{Animal}.
+
+\subsection{Переопределение методов}
+
+\textbf{Переопределение метода} --- определение в подклассе метода с той же сигнатурой, что и у метода базового класса.
+
+\begin{lstlisting}[language=Java,caption={Переопределение метода}]
+class Animal {
+    public void speak() {
+        System.out.println("Some sound");
+    }
+}
+
+class Cat extends Animal {
+    @Override
+    public void speak() {
+        System.out.println("Meow");
+    }
+}
+\end{lstlisting}
+
+\subsection{Наследование реализации и наследование интерфейса}
+
+Следует различать:
+\begin{itemize}
+    \item \textbf{наследование реализации} --- подкласс получает готовый код базового класса;
+    \item \textbf{наследование интерфейса} --- класс обязуется поддерживать некоторый набор операций.
+\end{itemize}
+
+Наследование реализации удобно для повторного использования кода, но может создавать сильную зависимость между классами.
+
+Наследование интерфейса обычно является более гибким, так как оно связывает классы через контракт, а не через реализацию.
+
+\subsection{Проблемы наследования}
+
+Наследование может приводить к следующим проблемам:
+\begin{itemize}
+    \item сильная связанность базового и производного классов;
+    \item хрупкость иерархий;
+    \item нарушение инкапсуляции;
+    \item сложность множественного наследования;
+    \item трудности при изменении базового класса.
+\end{itemize}
+
+Поэтому часто используют принцип:
+
+\[
+\text{предпочитать композицию наследованию.}
+\]
+
+\section{Композиция и агрегация}
+
+\subsection{Композиция}
+
+\textbf{Композиция} --- отношение между объектами вида ``часть--целое'', при котором один объект содержит другой и управляет его жизненным циклом.
+
+Например, объект \texttt{Car} может содержать объект \texttt{Engine}.
+
+\begin{lstlisting}[language=Java,caption={Композиция}]
+class Engine {
+    public void start() {
+        System.out.println("Engine started");
+    }
+}
+
+class Car {
+    private Engine engine = new Engine();
+
+    public void start() {
+        engine.start();
+    }
+}
+\end{lstlisting}
+
+Композиция выражает отношение:
+\[
+\text{has-a}.
+\]
+
+То есть:
+\[
+\texttt{Car has an Engine}.
+\]
+
+\subsection{Агрегация}
+
+\textbf{Агрегация} --- более слабое отношение ``часть--целое'', при котором объект использует другой объект, но не обязательно управляет его жизненным циклом.
+
+Пример:
+\[
+\texttt{Team has Players}.
+\]
+
+Игрок может существовать независимо от команды.
+
+\section{Полиморфизм}
+
+\subsection{Понятие полиморфизма}
+
+\textbf{Полиморфизм} --- возможность использовать объекты разных классов единообразно через общий интерфейс.
+
+В ООП чаще всего рассматривают:
+\begin{itemize}
+    \item полиморфизм подтипов;
+    \item параметрический полиморфизм;
+    \item ad-hoc полиморфизм.
+\end{itemize}
+
+\subsection{Полиморфизм подтипов}
+
+\textbf{Полиморфизм подтипов} означает, что объект производного класса может использоваться там, где ожидается объект базового класса или интерфейса.
+
+\begin{lstlisting}[language=Java,caption={Полиморфизм подтипов}]
+interface Shape {
+    double area();
+}
+
+class Rectangle implements Shape {
+    private double width;
+    private double height;
+
+    public Rectangle(double width, double height) {
+        this.width = width;
+        this.height = height;
+    }
+
+    public double area() {
+        return width * height;
+    }
+}
+
+class Circle implements Shape {
+    private double r;
+
+    public Circle(double r) {
+        this.r = r;
+    }
+
+    public double area() {
+        return Math.PI * r * r;
+    }
+}
+
+public class Main {
+    public static void printArea(Shape shape) {
+        System.out.println(shape.area());
+    }
+
+    public static void main(String[] args) {
+        printArea(new Rectangle(3, 4));
+        printArea(new Circle(2));
+    }
+}
+\end{lstlisting}
+
+Функция \texttt{printArea} работает с любым объектом, реализующим интерфейс \texttt{Shape}.
+
+\subsection{Динамическое связывание}
+
+\textbf{Динамическое связывание} --- выбор конкретной реализации метода во время выполнения программы, исходя из фактического типа объекта.
+
+Если переменная имеет тип \texttt{Shape}, но фактически ссылается на объект \texttt{Circle}, то будет вызван метод \texttt{area} класса \texttt{Circle}.
+
+\[
+\texttt{Shape s = new Circle(2);}
+\]
+\[
+\texttt{s.area();}
+\]
+
+Компилятор знает только, что \texttt{s} имеет тип \texttt{Shape}, но во время выполнения выбирается реализация \texttt{Circle.area()}.
+
+\subsection{Параметрический полиморфизм}
+
+\textbf{Параметрический полиморфизм} реализуется с помощью обобщений или шаблонов.
+
+\begin{lstlisting}[language=Java,caption={Параметрический полиморфизм}]
+class Box<T> {
+    private T value;
+
+    public Box(T value) {
+        this.value = value;
+    }
+
+    public T get() {
+        return value;
+    }
+}
+\end{lstlisting}
+
+Класс \texttt{Box<T>} может работать с разными типами:
+\[
+\texttt{Box<Integer>}, \quad \texttt{Box<String>}.
+\]
+
+\subsection{Ad-hoc полиморфизм}
+
+\textbf{Ad-hoc полиморфизм} обычно реализуется перегрузкой функций и операторов.
+
+\begin{lstlisting}[language=Java,caption={Перегрузка методов}]
+class Printer {
+    public void print(int x) {
+        System.out.println(x);
+    }
+
+    public void print(String s) {
+        System.out.println(s);
+    }
+}
+\end{lstlisting}
+
+Методы имеют одно имя, но разные параметры.
+
+\section{Интерфейсы}
+
+\subsection{Понятие интерфейса}
+
+\textbf{Интерфейс} --- это описание контракта, который должен выполнять класс.
+
+Интерфейс задаёт, какие операции доступны, но обычно не навязывает конкретную реализацию.
+
+\begin{lstlisting}[language=Java,caption={Интерфейс}]
+interface Repository<T> {
+    void save(T object);
+    T findById(int id);
+}
+\end{lstlisting}
+
+Класс, реализующий интерфейс, обязан предоставить реализации его методов.
+
+\begin{lstlisting}[language=Java,caption={Реализация интерфейса}]
+class UserRepository implements Repository<User> {
+    public void save(User user) {
+        // сохранение пользователя
+    }
+
+    public User findById(int id) {
+        // поиск пользователя
+        return null;
+    }
+}
+\end{lstlisting}
+
+\subsection{Роль интерфейсов}
+
+Интерфейсы используются для:
+\begin{itemize}
+    \item задания контрактов;
+    \item ослабления связанности между компонентами;
+    \item реализации полиморфизма;
+    \item поддержки тестирования;
+    \item замены конкретных реализаций без изменения клиентского кода.
+\end{itemize}
+
+\subsection{Интерфейс и абстрактный класс}
+
+\begin{longtable}{|p{5cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Критерий} & \textbf{Интерфейс} & \textbf{Абстрактный класс} \\
+\hline
+Назначение & Контракт поведения & Частичная реализация общей сущности \\
+\hline
+Состояние & Обычно не содержит изменяемого состояния объекта & Может содержать поля \\
+\hline
+Множественность & Класс обычно может реализовать несколько интерфейсов & Во многих языках класс наследует только один класс \\
+\hline
+Связь с реализацией & Слабая & Более сильная \\
+\hline
+Применение & Когда важен набор операций & Когда есть общая логика и состояние \\
+\hline
+\end{longtable}
+
+\section{Объектное окружение}
+
+\subsection{Понятие объектного окружения}
+
+\textbf{Объектное окружение} --- совокупность средств языка, среды выполнения и библиотек, которые обеспечивают создание, хранение, взаимодействие, уничтожение и обработку объектов.
+
+В объектное окружение входят:
+\begin{itemize}
+    \item система типов;
+    \item механизм создания объектов;
+    \item механизм вызова методов;
+    \item система управления памятью;
+    \item стандартная библиотека классов;
+    \item контейнеры;
+    \item итераторы;
+    \item исключения;
+    \item механизмы рефлексии;
+    \item средства сериализации;
+    \item механизмы параллельного и асинхронного выполнения;
+    \item рантайм-среда.
+\end{itemize}
+
+Например, в Java объектное окружение включает:
+\begin{itemize}
+    \item виртуальную машину JVM;
+    \item загрузчики классов;
+    \item сборщик мусора;
+    \item стандартную библиотеку;
+    \item механизм рефлексии;
+    \item систему исключений;
+    \item коллекции;
+    \item потоки и средства конкурентного программирования.
+\end{itemize}
+
+\subsection{Жизненный цикл объекта}
+
+Типичный жизненный цикл объекта:
+\begin{enumerate}
+    \item выделение памяти;
+    \item вызов конструктора;
+    \item использование объекта;
+    \item потеря достижимости объекта;
+    \item освобождение ресурсов вручную или сборщиком мусора.
+\end{enumerate}
+
+\subsection{Схема взаимодействия объектов}
+
+Пусть есть объект \texttt{Client}, объект \texttt{Service} и объект \texttt{Repository}.
+
+\[
+\texttt{Client} \rightarrow \texttt{Service} \rightarrow \texttt{Repository}.
+\]
+
+Клиент вызывает сервис, сервис выполняет бизнес-логику и обращается к репозиторию.
+
+\begin{lstlisting}[language=Java,caption={Простое объектное окружение}]
+interface Repository {
+    String findNameById(int id);
+}
+
+class MemoryRepository implements Repository {
+    public String findNameById(int id) {
+        return "Alice";
+    }
+}
+
+class UserService {
+    private Repository repository;
+
+    public UserService(Repository repository) {
+        this.repository = repository;
+    }
+
+    public String getUserName(int id) {
+        return repository.findNameById(id);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Repository repository = new MemoryRepository();
+        UserService service = new UserService(repository);
+        System.out.println(service.getUserName(1));
+    }
+}
+\end{lstlisting}
+
+Здесь объект \texttt{UserService} не зависит от конкретного класса \texttt{MemoryRepository}, а зависит только от интерфейса \texttt{Repository}.
+
+\section{Рефлексия}
+
+\subsection{Понятие рефлексии}
+
+\textbf{Рефлексия} --- механизм, позволяющий программе исследовать и иногда изменять свою структуру и поведение во время выполнения.
+
+С помощью рефлексии можно:
+\begin{itemize}
+    \item получить информацию о классе объекта;
+    \item узнать список методов и полей;
+    \item вызвать метод по имени;
+    \item создать объект по имени класса;
+    \item получить аннотации или метаданные;
+    \item изменить доступность полей и методов;
+    \item построить универсальные фреймворки.
+\end{itemize}
+
+\subsection{Пример рефлексии}
+
+\begin{lstlisting}[language=Java,caption={Получение информации о классе}]
+import java.lang.reflect.Method;
+
+class Person {
+    public void sayHello() {
+        System.out.println("Hello");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Class<?> clazz = Person.class;
+
+        for (Method method : clazz.getDeclaredMethods()) {
+            System.out.println(method.getName());
+        }
+    }
+}
+\end{lstlisting}
+
+Результат:
+\[
+\texttt{sayHello}
+\]
+
+\subsection{Создание объекта через рефлексию}
+
+\begin{lstlisting}[language=Java,caption={Создание объекта через рефлексию}]
+class Person {
+    public Person() {}
+
+    public void sayHello() {
+        System.out.println("Hello");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+        Class<?> clazz = Class.forName("Person");
+        Object obj = clazz.getDeclaredConstructor().newInstance();
+
+        Person person = (Person) obj;
+        person.sayHello();
+    }
+}
+\end{lstlisting}
+
+\subsection{Применение рефлексии}
+
+Рефлексия применяется:
+\begin{itemize}
+    \item в системах сериализации;
+    \item в ORM-фреймворках;
+    \item в контейнерах зависимостей;
+    \item в тестовых фреймворках;
+    \item в плагинных архитектурах;
+    \item в средах разработки;
+    \item в отладчиках.
+\end{itemize}
+
+\subsection{Недостатки рефлексии}
+
+Недостатки:
+\begin{itemize}
+    \item снижение производительности;
+    \item потеря статической проверки типов;
+    \item возможность нарушения инкапсуляции;
+    \item усложнение сопровождения;
+    \item потенциальные проблемы безопасности.
+\end{itemize}
+
+\section{Библиотеки классов}
+
+\subsection{Понятие библиотеки классов}
+
+\textbf{Библиотека классов} --- набор готовых классов, интерфейсов и функций, предназначенных для повторного использования.
+
+Библиотеки классов предоставляют:
+\begin{itemize}
+    \item структуры данных;
+    \item алгоритмы;
+    \item средства ввода-вывода;
+    \item работу с файлами;
+    \item сетевое взаимодействие;
+    \item графический интерфейс;
+    \item средства многопоточности;
+    \item работу с датой и временем;
+    \item математические функции;
+    \item механизмы сериализации;
+    \item средства тестирования.
+\end{itemize}
+
+\subsection{Примеры библиотек классов}
+
+Примеры:
+\begin{itemize}
+    \item Java Standard Library;
+    \item .NET Base Class Library;
+    \item C++ Standard Library;
+    \item Qt;
+    \item Boost;
+    \item Python Standard Library.
+\end{itemize}
+
+\subsection{Польза библиотек классов}
+
+Библиотеки классов:
+\begin{itemize}
+    \item уменьшают объём кода;
+    \item повышают надёжность;
+    \item дают проверенные реализации структур данных и алгоритмов;
+    \item стандартизируют подходы;
+    \item ускоряют разработку;
+    \item упрощают сопровождение.
+\end{itemize}
+
+\section{Средства обработки объектов}
+
+\subsection{Контейнеры}
+
+\textbf{Контейнер} --- объект, предназначенный для хранения других объектов.
+
+Основные виды контейнеров:
+\begin{itemize}
+    \item массив;
+    \item список;
+    \item стек;
+    \item очередь;
+    \item дек;
+    \item множество;
+    \item ассоциативный массив;
+    \item дерево;
+    \item граф.
+\end{itemize}
+
+\subsection{Список}
+
+\textbf{Список} --- последовательный контейнер, поддерживающий хранение элементов в определённом порядке.
+
+\begin{lstlisting}[language=Java,caption={Список}]
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List<String> names = new ArrayList<>();
+
+        names.add("Alice");
+        names.add("Bob");
+
+        System.out.println(names.get(0)); // Alice
+    }
+}
+\end{lstlisting}
+
+\subsection{Множество}
+
+\textbf{Множество} --- контейнер, не допускающий повторяющихся элементов.
+
+\begin{lstlisting}[language=Java,caption={Множество}]
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Set<Integer> numbers = new HashSet<>();
+
+        numbers.add(1);
+        numbers.add(1);
+        numbers.add(2);
+
+        System.out.println(numbers.size()); // 2
+    }
+}
+\end{lstlisting}
+
+\subsection{Ассоциативный массив}
+
+\textbf{Ассоциативный массив} или \textbf{словарь} хранит пары:
+\[
+\text{ключ} \rightarrow \text{значение}.
+\]
+
+\begin{lstlisting}[language=Java,caption={Ассоциативный массив}]
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Map<String, Integer> ages = new HashMap<>();
+
+        ages.put("Alice", 20);
+        ages.put("Bob", 25);
+
+        System.out.println(ages.get("Alice")); // 20
+    }
+}
+\end{lstlisting}
+
+\subsection{Итераторы}
+
+\textbf{Итератор} --- объект, предоставляющий последовательный доступ к элементам контейнера без раскрытия его внутреннего устройства.
+
+Обычно итератор поддерживает операции:
+\begin{itemize}
+    \item проверить наличие следующего элемента;
+    \item получить следующий элемент.
+\end{itemize}
+
+\subsection{Алгоритм обхода контейнера с помощью итератора}
+
+Пусть есть контейнер $C$.
+
+\textbf{Шаги алгоритма:}
+\begin{enumerate}
+    \item Получить итератор $it$ для контейнера $C$.
+    \item Пока в контейнере есть следующий элемент:
+    \begin{enumerate}
+        \item получить текущий элемент;
+        \item обработать текущий элемент;
+        \item перейти к следующему элементу.
+    \end{enumerate}
+    \item Завершить обход.
+\end{enumerate}
+
+\textbf{Иллюстрация:}
+
+\[
+[10, 20, 30]
+\]
+
+\[
+it \rightarrow 10 \quad \Rightarrow \quad it \rightarrow 20 \quad \Rightarrow \quad it \rightarrow 30.
+\]
+
+\begin{lstlisting}[language=Java,caption={Обход с помощью итератора}]
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List<Integer> values = Arrays.asList(10, 20, 30);
+
+        Iterator<Integer> it = values.iterator();
+
+        while (it.hasNext()) {
+            int x = it.next();
+            System.out.println(x);
+        }
+    }
+}
+\end{lstlisting}
+
+\subsection{Сопроцедуры и корутины}
+
+\textbf{Сопроцедура} или \textbf{корутина} --- программный компонент, который может приостанавливать своё выполнение и затем продолжать его с сохранённого состояния.
+
+Обычная процедура имеет схему:
+
+\[
+\text{вызов} \rightarrow \text{выполнение} \rightarrow \text{возврат}.
+\]
+
+Корутина имеет схему:
+
+\[
+\text{вызов} \rightarrow \text{выполнение} \rightarrow \text{приостановка} \rightarrow \text{возобновление} \rightarrow \dots
+\]
+
+\subsection{Генераторы как частный случай корутин}
+
+Генератор выдаёт значения по одному, сохраняя своё состояние между вызовами.
+
+\begin{lstlisting}[language=Python,caption={Генератор как пример корутины}]
+def numbers():
+    yield 1
+    yield 2
+    yield 3
+
+for x in numbers():
+    print(x)
+\end{lstlisting}
+
+\textbf{Шаги выполнения:}
+\begin{enumerate}
+    \item Вызов \texttt{numbers()} создаёт объект-генератор.
+    \item Первый вызов итерации выполняет код до \texttt{yield 1}.
+    \item Значение $1$ возвращается вызывающему коду.
+    \item Состояние функции сохраняется.
+    \item Следующая итерация продолжает выполнение после \texttt{yield 1}.
+    \item Аналогично возвращаются $2$ и $3$.
+    \item После завершения функции итерация заканчивается.
+\end{enumerate}
+
+\textbf{Иллюстрация:}
+
+\[
+start \rightarrow yield\ 1 \rightarrow pause
+\]
+
+\[
+resume \rightarrow yield\ 2 \rightarrow pause
+\]
+
+\[
+resume \rightarrow yield\ 3 \rightarrow finish.
+\]
+
+\section{Шаблоны проектирования}
+
+\subsection{Понятие шаблона проектирования}
+
+\textbf{Шаблон проектирования} --- это обобщённое повторно используемое решение типичной задачи проектирования программного обеспечения.
+
+Шаблон не является готовым фрагментом кода. Он описывает:
+\begin{itemize}
+    \item проблему;
+    \item контекст её возникновения;
+    \item структуру решения;
+    \item участников;
+    \item последствия применения.
+\end{itemize}
+
+Шаблоны проектирования позволяют использовать накопленный опыт разработки и дают общий язык общения между разработчиками.
+
+\subsection{Зачем нужны шаблоны проектирования}
+
+Шаблоны применяются для:
+\begin{itemize}
+    \item повышения повторного использования решений;
+    \item уменьшения связанности между классами;
+    \item повышения гибкости архитектуры;
+    \item упрощения сопровождения;
+    \item стандартизации проектных решений;
+    \item документирования архитектурных идей.
+\end{itemize}
+
+\subsection{Опасность чрезмерного применения}
+
+Шаблоны не следует применять механически.
+
+Недостатки чрезмерного использования:
+\begin{itemize}
+    \item усложнение архитектуры;
+    \item появление лишних классов;
+    \item ухудшение читаемости;
+    \item снижение производительности;
+    \item переинжиниринг простых задач.
+\end{itemize}
+
+Шаблон оправдан, если он решает реальную проблему изменяемости, расширяемости или повторного использования.
+
+\section{Классификация шаблонов проектирования}
+
+Классическая классификация шаблонов проектирования делит их на три группы:
+\begin{enumerate}
+    \item порождающие;
+    \item структурные;
+    \item поведенческие.
+\end{enumerate}
+
+\subsection{Порождающие шаблоны}
+
+\textbf{Порождающие шаблоны} управляют процессом создания объектов.
+
+Они помогают:
+\begin{itemize}
+    \item скрыть конкретные классы создаваемых объектов;
+    \item отделить создание объекта от его использования;
+    \item обеспечить гибкую настройку процесса создания.
+\end{itemize}
+
+К порождающим шаблонам относятся:
+\begin{itemize}
+    \item Singleton;
+    \item Factory Method;
+    \item Abstract Factory;
+    \item Builder;
+    \item Prototype.
+\end{itemize}
+
+\subsection{Структурные шаблоны}
+
+\textbf{Структурные шаблоны} описывают способы объединения классов и объектов в более крупные структуры.
+
+Они помогают:
+\begin{itemize}
+    \item адаптировать интерфейсы;
+    \item строить иерархии объектов;
+    \item добавлять функциональность без изменения исходного класса;
+    \item уменьшать связанность.
+\end{itemize}
+
+К структурным шаблонам относятся:
+\begin{itemize}
+    \item Adapter;
+    \item Bridge;
+    \item Composite;
+    \item Decorator;
+    \item Facade;
+    \item Flyweight;
+    \item Proxy.
+\end{itemize}
+
+\subsection{Поведенческие шаблоны}
+
+\textbf{Поведенческие шаблоны} описывают взаимодействие объектов и распределение ответственности между ними.
+
+Они помогают:
+\begin{itemize}
+    \item организовывать обмен сообщениями;
+    \item изменять поведение объекта во время выполнения;
+    \item отделять алгоритмы от объектов;
+    \item уменьшать связанность участников взаимодействия.
+\end{itemize}
+
+К поведенческим шаблонам относятся:
+\begin{itemize}
+    \item Chain of Responsibility;
+    \item Command;
+    \item Interpreter;
+    \item Iterator;
+    \item Mediator;
+    \item Memento;
+    \item Observer;
+    \item State;
+    \item Strategy;
+    \item Template Method;
+    \item Visitor.
+\end{itemize}
+
+\section{Примеры шаблонов проектирования}
+
+\subsection{Singleton}
+
+\subsubsection{Назначение}
+
+\textbf{Singleton} гарантирует, что у класса существует только один экземпляр, и предоставляет глобальную точку доступа к нему.
+
+\subsubsection{Когда применять}
+
+Шаблон применяют, когда:
+\begin{itemize}
+    \item в системе должен быть ровно один объект данного класса;
+    \item нужен централизованный доступ к общему ресурсу;
+    \item создание нескольких экземпляров нарушает логику программы.
+\end{itemize}
+
+Примеры:
+\begin{itemize}
+    \item конфигурация приложения;
+    \item журналирование;
+    \item пул соединений;
+    \item менеджер ресурсов.
+\end{itemize}
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Singleton}]
+class Logger {
+    private static final Logger INSTANCE = new Logger();
+
+    private Logger() {}
+
+    public static Logger getInstance() {
+        return INSTANCE;
+    }
+
+    public void log(String message) {
+        System.out.println(message);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Logger logger = Logger.getInstance();
+        logger.log("Application started");
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Достоинства и недостатки}
+
+Достоинства:
+\begin{itemize}
+    \item контроль числа экземпляров;
+    \item единая точка доступа.
+\end{itemize}
+
+Недостатки:
+\begin{itemize}
+    \item глобальное состояние;
+    \item усложнение тестирования;
+    \item скрытые зависимости;
+    \item возможное нарушение принципа единственной ответственности.
+\end{itemize}
+
+\subsection{Factory Method}
+
+\subsubsection{Назначение}
+
+\textbf{Factory Method} определяет общий интерфейс создания объекта, но позволяет подклассам выбирать конкретный создаваемый класс.
+
+\subsubsection{Идея}
+
+Клиентский код работает с абстрактным продуктом, а создание конкретного продукта делегируется фабричному методу.
+
+\[
+\texttt{Creator} \rightarrow \texttt{factoryMethod()} \rightarrow \texttt{Product}.
+\]
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Factory Method}]
+interface Button {
+    void render();
+}
+
+class WindowsButton implements Button {
+    public void render() {
+        System.out.println("Windows button");
+    }
+}
+
+class HtmlButton implements Button {
+    public void render() {
+        System.out.println("HTML button");
+    }
+}
+
+abstract class Dialog {
+    public void renderDialog() {
+        Button button = createButton();
+        button.render();
+    }
+
+    protected abstract Button createButton();
+}
+
+class WindowsDialog extends Dialog {
+    protected Button createButton() {
+        return new WindowsButton();
+    }
+}
+
+class WebDialog extends Dialog {
+    protected Button createButton() {
+        return new HtmlButton();
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Алгоритм применения}
+
+\begin{enumerate}
+    \item Выделить общий интерфейс продукта.
+    \item Создать конкретные реализации продукта.
+    \item В базовом классе определить фабричный метод.
+    \item В подклассах переопределить фабричный метод.
+    \item Клиентский код должен работать с абстрактным продуктом.
+\end{enumerate}
+
+\subsection{Abstract Factory}
+
+\subsubsection{Назначение}
+
+\textbf{Abstract Factory} предоставляет интерфейс для создания семейств взаимосвязанных объектов без указания их конкретных классов.
+
+\subsubsection{Пример задачи}
+
+Нужно создавать элементы интерфейса для разных платформ:
+\[
+\texttt{WindowsButton}, \quad \texttt{WindowsCheckbox}
+\]
+и
+\[
+\texttt{MacButton}, \quad \texttt{MacCheckbox}.
+\]
+
+Важно, чтобы элементы одного семейства были совместимы.
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Abstract Factory}]
+interface Button {
+    void paint();
+}
+
+interface Checkbox {
+    void paint();
+}
+
+class WindowsButton implements Button {
+    public void paint() {
+        System.out.println("Windows button");
+    }
+}
+
+class WindowsCheckbox implements Checkbox {
+    public void paint() {
+        System.out.println("Windows checkbox");
+    }
+}
+
+class MacButton implements Button {
+    public void paint() {
+        System.out.println("Mac button");
+    }
+}
+
+class MacCheckbox implements Checkbox {
+    public void paint() {
+        System.out.println("Mac checkbox");
+    }
+}
+
+interface GUIFactory {
+    Button createButton();
+    Checkbox createCheckbox();
+}
+
+class WindowsFactory implements GUIFactory {
+    public Button createButton() {
+        return new WindowsButton();
+    }
+
+    public Checkbox createCheckbox() {
+        return new WindowsCheckbox();
+    }
+}
+
+class MacFactory implements GUIFactory {
+    public Button createButton() {
+        return new MacButton();
+    }
+
+    public Checkbox createCheckbox() {
+        return new MacCheckbox();
+    }
+}
+\end{lstlisting}
+
+\subsection{Builder}
+
+\subsubsection{Назначение}
+
+\textbf{Builder} отделяет конструирование сложного объекта от его представления.
+
+Шаблон полезен, когда объект имеет много параметров или сложный процесс создания.
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Builder}]
+class User {
+    private String name;
+    private int age;
+    private String email;
+
+    private User(Builder builder) {
+        this.name = builder.name;
+        this.age = builder.age;
+        this.email = builder.email;
+    }
+
+    static class Builder {
+        private String name;
+        private int age;
+        private String email;
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder age(int age) {
+            this.age = age;
+            return this;
+        }
+
+        public Builder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public User build() {
+            return new User(this);
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        User user = new User.Builder()
+            .name("Alice")
+            .age(20)
+            .email("alice@example.com")
+            .build();
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Шаги построения объекта}
+
+\begin{enumerate}
+    \item Создаётся объект-строитель.
+    \item Последовательно задаются нужные параметры.
+    \item Вызывается метод \texttt{build()}.
+    \item Возвращается готовый объект.
+\end{enumerate}
+
+\subsection{Prototype}
+
+\subsubsection{Назначение}
+
+\textbf{Prototype} создаёт новые объекты путём копирования существующего объекта-прототипа.
+
+\subsubsection{Когда применять}
+
+Шаблон полезен, когда:
+\begin{itemize}
+    \item создание объекта дорогостоящее;
+    \item объект имеет сложную начальную конфигурацию;
+    \item нужно создавать объекты, похожие на уже существующие.
+\end{itemize}
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Prototype}]
+class Document implements Cloneable {
+    private String text;
+
+    public Document(String text) {
+        this.text = text;
+    }
+
+    public Document clone() {
+        return new Document(this.text);
+    }
+}
+\end{lstlisting}
+
+\subsection{Adapter}
+
+\subsubsection{Назначение}
+
+\textbf{Adapter} преобразует интерфейс одного класса в интерфейс, ожидаемый клиентом.
+
+\subsubsection{Пример}
+
+Есть старый класс:
+
+\begin{lstlisting}[language=Java]
+class OldPrinter {
+    public void printOld(String text) {
+        System.out.println(text);
+    }
+}
+\end{lstlisting}
+
+Клиент ожидает интерфейс:
+
+\begin{lstlisting}[language=Java]
+interface Printer {
+    void print(String text);
+}
+\end{lstlisting}
+
+Адаптер:
+
+\begin{lstlisting}[language=Java,caption={Adapter}]
+class PrinterAdapter implements Printer {
+    private OldPrinter oldPrinter;
+
+    public PrinterAdapter(OldPrinter oldPrinter) {
+        this.oldPrinter = oldPrinter;
+    }
+
+    public void print(String text) {
+        oldPrinter.printOld(text);
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Иллюстрация}
+
+\[
+\texttt{Client} \rightarrow \texttt{Printer}
+\]
+
+\[
+\texttt{PrinterAdapter} \rightarrow \texttt{OldPrinter}.
+\]
+
+Клиент не знает о существовании \texttt{OldPrinter}.
+
+\subsection{Decorator}
+
+\subsubsection{Назначение}
+
+\textbf{Decorator} динамически добавляет объекту новую функциональность, не изменяя его класс.
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Decorator}]
+interface Notifier {
+    void send(String message);
+}
+
+class EmailNotifier implements Notifier {
+    public void send(String message) {
+        System.out.println("Email: " + message);
+    }
+}
+
+class SmsDecorator implements Notifier {
+    private Notifier notifier;
+
+    public SmsDecorator(Notifier notifier) {
+        this.notifier = notifier;
+    }
+
+    public void send(String message) {
+        notifier.send(message);
+        System.out.println("SMS: " + message);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Notifier notifier = new SmsDecorator(new EmailNotifier());
+        notifier.send("Hello");
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Идея}
+
+\[
+\texttt{Decorator} \supset \texttt{Component}
+\]
+
+Декоратор содержит ссылку на объект того же интерфейса и дополняет его поведение.
+
+\subsection{Facade}
+
+\subsubsection{Назначение}
+
+\textbf{Facade} предоставляет простой интерфейс к сложной подсистеме.
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Facade}]
+class CPU {
+    void freeze() {}
+    void execute() {}
+}
+
+class Memory {
+    void load() {}
+}
+
+class HardDrive {
+    byte[] read() {
+        return new byte[0];
+    }
+}
+
+class ComputerFacade {
+    private CPU cpu = new CPU();
+    private Memory memory = new Memory();
+    private HardDrive hardDrive = new HardDrive();
+
+    public void start() {
+        cpu.freeze();
+        memory.load();
+        hardDrive.read();
+        cpu.execute();
+    }
+}
+\end{lstlisting}
+
+Клиент вызывает только:
+\[
+\texttt{computer.start();}
+\]
+
+и не работает напрямую со всеми частями подсистемы.
+
+\subsection{Proxy}
+
+\subsubsection{Назначение}
+
+\textbf{Proxy} предоставляет объект-заместитель, контролирующий доступ к другому объекту.
+
+\subsubsection{Применения}
+
+\begin{itemize}
+    \item ленивое создание объекта;
+    \item контроль доступа;
+    \item удалённый доступ;
+    \item кеширование;
+    \item логирование вызовов.
+\end{itemize}
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Proxy}]
+interface Image {
+    void display();
+}
+
+class RealImage implements Image {
+    private String filename;
+
+    public RealImage(String filename) {
+        this.filename = filename;
+        loadFromDisk();
+    }
+
+    private void loadFromDisk() {
+        System.out.println("Loading " + filename);
+    }
+
+    public void display() {
+        System.out.println("Displaying " + filename);
+    }
+}
+
+class ProxyImage implements Image {
+    private String filename;
+    private RealImage realImage;
+
+    public ProxyImage(String filename) {
+        this.filename = filename;
+    }
+
+    public void display() {
+        if (realImage == null) {
+            realImage = new RealImage(filename);
+        }
+        realImage.display();
+    }
+}
+\end{lstlisting}
+
+\subsection{Composite}
+
+\subsubsection{Назначение}
+
+\textbf{Composite} позволяет работать с отдельными объектами и группами объектов единообразно.
+
+\subsubsection{Пример}
+
+Файловая система:
+\[
+\texttt{File} \quad \text{и} \quad \texttt{Directory}
+\]
+могут иметь общий интерфейс \texttt{FileSystemNode}.
+
+\begin{lstlisting}[language=Java,caption={Composite}]
+import java.util.*;
+
+interface Graphic {
+    void draw();
+}
+
+class Circle implements Graphic {
+    public void draw() {
+        System.out.println("Circle");
+    }
+}
+
+class Group implements Graphic {
+    private List<Graphic> children = new ArrayList<>();
+
+    public void add(Graphic graphic) {
+        children.add(graphic);
+    }
+
+    public void draw() {
+        for (Graphic graphic : children) {
+            graphic.draw();
+        }
+    }
+}
+\end{lstlisting}
+
+\subsection{Strategy}
+
+\subsubsection{Назначение}
+
+\textbf{Strategy} определяет семейство алгоритмов, инкапсулирует каждый из них и делает их взаимозаменяемыми.
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Strategy}]
+interface SortStrategy {
+    void sort(int[] array);
+}
+
+class BubbleSort implements SortStrategy {
+    public void sort(int[] array) {
+        System.out.println("Bubble sort");
+    }
+}
+
+class QuickSort implements SortStrategy {
+    public void sort(int[] array) {
+        System.out.println("Quick sort");
+    }
+}
+
+class Sorter {
+    private SortStrategy strategy;
+
+    public Sorter(SortStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public void sort(int[] array) {
+        strategy.sort(array);
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Алгоритм применения}
+
+\begin{enumerate}
+    \item Выделить изменяющийся алгоритм.
+    \item Описать общий интерфейс стратегии.
+    \item Создать конкретные стратегии.
+    \item Передавать стратегию объекту-контексту.
+    \item Вызывать алгоритм через интерфейс стратегии.
+\end{enumerate}
+
+\subsubsection{Иллюстрация}
+
+\[
+\texttt{Sorter} \rightarrow \texttt{SortStrategy}
+\]
+
+\[
+\texttt{BubbleSort}, \quad \texttt{QuickSort}, \quad \texttt{MergeSort}.
+\]
+
+\subsection{Observer}
+
+\subsubsection{Назначение}
+
+\textbf{Observer} определяет зависимость ``один ко многим'', при которой изменение состояния одного объекта автоматически уведомляет зависимые объекты.
+
+\subsubsection{Пример}
+
+\[
+\texttt{Subject} \rightarrow \texttt{Observer}_1, \texttt{Observer}_2, \dots, \texttt{Observer}_n.
+\]
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Observer}]
+import java.util.*;
+
+interface Observer {
+    void update(String message);
+}
+
+class Subject {
+    private List<Observer> observers = new ArrayList<>();
+
+    public void subscribe(Observer observer) {
+        observers.add(observer);
+    }
+
+    public void notifyObservers(String message) {
+        for (Observer observer : observers) {
+            observer.update(message);
+        }
+    }
+}
+
+class EmailSubscriber implements Observer {
+    public void update(String message) {
+        System.out.println("Email: " + message);
+    }
+}
+
+class SmsSubscriber implements Observer {
+    public void update(String message) {
+        System.out.println("SMS: " + message);
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Алгоритм уведомления}
+
+\begin{enumerate}
+    \item Субъект хранит список наблюдателей.
+    \item Наблюдатель подписывается на субъект.
+    \item Состояние субъекта изменяется.
+    \item Субъект вызывает метод уведомления у каждого наблюдателя.
+    \item Каждый наблюдатель реагирует на изменение.
+\end{enumerate}
+
+\subsection{Command}
+
+\subsubsection{Назначение}
+
+\textbf{Command} превращает запрос в объект.
+
+Это позволяет:
+\begin{itemize}
+    \item параметризовать объекты действиями;
+    \item ставить команды в очередь;
+    \item логировать команды;
+    \item реализовывать отмену операций.
+\end{itemize}
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Command}]
+interface Command {
+    void execute();
+}
+
+class Light {
+    public void on() {
+        System.out.println("Light on");
+    }
+
+    public void off() {
+        System.out.println("Light off");
+    }
+}
+
+class LightOnCommand implements Command {
+    private Light light;
+
+    public LightOnCommand(Light light) {
+        this.light = light;
+    }
+
+    public void execute() {
+        light.on();
+    }
+}
+
+class RemoteControl {
+    private Command command;
+
+    public void setCommand(Command command) {
+        this.command = command;
+    }
+
+    public void pressButton() {
+        command.execute();
+    }
+}
+\end{lstlisting}
+
+\subsection{State}
+
+\subsubsection{Назначение}
+
+\textbf{State} позволяет объекту изменять своё поведение при изменении внутреннего состояния.
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={State}]
+interface State {
+    void handle();
+}
+
+class DraftState implements State {
+    public void handle() {
+        System.out.println("Document is draft");
+    }
+}
+
+class PublishedState implements State {
+    public void handle() {
+        System.out.println("Document is published");
+    }
+}
+
+class Document {
+    private State state;
+
+    public void setState(State state) {
+        this.state = state;
+    }
+
+    public void request() {
+        state.handle();
+    }
+}
+\end{lstlisting}
+
+\subsection{Template Method}
+
+\subsubsection{Назначение}
+
+\textbf{Template Method} задаёт скелет алгоритма в базовом классе, позволяя подклассам переопределять отдельные шаги алгоритма.
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Template Method}]
+abstract class DataProcessor {
+    public final void process() {
+        readData();
+        transformData();
+        saveData();
+    }
+
+    protected abstract void readData();
+    protected abstract void transformData();
+
+    protected void saveData() {
+        System.out.println("Saving data");
+    }
+}
+
+class CsvProcessor extends DataProcessor {
+    protected void readData() {
+        System.out.println("Reading CSV");
+    }
+
+    protected void transformData() {
+        System.out.println("Transforming CSV");
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Шаги алгоритма}
+
+\begin{enumerate}
+    \item Базовый класс определяет общий порядок действий.
+    \item Некоторые шаги реализуются в базовом классе.
+    \item Некоторые шаги объявляются абстрактными.
+    \item Подклассы задают конкретную реализацию отдельных шагов.
+\end{enumerate}
+
+\subsection{Iterator}
+
+\subsubsection{Назначение}
+
+\textbf{Iterator} предоставляет способ последовательного доступа к элементам агрегированного объекта без раскрытия его внутреннего представления.
+
+Этот шаблон лежит в основе стандартных итераторов коллекций.
+
+\subsubsection{Минимальный пример}
+
+\begin{lstlisting}[language=Java,caption={Iterator}]
+interface MyIterator<T> {
+    boolean hasNext();
+    T next();
+}
+
+class ArrayIterator<T> implements MyIterator<T> {
+    private T[] array;
+    private int index = 0;
+
+    public ArrayIterator(T[] array) {
+        this.array = array;
+    }
+
+    public boolean hasNext() {
+        return index < array.length;
+    }
+
+    public T next() {
+        return array[index++];
+    }
+}
+\end{lstlisting}
+
+\section{Принципы проектирования ОО-систем}
+
+\subsection{SOLID}
+
+SOLID --- набор принципов объектно-ориентированного проектирования:
+\begin{enumerate}
+    \item Single Responsibility Principle;
+    \item Open/Closed Principle;
+    \item Liskov Substitution Principle;
+    \item Interface Segregation Principle;
+    \item Dependency Inversion Principle.
+\end{enumerate}
+
+\subsection{Принцип единственной ответственности}
+
+\textbf{Single Responsibility Principle}:
+\[
+\text{у класса должна быть только одна причина для изменения.}
+\]
+
+Если класс одновременно отвечает за бизнес-логику, сохранение в базу данных и вывод на экран, он нарушает этот принцип.
+
+Плохой пример:
+\begin{lstlisting}[language=Java]
+class Report {
+    public void calculate() {}
+    public void saveToFile() {}
+    public void print() {}
+}
+\end{lstlisting}
+
+Лучше разделить ответственности:
+\begin{lstlisting}[language=Java]
+class Report {
+    public void calculate() {}
+}
+
+class ReportSaver {
+    public void saveToFile(Report report) {}
+}
+
+class ReportPrinter {
+    public void print(Report report) {}
+}
+\end{lstlisting}
+
+\subsection{Принцип открытости/закрытости}
+
+\textbf{Open/Closed Principle}:
+\[
+\text{программные сущности должны быть открыты для расширения, но закрыты для изменения.}
+\]
+
+Идея: новую функциональность лучше добавлять через новые классы, а не через постоянное изменение старого кода.
+
+Например, вместо большого оператора \texttt{switch} по типам фигур лучше использовать полиморфизм:
+
+\begin{lstlisting}[language=Java]
+interface Shape {
+    double area();
+}
+\end{lstlisting}
+
+Новая фигура добавляется новым классом, не меняя код вычисления суммы площадей.
+
+\subsection{Принцип подстановки Лисков}
+
+\textbf{Liskov Substitution Principle}:
+\[
+\text{объекты подкласса должны быть заменяемы объектами базового класса без нарушения корректности программы.}
+\]
+
+Если функция ожидает объект типа \texttt{Shape}, то передача объекта \texttt{Circle} не должна ломать её логику.
+
+Нарушение принципа часто возникает, когда подкласс усиливает предусловия или ослабляет постусловия методов базового класса.
+
+\subsection{Принцип разделения интерфейсов}
+
+\textbf{Interface Segregation Principle}:
+\[
+\text{клиенты не должны зависеть от методов, которые они не используют.}
+\]
+
+Плохой пример:
+\begin{lstlisting}[language=Java]
+interface Worker {
+    void work();
+    void eat();
+}
+
+class Robot implements Worker {
+    public void work() {}
+    public void eat() {
+        throw new UnsupportedOperationException();
+    }
+}
+\end{lstlisting}
+
+Лучше:
+\begin{lstlisting}[language=Java]
+interface Workable {
+    void work();
+}
+
+interface Eatable {
+    void eat();
+}
+\end{lstlisting}
+
+\subsection{Принцип инверсии зависимостей}
+
+\textbf{Dependency Inversion Principle}:
+\[
+\text{модули верхнего уровня не должны зависеть от модулей нижнего уровня;}
+\]
+\[
+\text{оба должны зависеть от абстракций.}
+\]
+
+Плохой пример:
+\begin{lstlisting}[language=Java]
+class MySQLDatabase {
+    void save(String data) {}
+}
+
+class UserService {
+    private MySQLDatabase database = new MySQLDatabase();
+}
+\end{lstlisting}
+
+Лучше:
+\begin{lstlisting}[language=Java]
+interface Database {
+    void save(String data);
+}
+
+class MySQLDatabase implements Database {
+    public void save(String data) {}
+}
+
+class UserService {
+    private Database database;
+
+    public UserService(Database database) {
+        this.database = database;
+    }
+}
+\end{lstlisting}
+
+\section{Связность и сцепление}
+
+\subsection{Связность}
+
+\textbf{Связность} модуля показывает, насколько тесно элементы внутри одного модуля связаны между собой.
+
+Высокая связность обычно является хорошим свойством.
+
+Класс должен иметь чёткую ответственность, а его методы должны работать на общую цель.
+
+\subsection{Сцепление}
+
+\textbf{Сцепление} показывает степень зависимости одного модуля от другого.
+
+Низкое сцепление обычно является хорошим свойством.
+
+ООП и шаблоны проектирования часто направлены на:
+\[
+\text{высокую связность} + \text{низкое сцепление}.
+\]
+
+\section{Сравнение наследования и композиции}
+
+\begin{longtable}{|p{5cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Критерий} & \textbf{Наследование} & \textbf{Композиция} \\
+\hline
+Отношение & is-a & has-a \\
+\hline
+Связь классов & Более жёсткая & Более гибкая \\
+\hline
+Повторное использование & Через базовый класс & Через включение объекта \\
+\hline
+Изменение поведения & Обычно через переопределение & Через замену компонента \\
+\hline
+Риск нарушения инкапсуляции & Выше & Ниже \\
+\hline
+Пример & \texttt{Circle extends Shape} & \texttt{Car has Engine} \\
+\hline
+\end{longtable}
+
+\section{Исключения как объектный механизм}
+
+\subsection{Понятие исключения}
+
+\textbf{Исключение} --- объект, описывающий ошибочную или нестандартную ситуацию во время выполнения программы.
+
+Исключения позволяют отделить обычную логику программы от обработки ошибок.
+
+\begin{lstlisting}[language=Java,caption={Исключения}]
+public class Main {
+    public static int divide(int a, int b) {
+        if (b == 0) {
+            throw new IllegalArgumentException("Division by zero");
+        }
+        return a / b;
+    }
+
+    public static void main(String[] args) {
+        try {
+            System.out.println(divide(10, 0));
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
+\end{lstlisting}
+
+\section{Сериализация объектов}
+
+\subsection{Понятие сериализации}
+
+\textbf{Сериализация} --- преобразование объекта в последовательность байтов или текстовый формат для хранения или передачи.
+
+\textbf{Десериализация} --- восстановление объекта из сохранённого представления.
+
+Применения:
+\begin{itemize}
+    \item сохранение состояния программы;
+    \item передача объектов по сети;
+    \item кеширование;
+    \item обмен данными между сервисами.
+\end{itemize}
+
+\section{Краткая сравнительная таблица шаблонов}
+
+\begin{longtable}{|p{4cm}|p{4cm}|p{6cm}|}
+\hline
+\textbf{Шаблон} & \textbf{Группа} & \textbf{Основная идея} \\
+\hline
+Singleton & Порождающий & Единственный экземпляр класса \\
+\hline
+Factory Method & Порождающий & Делегирование создания объектов подклассам \\
+\hline
+Abstract Factory & Порождающий & Создание семейств связанных объектов \\
+\hline
+Builder & Порождающий & Пошаговое создание сложного объекта \\
+\hline
+Prototype & Порождающий & Создание объекта копированием прототипа \\
+\hline
+Adapter & Структурный & Совмещение несовместимых интерфейсов \\
+\hline
+Decorator & Структурный & Динамическое добавление поведения \\
+\hline
+Facade & Структурный & Простой интерфейс к сложной подсистеме \\
+\hline
+Proxy & Структурный & Заместитель объекта с контролем доступа \\
+\hline
+Composite & Структурный & Единообразная работа с объектами и их группами \\
+\hline
+Strategy & Поведенческий & Взаимозаменяемые алгоритмы \\
+\hline
+Observer & Поведенческий & Уведомление зависимых объектов об изменениях \\
+\hline
+Command & Поведенческий & Представление запроса в виде объекта \\
+\hline
+State & Поведенческий & Изменение поведения при изменении состояния \\
+\hline
+Template Method & Поведенческий & Скелет алгоритма в базовом классе \\
+\hline
+Iterator & Поведенческий & Последовательный обход контейнера \\
+\hline
+\end{longtable}
+
+\section{Минимальный пример совместного применения принципов ООП}
+
+Рассмотрим задачу: нужно отправлять уведомления разными способами.
+
+Плохой вариант:
+
+\begin{lstlisting}[language=Java]
+class NotificationService {
+    public void send(String type, String message) {
+        if (type.equals("email")) {
+            System.out.println("Email: " + message);
+        } else if (type.equals("sms")) {
+            System.out.println("SMS: " + message);
+        }
+    }
+}
+\end{lstlisting}
+
+Недостатки:
+\begin{itemize}
+    \item при добавлении нового способа уведомления нужно изменять класс;
+    \item нарушается принцип открытости/закрытости;
+    \item логика разных уведомлений смешана.
+\end{itemize}
+
+Хороший вариант:
+
+\begin{lstlisting}[language=Java]
+interface Notifier {
+    void send(String message);
+}
+
+class EmailNotifier implements Notifier {
+    public void send(String message) {
+        System.out.println("Email: " + message);
+    }
+}
+
+class SmsNotifier implements Notifier {
+    public void send(String message) {
+        System.out.println("SMS: " + message);
+    }
+}
+
+class NotificationService {
+    private Notifier notifier;
+
+    public NotificationService(Notifier notifier) {
+        this.notifier = notifier;
+    }
+
+    public void notify(String message) {
+        notifier.send(message);
+    }
+}
+\end{lstlisting}
+
+Здесь используются:
+\begin{itemize}
+    \item абстракция --- интерфейс \texttt{Notifier};
+    \item инкапсуляция --- конкретные способы отправки скрыты в классах;
+    \item полиморфизм --- сервис работает с любым объектом \texttt{Notifier};
+    \item композиция --- сервис содержит объект уведомления;
+    \item Strategy --- способ отправки сообщения является заменяемой стратегией;
+    \item Dependency Inversion --- сервис зависит от интерфейса, а не от конкретного класса.
+\end{itemize}
+
+\section{Выводы}
+
+Объектно-ориентированное программирование строится вокруг понятий класса, объекта, состояния, поведения и взаимодействия объектов.
+
+Основные принципы ООП:
+\begin{itemize}
+    \item абстракция позволяет выделять главное;
+    \item инкапсуляция защищает внутреннее состояние объекта;
+    \item наследование позволяет строить иерархии и повторно использовать код;
+    \item полиморфизм обеспечивает единообразную работу с разными типами объектов.
+\end{itemize}
+
+Интерфейсы, библиотеки классов, контейнеры, итераторы, рефлексия и корутины образуют важную часть объектного окружения современных языков программирования.
+
+Шаблоны проектирования представляют собой проверенные решения типичных задач проектирования. Они делятся на порождающие, структурные и поведенческие. Правильное применение шаблонов повышает гибкость, расширяемость и сопровождаемость программ, однако чрезмерное использование шаблонов может сделать архитектуру излишне сложной.
+
+\end{document}
