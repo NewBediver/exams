@@ -1,0 +1,296 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{float}
+
+\geometry{left=25mm, right=15mm, top=20mm, bottom=20mm}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.98,0.98,0.98}
+
+\lstdefinestyle{sqlstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=SQL,
+    literate=
+      {А}{{\CYRA}}1
+      {Б}{{\CYRB}}1
+      {В}{{\CYRV}}1
+      {Г}{{\CYRG}}1
+      {Д}{{\CYRD}}1
+      {Е}{{\CYRE}}1
+      {Ё}{{\CYRYO}}1
+      {Ж}{{\CYRZH}}1
+      {З}{{\CYRZ}}1
+      {И}{{\CYRI}}1
+      {Й}{{\CYRISHRT}}1
+      {К}{{\CYRK}}1
+      {Л}{{\CYRL}}1
+      {М}{{\CYRM}}1
+      {Н}{{\CYRN}}1
+      {О}{{\CYRO}}1
+      {П}{{\CYRP}}1
+      {Р}{{\CYRR}}1
+      {С}{{\CYRS}}1
+      {Т}{{\CYRT}}1
+      {У}{{\CYRU}}1
+      {Ф}{{\CYRF}}1
+      {Х}{{\CYRH}}1
+      {Ц}{{\CYRC}}1
+      {Ч}{{\CYRCH}}1
+      {Ш}{{\CYRSH}}1
+      {Щ}{{\CYRSHCH}}1
+      {Ъ}{{\CYRHRDSN}}1
+      {Ы}{{\CYRERY}}1
+      {Ь}{{\CYRSFTSN}}1
+      {Э}{{\CYREREV}}1
+      {Ю}{{\CYRYU}}1
+      {Я}{{\CYRYA}}1
+      {а}{{\cyra}}1
+      {б}{{\cyrb}}1
+      {в}{{\cyrv}}1
+      {г}{{\cyrg}}1
+      {д}{{\cyrd}}1
+      {е}{{\cyre}}1
+      {ё}{{\cyryo}}1
+      {ж}{{\cyrzh}}1
+      {з}{{\cyrz}}1
+      {и}{{\cyri}}1
+      {й}{{\cyrishrt}}1
+      {к}{{\cyrk}}1
+      {л}{{\cyrl}}1
+      {м}{{\cyrm}}1
+      {н}{{\cyrn}}1
+      {о}{{\cyro}}1
+      {п}{{\cyrp}}1
+      {р}{{\cyrr}}1
+      {с}{{\cyrs}}1
+      {т}{{\cyrt}}1
+      {у}{{\cyru}}1
+      {ф}{{\cyrf}}1
+      {х}{{\cyrh}}1
+      {ц}{{\cyrc}}1
+      {ч}{{\cyrch}}1
+      {ш}{{\cyrsh}}1
+      {щ}{{\cyrshch}}1
+      {ъ}{{\cyrhrdsn}}1
+      {ы}{{\cyrery}}1
+      {ь}{{\cyrsftsn}}1
+      {э}{{\cyrerev}}1
+      {ю}{{\cyryu}}1
+      {я}{{\cyrya}}1
+}
+\lstset{style=sqlstyle}
+
+\newtheorem{theorem}{Теорема}
+\newtheorem{definition}{Определение}
+
+\title{Билет №78 \\ \small Язык SQL. Средства определения и изменения схемы БД, определения ограничений целостности. Контроль доступа. Средства манипулирования данными. (СпБГУ)}
+\author{Сериков Владислав Александрович}
+\date{16 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Введение}
+\textbf{SQL (Structured Query Language)} --- декларативный язык программирования, применяемый для создания, модификации и управления данными в реляционных базах данных.
+
+Для обеспечения теоретической базы SQL опирается на реляционную алгебру. Связь между SQL и реляционной алгеброй описывается теоремой о реляционной полноте.
+
+\begin{definition}
+Язык запросов называется \textbf{реляционно полным}, если он обладает выразительной мощностью, не уступающей базовой реляционной алгебре (содержащей операции: выборка, проекция, декартово произведение, объединение, разность).
+\end{definition}
+
+\begin{theorem}[Реляционная полнота ядра SQL]
+Язык SQL, включающий базовый блок \texttt{SELECT-FROM-WHERE}, а также операции \texttt{UNION}, \texttt{EXCEPT} и возможность использования вложенных подзапросов, является реляционно полным.
+\end{theorem}
+
+\begin{proof}
+Доказательство проведем методом структурной индукции по построению выражения реляционной алгебры. Покажем, что любую из пяти базовых операций можно выразить средствами SQL.
+
+\textbf{База индукции:} Отношение $R$.
+В SQL тривиально выражается как: \lstinline|SELECT * FROM R;|.
+
+\textbf{Индукционный переход:} Пусть выражения $E_1$ и $E_2$ уже могут быть выражены SQL-запросами $Q_1$ и $Q_2$. Покажем выразимость базовых операций:
+\begin{enumerate}
+    \item \textit{Проекция} $\pi_{A_1, \dots, A_n}(E_1)$.
+    Транслируется в SQL путем указания нужных атрибутов в секции \texttt{SELECT}:
+    \begin{lstlisting}
+SELECT DISTINCT A_1, ..., A_n FROM (Q_1) AS T;
+    \end{lstlisting}
+    (Ключевое слово \texttt{DISTINCT} необходимо для строгого соответствия алгебре, так как она оперирует множествами, а не мультимножествами).
+
+    \item \textit{Выборка (селекция)} $\sigma_P(E_1)$, где $P$ --- предикат.
+    Транслируется с помощью секции \texttt{WHERE}:
+    \begin{lstlisting}
+SELECT * FROM (Q_1) AS T WHERE P;
+    \end{lstlisting}
+
+    \item \textit{Декартово произведение} $E_1 \times E_2$.
+    \begin{lstlisting}
+SELECT * FROM (Q_1) AS T1 CROSS JOIN (Q2) AS T2;
+    \end{lstlisting}
+
+    \item \textit{Объединение} $E_1 \cup E_2$.
+    \begin{lstlisting}
+(Q_1) UNION (Q_2);
+    \end{lstlisting}
+    (В SQL \texttt{UNION} по умолчанию удаляет дубликаты, что соответствует теоретико-множественному объединению).
+
+    \item \textit{Разность} $E_1 \setminus E_2$.
+    \begin{lstlisting}
+(Q_1) EXCEPT (Q_2);
+    \end{lstlisting}
+    (В некоторых СУБД используется оператор \texttt{MINUS}).
+\end{enumerate}
+Поскольку все базовые операции реляционной алгебры выразимы в SQL, язык является реляционно полным. Ч.т.д.
+\end{proof}
+
+\section{Средства определения и изменения схемы БД (DDL)}
+\textbf{DDL (Data Definition Language)} --- подмножество SQL, предназначенное для описания структур базы данных.
+
+Основные операторы DDL:
+\begin{itemize}
+    \item \texttt{CREATE} --- создание объектов БД (таблиц, индексов, представлений).
+    \item \texttt{ALTER} --- модификация существующих объектов (добавление/удаление столбцов, изменение типов).
+    \item \texttt{DROP} --- удаление объектов из БД.
+    \item \texttt{TRUNCATE} --- быстрое удаление всех данных из таблицы с сохранением её структуры.
+\end{itemize}
+
+\textbf{Пример создания и изменения таблицы:}
+\begin{lstlisting}
+CREATE TABLE Students (
+    StudentID INT PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL,
+    EnrollmentYear INT
+);
+
+ALTER TABLE Students ADD Email VARCHAR(255);
+DROP TABLE Students;
+\end{lstlisting}
+
+\section{Ограничения целостности (Integrity Constraints)}
+Ограничения целостности гарантируют корректность и непротиворечивость данных. Они определяются в DDL при создании или изменении таблицы.
+
+\begin{enumerate}
+    \item \textbf{PRIMARY KEY} (Первичный ключ) --- уникально идентифицирует каждую запись в таблице. Не допускает значений \texttt{NULL}.
+    \item \textbf{FOREIGN KEY} (Внешний ключ) --- обеспечивает ссылочную целостность между таблицами. Гарантирует, что значение в дочерней таблице должно присутствовать в родительской. Может сопровождаться каскадными операциями: \texttt{ON DELETE CASCADE}, \texttt{ON UPDATE SET NULL} и др.
+    \item \textbf{UNIQUE} --- гарантирует уникальность значений в столбце (допускает одно или несколько значений \texttt{NULL} в зависимости от СУБД).
+    \item \textbf{NOT NULL} --- запрещает наличие пустых значений (\texttt{NULL}) в столбце.
+    \item \textbf{CHECK} --- проверяет выполнение заданного логического условия для каждой строки.
+\end{enumerate}
+
+\textbf{Пример использования ограничений:}
+\begin{lstlisting}
+CREATE TABLE Enrollments (
+    EnrollmentID INT PRIMARY KEY,
+    StudentID INT,
+    CourseID INT,
+    Grade DECIMAL(3,2) CHECK (Grade >= 0.0 AND Grade <= 5.0),
+    CONSTRAINT fk_student FOREIGN KEY (StudentID)
+        REFERENCES Students(StudentID) ON DELETE CASCADE
+);
+\end{lstlisting}
+
+\section{Контроль доступа (DCL)}
+\textbf{DCL (Data Control Language)} --- подмножество SQL, управляющее правами доступа пользователей к объектам БД.
+
+\begin{itemize}
+    \item \texttt{GRANT} --- предоставляет привилегии.
+    \item \texttt{REVOKE} --- отзывает привилегии.
+\end{itemize}
+
+Синтаксис:
+\begin{lstlisting}
+GRANT SELECT, INSERT ON Students TO 'user1';
+REVOKE DELETE ON Students FROM 'user1';
+\end{lstlisting}
+
+Также в современных СУБД используется ролевая модель доступа (RBAC), позволяющая выдавать привилегии не конкретному пользователю, а роли:
+\begin{lstlisting}
+CREATE ROLE data_entry;
+GRANT INSERT, UPDATE ON Enrollments TO data_entry;
+GRANT data_entry TO 'alice';
+\end{lstlisting}
+
+\section{Средства манипулирования данными (DML)}
+\textbf{DML (Data Manipulation Language)} --- подмножество SQL для работы с данными внутри таблиц. Включает \texttt{INSERT}, \texttt{UPDATE}, \texttt{DELETE} и \texttt{SELECT} (часто \texttt{SELECT} выделяют в DQL --- Data Query Language).
+
+\subsection{Модификация данных}
+\begin{lstlisting}
+-- Добавление данных
+INSERT INTO Students (StudentID, Name) VALUES (1, 'Ivan Ivanov');
+
+-- Обновление данных
+UPDATE Students SET EnrollmentYear = 2023 WHERE StudentID = 1;
+
+-- Удаление данных
+DELETE FROM Students WHERE EnrollmentYear < 2020;
+\end{lstlisting}
+
+\subsection{Алгоритм логической обработки DML-запроса (SELECT)}
+Для понимания семантики оператора \texttt{SELECT} используется алгоритм логического (концептуального) выполнения запроса. Порядок написания ключевых слов в SQL не совпадает с порядком их логической обработки СУБД.
+
+\textbf{Шаги алгоритма логической обработки запроса:}
+
+\begin{enumerate}
+    \item \textbf{FROM (и JOIN):} Определение источников данных. Вычисляется декартово произведение всех указанных таблиц. Если указаны соединения (\texttt{JOIN}), применяются условия объединения (\texttt{ON}), фильтруя декартово произведение.
+    \item \textbf{WHERE:} Применение предиката фильтрации к строкам, полученным на шаге 1. Строки, для которых предикат дает \texttt{FALSE} или \texttt{UNKNOWN}, отбрасываются.
+    \item \textbf{GROUP BY:} Группировка строк по уникальным значениям указанных столбцов. Каждая группа сворачивается в одну строку.
+    \item \textbf{HAVING:} Фильтрация сгруппированных данных (вычисление агрегатных функций и проверка условий для групп).
+    \item \textbf{SELECT:} Проекция. Вычисляются выражения, указанные в списке выборки. Назначаются псевдонимы (\texttt{AS}).
+    \item \textbf{DISTINCT:} Удаление дубликатов из результирующего набора строк.
+    \item \textbf{ORDER BY:} Сортировка итогового набора данных по заданным критериям (направление \texttt{ASC} или \texttt{DESC}).
+    \item \textbf{LIMIT / OFFSET:} Пропуск заданного числа строк и ограничение размера вывода (в диалектах SQL Server используется \texttt{TOP}, в Oracle — \texttt{FETCH FIRST}).
+\end{enumerate}
+
+\textbf{Иллюстрация и минимальный пример алгоритма:}
+
+Рассмотрим запрос, который выводит номера курсов, на которых обучается более 10 студентов, отсортированные по убыванию числа студентов:
+
+\begin{lstlisting}
+SELECT CourseID, COUNT(StudentID) as StudentCount
+FROM Enrollments
+WHERE Grade >= 3.0
+GROUP BY CourseID
+HAVING COUNT(StudentID) > 10
+ORDER BY StudentCount DESC;
+\end{lstlisting}
+
+\textit{Пошаговая иллюстрация:}
+\begin{itemize}
+    \item \textbf{Шаг 1 (FROM):} Берется полная таблица \texttt{Enrollments}.
+    \item \textbf{Шаг 2 (WHERE):} Отбрасываются строки, где оценка меньше $3.0$.
+    \item \textbf{Шаг 3 (GROUP BY):} Оставшиеся строки разбиваются на "корзины" (группы) по значению \texttt{CourseID}.
+    \item \textbf{Шаг 4 (HAVING):} Для каждой корзины вычисляется \texttt{COUNT(StudentID)}. Корзины, в которых $\leq 10$ элементов, удаляются из рассмотрения.
+    \item \textbf{Шаг 5 (SELECT):} Для оставшихся корзин формируются результирующие строки: номер курса и вычисленное количество (создается алиас \texttt{StudentCount}).
+    \item \textbf{Шаг 6 (ORDER BY):} Сформированные строки сортируются по убыванию значения \texttt{StudentCount}.
+\end{itemize}
+
+\end{document}

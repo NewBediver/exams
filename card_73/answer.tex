@@ -1,0 +1,1273 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+
+\geometry{margin=2.2cm}
+
+\newtheorem{definition}{Определение}[section]
+\newtheorem{theorem}{Теорема}[section]
+\newtheorem{lemma}{Лемма}[section]
+\newtheorem{proposition}{Утверждение}[section]
+\newtheorem{example}{Пример}[section]
+
+\theoremstyle{remark}
+\newtheorem{remark}{Замечание}[section]
+
+\lstdefinestyle{sqlstyle}{
+    language=SQL,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red!60!black},
+    breaklines=true,
+    frame=single
+}
+
+\title{Билет №73 \\ \small CASE-средства и их использование при проектировании базы данных (БД), нотация IDEF. (СпБГУ)}
+\author{Сериков Владислав Александрович}
+\date{16 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{CASE-средства и их использование при проектировании баз данных. Нотации семейства IDEF}
+
+\subsection{Основные понятия}
+
+\textbf{CASE-средства} --- это программные средства, поддерживающие процессы анализа, проектирования, разработки, документирования, сопровождения и реинжиниринга информационных систем. Аббревиатура CASE обычно раскрывается как \textit{Computer-Aided Software Engineering}, то есть автоматизированная поддержка разработки программного обеспечения.
+
+В контексте проектирования баз данных CASE-средства применяются для построения моделей данных, проверки их корректности, генерации схем БД, документирования структуры данных, сопровождения изменений и обратного проектирования уже существующих баз данных.
+
+\textbf{База данных} --- это организованная совокупность взаимосвязанных данных, предназначенная для долговременного хранения, поиска, изменения и совместного использования.
+
+\textbf{Система управления базами данных} --- программный комплекс, обеспечивающий создание, хранение, модификацию и защиту данных, а также доступ к ним со стороны прикладных программ и пользователей.
+
+\textbf{Проектирование базы данных} --- процесс построения структуры данных, ограничений целостности и способов доступа к данным, удовлетворяющих требованиям предметной области и будущей информационной системы.
+
+Обычно выделяют следующие уровни проектирования БД:
+
+\begin{enumerate}
+    \item \textbf{Инфологическое проектирование} --- описание предметной области независимо от конкретной СУБД. Результат: концептуальная модель данных.
+    \item \textbf{Даталогическое проектирование} --- преобразование концептуальной модели в логическую модель, например в реляционную схему.
+    \item \textbf{Физическое проектирование} --- выбор конкретных структур хранения, индексов, табличных пространств, параметров СУБД.
+\end{enumerate}
+
+CASE-средства особенно полезны на инфологическом и даталогическом этапах, поскольку позволяют формализовать знания о предметной области и уменьшить количество ошибок при переходе от требований к реализации.
+
+\subsection{Классификация CASE-средств}
+
+CASE-средства можно классифицировать по нескольким признакам.
+
+\subsubsection{По этапам жизненного цикла}
+
+\begin{enumerate}
+    \item \textbf{Upper CASE} --- средства верхнего уровня, поддерживающие анализ предметной области, моделирование бизнес-процессов, построение концептуальных моделей.
+    \item \textbf{Middle CASE} --- средства проектирования архитектуры, логических моделей данных, интерфейсов, спецификаций.
+    \item \textbf{Lower CASE} --- средства генерации кода, схем БД, DDL-скриптов, тестов и документации.
+    \item \textbf{Integrated CASE} --- интегрированные среды, поддерживающие несколько стадий жизненного цикла.
+\end{enumerate}
+
+\subsubsection{По назначению}
+
+\begin{enumerate}
+    \item средства функционального моделирования;
+    \item средства информационного моделирования;
+    \item средства объектно-ориентированного моделирования;
+    \item средства проектирования реляционных баз данных;
+    \item средства обратного проектирования;
+    \item средства генерации документации;
+    \item средства контроля версий и управления изменениями моделей.
+\end{enumerate}
+
+\subsubsection{По степени автоматизации}
+
+\begin{enumerate}
+    \item \textbf{Рисующие средства} --- позволяют строить диаграммы, но почти не проверяют их семантику.
+    \item \textbf{Моделирующие средства} --- хранят модель в репозитории и проверяют ее внутреннюю согласованность.
+    \item \textbf{Генерирующие средства} --- способны порождать SQL-код, DDL-скрипты, документацию, фрагменты программного кода.
+    \item \textbf{Реинжиниринговые средства} --- восстанавливают модели по существующим схемам БД или программному коду.
+\end{enumerate}
+
+\subsection{Основные функции CASE-средств при проектировании БД}
+
+CASE-средства для проектирования баз данных обычно поддерживают следующие функции:
+
+\begin{enumerate}
+    \item \textbf{Создание концептуальной модели данных}.
+
+    На этом этапе описываются сущности предметной области, их атрибуты и связи между ними. Например, для университетской системы можно выделить сущности:
+    \[
+        \text{Студент}, \quad \text{Группа}, \quad \text{Дисциплина}, \quad \text{Экзамен}.
+    \]
+
+    \item \textbf{Создание логической модели данных}.
+
+    Концептуальная модель преобразуется в логическую, обычно реляционную. Сущности становятся отношениями, атрибуты --- столбцами, связи --- внешними ключами.
+
+    \item \textbf{Нормализация схемы}.
+
+    CASE-средство может помогать выявлять избыточность данных, повторяющиеся группы, нарушения функциональных зависимостей.
+
+    \item \textbf{Проверка ограничений целостности}.
+
+    Средство проверяет наличие первичных ключей, корректность внешних ключей, обязательность атрибутов, типы связей, кардинальности.
+
+    \item \textbf{Генерация DDL-скриптов}.
+
+    По модели автоматически создаются SQL-команды:
+
+\begin{verbatim}
+CREATE TABLE Student (
+    student_id INTEGER PRIMARY KEY,
+    full_name  VARCHAR(200) NOT NULL,
+    group_id   INTEGER NOT NULL,
+    FOREIGN KEY (group_id) REFERENCES StudyGroup(group_id)
+);
+\end{verbatim}
+
+    \item \textbf{Обратное проектирование}.
+
+    CASE-средство может подключиться к существующей БД, считать структуру таблиц, ключей и связей, после чего построить диаграмму модели данных.
+
+    \item \textbf{Синхронизация модели и базы данных}.
+
+    При изменении модели можно сформировать миграционные скрипты, изменяющие физическую схему БД.
+
+    \item \textbf{Документирование}.
+
+    По модели формируются отчеты: список таблиц, атрибутов, ключей, ограничений, связей, комментариев.
+
+    \item \textbf{Командная работа}.
+
+    Современные CASE-средства могут поддерживать репозитории моделей, контроль версий, сравнение моделей и разрешение конфликтов.
+\end{enumerate}
+
+\subsection{Преимущества использования CASE-средств}
+
+Использование CASE-средств при проектировании баз данных дает следующие преимущества:
+
+\begin{enumerate}
+    \item повышение наглядности проекта;
+    \item снижение количества ошибок в схеме БД;
+    \item автоматизация рутинных операций;
+    \item ускорение перехода от модели к реализации;
+    \item упрощение сопровождения БД;
+    \item возможность коллективной разработки;
+    \item единое хранилище проектной информации;
+    \item автоматическое формирование документации;
+    \item поддержка стандартных нотаций моделирования.
+\end{enumerate}
+
+\subsection{Недостатки и ограничения CASE-средств}
+
+Несмотря на преимущества, CASE-средства не устраняют необходимость квалифицированного проектирования. Их ограничения:
+
+\begin{enumerate}
+    \item средство не заменяет анализ предметной области;
+    \item ошибки аналитика могут быть формально корректно перенесены в модель;
+    \item возможна зависимость от конкретного инструмента и его формата хранения моделей;
+    \item сложные модели требуют дисциплины именования и документирования;
+    \item автоматическая генерация схемы не всегда дает оптимальную физическую структуру;
+    \item требуется обучение команды выбранной методологии и инструменту.
+\end{enumerate}
+
+\subsection{Типовой процесс проектирования БД с использованием CASE-средства}
+
+Проектирование базы данных с помощью CASE-средства можно представить как алгоритм.
+
+\subsubsection*{Алгоритм проектирования БД с использованием CASE-средства}
+
+\begin{enumerate}
+    \item \textbf{Сбор требований}.
+
+    Определяются цели системы, пользователи, бизнес-процессы, документы, отчеты, правила предметной области.
+
+    \item \textbf{Выделение объектов предметной области}.
+
+    Из требований извлекаются основные сущности. Например:
+    \[
+        \text{Клиент}, \quad \text{Заказ}, \quad \text{Товар}, \quad \text{Платеж}.
+    \]
+
+    \item \textbf{Определение атрибутов сущностей}.
+
+    Для каждой сущности задаются свойства:
+    \[
+        \text{Клиент}(\text{id}, \text{ФИО}, \text{телефон}, \text{email}).
+    \]
+
+    \item \textbf{Выбор идентификаторов}.
+
+    Для каждой сущности выбирается первичный ключ. Например:
+    \[
+        \text{client\_id}
+    \]
+    для сущности \texttt{Client}.
+
+    \item \textbf{Определение связей}.
+
+    Устанавливаются связи между сущностями. Например:
+    \[
+        \text{Клиент} \; 1 : N \; \text{Заказ}.
+    \]
+
+    Это означает, что один клиент может иметь много заказов, но каждый заказ принадлежит одному клиенту.
+
+    \item \textbf{Уточнение кардинальностей и обязательности}.
+
+    Определяется, является ли участие сущности в связи обязательным. Например, заказ не может существовать без клиента, значит связь со стороны заказа обязательна.
+
+    \item \textbf{Построение концептуальной модели}.
+
+    В CASE-средстве строится ER-, UML- или IDEF1X-диаграмма.
+
+    \item \textbf{Преобразование в логическую модель}.
+
+    Сущности преобразуются в таблицы, атрибуты --- в столбцы, связи --- во внешние ключи.
+
+    \item \textbf{Проверка модели}.
+
+    Проверяются ключи, типы данных, связи, циклы, избыточные атрибуты, нарушения целостности.
+
+    \item \textbf{Нормализация}.
+
+    Схема приводится, как правило, по крайней мере к третьей нормальной форме, если нет специальных причин для денормализации.
+
+    \item \textbf{Физическое проектирование}.
+
+    Выбираются типы данных конкретной СУБД, индексы, ограничения, секционирование, параметры хранения.
+
+    \item \textbf{Генерация SQL-скриптов}.
+
+    CASE-средство формирует DDL-код для создания объектов БД.
+
+    \item \textbf{Развертывание и тестирование}.
+
+    Скрипты выполняются в тестовой БД, проверяются ограничения, запросы и производительность.
+
+    \item \textbf{Документирование}.
+
+    Генерируется описание схемы, диаграммы, словарь данных.
+
+    \item \textbf{Сопровождение}.
+
+    При изменении требований корректируется модель, а затем выполняется синхронизация с БД.
+\end{enumerate}
+
+\subsection{Минимальный пример проектирования БД в CASE-стиле}
+
+Рассмотрим предметную область: студент записывается на учебные курсы.
+
+\subsubsection*{Шаг 1. Выделение сущностей}
+
+\[
+    \text{Student}, \quad \text{Course}, \quad \text{Enrollment}.
+\]
+
+\subsubsection*{Шаг 2. Определение атрибутов}
+
+\[
+\begin{aligned}
+    \text{Student} &= (\text{student\_id}, \text{full\_name}, \text{email}),\\
+    \text{Course} &= (\text{course\_id}, \text{title}, \text{credits}),\\
+    \text{Enrollment} &= (\text{student\_id}, \text{course\_id}, \text{enroll\_date}, \text{grade}).
+\end{aligned}
+\]
+
+\subsubsection*{Шаг 3. Определение связей}
+
+Один студент может быть записан на несколько курсов, и один курс может иметь много студентов. Следовательно, между \texttt{Student} и \texttt{Course} существует связь многие-ко-многим:
+
+\[
+    \text{Student} \; M : N \; \text{Course}.
+\]
+
+В реляционной модели такая связь реализуется через ассоциативную таблицу:
+
+\[
+    \text{Enrollment}.
+\]
+
+\subsubsection*{Шаг 4. Логическая схема}
+
+\[
+\begin{aligned}
+    \text{Student}(&\underline{\text{student\_id}}, \text{full\_name}, \text{email}),\\
+    \text{Course}(&\underline{\text{course\_id}}, \text{title}, \text{credits}),\\
+    \text{Enrollment}(&\underline{\text{student\_id}, \text{course\_id}}, \text{enroll\_date}, \text{grade}).
+\end{aligned}
+\]
+
+Здесь подчеркивание обозначает первичный ключ. В таблице \texttt{Enrollment} первичный ключ составной.
+
+\subsubsection*{Шаг 5. DDL-код}
+
+\begin{verbatim}
+CREATE TABLE Student (
+    student_id INTEGER PRIMARY KEY,
+    full_name  VARCHAR(200) NOT NULL,
+    email      VARCHAR(200) UNIQUE
+);
+
+CREATE TABLE Course (
+    course_id INTEGER PRIMARY KEY,
+    title     VARCHAR(200) NOT NULL,
+    credits   INTEGER NOT NULL CHECK (credits > 0)
+);
+
+CREATE TABLE Enrollment (
+    student_id  INTEGER NOT NULL,
+    course_id   INTEGER NOT NULL,
+    enroll_date DATE NOT NULL,
+    grade       INTEGER CHECK (grade BETWEEN 2 AND 5),
+    PRIMARY KEY (student_id, course_id),
+    FOREIGN KEY (student_id) REFERENCES Student(student_id),
+    FOREIGN KEY (course_id) REFERENCES Course(course_id)
+);
+\end{verbatim}
+
+\subsection{Основные нотации моделирования данных}
+
+При проектировании БД CASE-средства могут поддерживать разные нотации:
+
+\begin{enumerate}
+    \item ER-нотация Чена;
+    \item нотация Crow's Foot;
+    \item IDEF1X;
+    \item UML Class Diagram;
+    \item Barker notation;
+    \item собственные нотации конкретных CASE-средств.
+\end{enumerate}
+
+Для проектирования реляционных баз данных особенно важна нотация \textbf{IDEF1X}, поскольку она ориентирована на информационное моделирование и хорошо согласуется с реляционной моделью данных.
+
+\section{Семейство методологий IDEF}
+
+\subsection{Общая характеристика IDEF}
+
+\textbf{IDEF} --- семейство методологий моделирования, предназначенных для описания функций, процессов, информации, данных и поведения систем.
+
+Наиболее известны:
+
+\begin{enumerate}
+    \item \textbf{IDEF0} --- функциональное моделирование;
+    \item \textbf{IDEF1} --- информационное моделирование;
+    \item \textbf{IDEF1X} --- моделирование данных;
+    \item \textbf{IDEF3} --- описание процессов и сценариев;
+    \item \textbf{IDEF4} --- объектно-ориентированное проектирование;
+    \item \textbf{IDEF5} --- онтологическое моделирование.
+\end{enumerate}
+
+При проектировании баз данных наиболее важны IDEF0 и IDEF1X:
+
+\begin{itemize}
+    \item IDEF0 помогает понять функции и информационные потоки предметной области;
+    \item IDEF1X используется для построения модели данных.
+\end{itemize}
+
+\section{Нотация IDEF0}
+
+\subsection{Назначение IDEF0}
+
+\textbf{IDEF0} --- методология функционального моделирования, применяемая для описания деятельности организации или системы. Она позволяет представить систему как совокупность взаимосвязанных функций.
+
+IDEF0 полезна при проектировании БД, потому что позволяет выявить:
+
+\begin{enumerate}
+    \item какие процессы существуют в предметной области;
+    \item какие данные используются процессами;
+    \item какие документы и объекты поступают на вход;
+    \item какие результаты формируются на выходе;
+    \item какие правила управляют процессами;
+    \item какие исполнители и средства обеспечивают выполнение функций.
+\end{enumerate}
+
+\subsection{Базовая конструкция IDEF0}
+
+Основным элементом IDEF0 является \textbf{функциональный блок}. Он изображается прямоугольником, а стрелки вокруг него имеют строго заданную семантику.
+
+\[
+\begin{array}{c}
+    \text{Управление} \\
+    \downarrow \\
+    \boxed{\text{Функция}} \\
+    \uparrow \\
+    \text{Механизм}
+\end{array}
+\]
+
+Формально функцию можно описать как преобразование:
+
+\[
+    Y = F(X, C, M),
+\]
+
+где:
+
+\begin{itemize}
+    \item $X$ --- входы;
+    \item $C$ --- управления;
+    \item $M$ --- механизмы;
+    \item $Y$ --- выходы.
+\end{itemize}
+
+В IDEF0 используется аббревиатура \textbf{ICOM}:
+
+\[
+    ICOM = Input, Control, Output, Mechanism.
+\]
+
+\subsection{Типы стрелок IDEF0}
+
+\begin{enumerate}
+    \item \textbf{Input} --- вход.
+
+    Данные или материальные объекты, преобразуемые функцией.
+
+    \item \textbf{Control} --- управление.
+
+    Правила, ограничения, стандарты, инструкции, влияющие на выполнение функции, но не преобразуемые ею.
+
+    \item \textbf{Output} --- выход.
+
+    Результат выполнения функции.
+
+    \item \textbf{Mechanism} --- механизм.
+
+    Исполнители, технические средства, программные системы, ресурсы.
+\end{enumerate}
+
+\subsection{Пример IDEF0-модели для проектирования БД}
+
+Рассмотрим процесс \textbf{оформления заказа}.
+
+\[
+\begin{array}{lll}
+    \text{Входы:} & \text{заявка клиента, данные о товарах};\\
+    \text{Управления:} & \text{правила скидок, договор, регламент продаж};\\
+    \text{Выходы:} & \text{заказ, счет, резерв товара};\\
+    \text{Механизмы:} & \text{менеджер, информационная система, складская система}.
+\end{array}
+\]
+
+Из такой модели можно извлечь кандидаты в сущности БД:
+
+\[
+    \text{Client}, \quad \text{Order}, \quad \text{Product}, \quad \text{Invoice}, \quad \text{Warehouse}.
+\]
+
+\subsection{Декомпозиция в IDEF0}
+
+IDEF0 поддерживает иерархическую декомпозицию функций. Верхний уровень описывает систему в целом, а нижние уровни раскрывают детали.
+
+Например:
+
+\[
+    A0 = \text{Управлять продажами}.
+\]
+
+Декомпозиция:
+
+\[
+\begin{aligned}
+    A1 &= \text{Принять заказ},\\
+    A2 &= \text{Проверить наличие товара},\\
+    A3 &= \text{Сформировать счет},\\
+    A4 &= \text{Отгрузить товар}.
+\end{aligned}
+\]
+
+Для проектирования БД это важно, поскольку на каждом уровне декомпозиции выявляются новые данные и связи.
+
+\section{Нотация IDEF1X}
+
+\subsection{Назначение IDEF1X}
+
+\textbf{IDEF1X} --- нотация информационного моделирования, предназначенная для описания структуры данных предметной области. Она особенно удобна для проектирования реляционных баз данных.
+
+IDEF1X используется для:
+
+\begin{enumerate}
+    \item выявления сущностей предметной области;
+    \item описания атрибутов сущностей;
+    \item задания идентификаторов;
+    \item описания связей между сущностями;
+    \item отображения обязательности и кардинальности связей;
+    \item подготовки модели к преобразованию в реляционную схему.
+\end{enumerate}
+
+\subsection{Сущность в IDEF1X}
+
+\textbf{Сущность} --- множество объектов предметной области одного типа, о которых необходимо хранить информацию.
+
+Примеры сущностей:
+
+\[
+    \text{Студент}, \quad \text{Преподаватель}, \quad \text{Кафедра}, \quad \text{Дисциплина}.
+\]
+
+В IDEF1X сущность изображается прямоугольником, внутри которого указываются имя сущности и атрибуты.
+
+Пример:
+
+\[
+\begin{array}{|l|}
+\hline
+\text{STUDENT}\\
+\hline
+\text{student\_id}\\
+\hline
+\text{full\_name}\\
+\text{birth\_date}\\
+\text{email}\\
+\hline
+\end{array}
+\]
+
+\subsection{Атрибут}
+
+\textbf{Атрибут} --- именованное свойство сущности.
+
+Например, для сущности \texttt{Student} атрибутами могут быть:
+
+\[
+    \text{student\_id}, \quad \text{full\_name}, \quad \text{birth\_date}, \quad \text{email}.
+\]
+
+Атрибуты бывают:
+
+\begin{enumerate}
+    \item \textbf{ключевые} --- входят в идентификатор сущности;
+    \item \textbf{неключевые} --- описывают свойства сущности;
+    \item \textbf{обязательные} --- не допускают отсутствующего значения;
+    \item \textbf{необязательные} --- допускают отсутствие значения.
+\end{enumerate}
+
+\subsection{Идентификатор}
+
+\textbf{Идентификатор сущности} --- один или несколько атрибутов, значения которых однозначно определяют экземпляр сущности.
+
+Если идентификатор состоит из одного атрибута, он называется простым:
+
+\[
+    \text{student\_id}.
+\]
+
+Если идентификатор состоит из нескольких атрибутов, он называется составным:
+
+\[
+    (\text{student\_id}, \text{course\_id}).
+\]
+
+В реляционной схеме идентификатор обычно становится первичным ключом.
+
+\subsection{Связи в IDEF1X}
+
+\textbf{Связь} --- ассоциация между сущностями.
+
+В IDEF1X обычно различают:
+
+\begin{enumerate}
+    \item идентифицирующие связи;
+    \item неидентифицирующие связи;
+    \item обязательные связи;
+    \item необязательные связи;
+    \item связи один-к-одному;
+    \item связи один-ко-многим;
+    \item связи многие-ко-многим.
+\end{enumerate}
+
+\subsection{Родительская и дочерняя сущность}
+
+В связи IDEF1X выделяют:
+
+\begin{itemize}
+    \item \textbf{родительскую сущность} --- сущность, чей ключ передается в другую сущность;
+    \item \textbf{дочернюю сущность} --- сущность, которая получает внешний ключ.
+\end{itemize}
+
+Например, если один факультет имеет много кафедр:
+
+\[
+    \text{Faculty} \; 1 : N \; \text{Department},
+\]
+
+то \texttt{Faculty} является родительской сущностью, а \texttt{Department} --- дочерней.
+
+\subsection{Идентифицирующая связь}
+
+\textbf{Идентифицирующая связь} --- связь, при которой ключ родительской сущности входит в состав первичного ключа дочерней сущности.
+
+Например:
+
+\[
+\begin{aligned}
+    \text{Order}(&\underline{\text{order\_id}}, \text{order\_date}),\\
+    \text{OrderItem}(&\underline{\text{order\_id}, \text{line\_no}}, \text{product\_id}, \text{quantity}).
+\end{aligned}
+\]
+
+Здесь \texttt{order\_id} входит в первичный ключ таблицы \texttt{OrderItem}. Поэтому связь между \texttt{Order} и \texttt{OrderItem} является идентифицирующей.
+
+Смысл: строка заказа не имеет самостоятельной идентичности вне заказа.
+
+\subsection{Неидентифицирующая связь}
+
+\textbf{Неидентифицирующая связь} --- связь, при которой ключ родительской сущности мигрирует в дочернюю сущность как внешний ключ, но не входит в ее первичный ключ.
+
+Например:
+
+\[
+\begin{aligned}
+    \text{Department}(&\underline{\text{department\_id}}, \text{name}),\\
+    \text{Employee}(&\underline{\text{employee\_id}}, \text{full\_name}, \text{department\_id}).
+\end{aligned}
+\]
+
+Здесь \texttt{department\_id} является внешним ключом в \texttt{Employee}, но не входит в первичный ключ сотрудника. Следовательно, связь неидентифицирующая.
+
+\subsection{Зависимые и независимые сущности}
+
+В IDEF1X различают:
+
+\begin{enumerate}
+    \item \textbf{независимую сущность};
+    \item \textbf{зависимую сущность}.
+\end{enumerate}
+
+\textbf{Независимая сущность} имеет собственный идентификатор, не зависящий от других сущностей.
+
+Пример:
+
+\[
+    \text{Student}(\underline{\text{student\_id}}, \text{full\_name}).
+\]
+
+\textbf{Зависимая сущность} идентифицируется с использованием ключа другой сущности.
+
+Пример:
+
+\[
+    \text{OrderItem}(\underline{\text{order\_id}, \text{line\_no}}, \text{quantity}).
+\]
+
+Здесь \texttt{OrderItem} зависит от \texttt{Order}.
+
+\subsection{Миграция ключей}
+
+\textbf{Миграция ключа} --- перенос первичного ключа родительской сущности в дочернюю сущность в виде внешнего ключа.
+
+Например:
+
+\[
+\begin{aligned}
+    \text{Client}(&\underline{\text{client\_id}}, \text{name}),\\
+    \text{Order}(&\underline{\text{order\_id}}, \text{order\_date}, \text{client\_id}).
+\end{aligned}
+\]
+
+Ключ \texttt{client\_id} мигрирует из \texttt{Client} в \texttt{Order}.
+
+В SQL это выражается ограничением:
+
+\begin{verbatim}
+FOREIGN KEY (client_id) REFERENCES Client(client_id)
+\end{verbatim}
+
+\subsection{Кардинальность связей}
+
+Кардинальность показывает, сколько экземпляров одной сущности может быть связано с экземпляром другой сущности.
+
+Основные типы:
+
+\begin{enumerate}
+    \item \textbf{один-к-одному}:
+    \[
+        1 : 1;
+    \]
+
+    \item \textbf{один-ко-многим}:
+    \[
+        1 : N;
+    \]
+
+    \item \textbf{многие-ко-многим}:
+    \[
+        M : N.
+    \]
+\end{enumerate}
+
+В реляционной модели связь многие-ко-многим непосредственно не реализуется. Она преобразуется в отдельную ассоциативную сущность.
+
+\subsection{Преобразование связи многие-ко-многим}
+
+Пусть имеется связь:
+
+\[
+    \text{Student} \; M : N \; \text{Course}.
+\]
+
+Она преобразуется в две связи один-ко-многим через ассоциативную сущность:
+
+\[
+    \text{Student} \; 1 : N \; \text{Enrollment} \; N : 1 \; \text{Course}.
+\]
+
+Логическая схема:
+
+\[
+\begin{aligned}
+    \text{Student}(&\underline{\text{student\_id}}, \text{full\_name}),\\
+    \text{Course}(&\underline{\text{course\_id}}, \text{title}),\\
+    \text{Enrollment}(&\underline{\text{student\_id}, \text{course\_id}}, \text{enroll\_date}).
+\end{aligned}
+\]
+
+\section{Алгоритмы преобразования моделей IDEF1X в реляционную схему}
+
+\subsection{Алгоритм преобразования сущностей в таблицы}
+
+\subsubsection*{Вход}
+
+IDEF1X-модель, содержащая множество сущностей:
+
+\[
+    E = \{E_1, E_2, \ldots, E_n\}.
+\]
+
+\subsubsection*{Выход}
+
+Реляционная схема:
+
+\[
+    R = \{R_1, R_2, \ldots, R_n\}.
+\]
+
+\subsubsection*{Шаги алгоритма}
+
+\begin{enumerate}
+    \item Для каждой сущности $E_i$ создать отношение $R_i$.
+    \item Для каждого атрибута сущности создать столбец соответствующего отношения.
+    \item Атрибуты идентификатора сущности назначить первичным ключом.
+    \item Для обязательных атрибутов задать ограничение \texttt{NOT NULL}.
+    \item Для доменов атрибутов выбрать типы данных конкретной СУБД.
+    \item Для уникальных альтернативных идентификаторов задать ограничение \texttt{UNIQUE}.
+\end{enumerate}
+
+\subsubsection*{Минимальный пример}
+
+IDEF1X-сущность:
+
+\[
+    \text{Book}(\underline{\text{book\_id}}, \text{title}, \text{isbn}).
+\]
+
+Реляционная таблица:
+
+\begin{verbatim}
+CREATE TABLE Book (
+    book_id INTEGER PRIMARY KEY,
+    title   VARCHAR(300) NOT NULL,
+    isbn    VARCHAR(20) UNIQUE
+);
+\end{verbatim}
+
+\subsection{Алгоритм преобразования связи один-ко-многим}
+
+\subsubsection*{Вход}
+
+Связь:
+
+\[
+    A \; 1 : N \; B,
+\]
+
+где $A$ --- родительская сущность, $B$ --- дочерняя сущность.
+
+\subsubsection*{Выход}
+
+Реляционные таблицы с внешним ключом.
+
+\subsubsection*{Шаги алгоритма}
+
+\begin{enumerate}
+    \item Создать таблицу для сущности $A$.
+    \item Создать таблицу для сущности $B$.
+    \item Первичный ключ таблицы $A$ добавить в таблицу $B$ как внешний ключ.
+    \item Если связь обязательна со стороны $B$, внешний ключ сделать \texttt{NOT NULL}.
+    \item Если связь идентифицирующая, внешний ключ включить в первичный ключ таблицы $B$.
+    \item Если связь неидентифицирующая, внешний ключ не включать в первичный ключ таблицы $B$.
+\end{enumerate}
+
+\subsubsection*{Пример неидентифицирующей связи}
+
+\[
+    \text{Department} \; 1 : N \; \text{Employee}.
+\]
+
+\begin{verbatim}
+CREATE TABLE Department (
+    department_id INTEGER PRIMARY KEY,
+    name          VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE Employee (
+    employee_id   INTEGER PRIMARY KEY,
+    full_name     VARCHAR(200) NOT NULL,
+    department_id INTEGER NOT NULL,
+    FOREIGN KEY (department_id)
+        REFERENCES Department(department_id)
+);
+\end{verbatim}
+
+\subsubsection*{Пример идентифицирующей связи}
+
+\[
+    \text{Order} \; 1 : N \; \text{OrderItem}.
+\]
+
+\begin{verbatim}
+CREATE TABLE Orders (
+    order_id   INTEGER PRIMARY KEY,
+    order_date DATE NOT NULL
+);
+
+CREATE TABLE OrderItem (
+    order_id  INTEGER NOT NULL,
+    line_no   INTEGER NOT NULL,
+    product   VARCHAR(200) NOT NULL,
+    quantity  INTEGER NOT NULL,
+    PRIMARY KEY (order_id, line_no),
+    FOREIGN KEY (order_id)
+        REFERENCES Orders(order_id)
+);
+\end{verbatim}
+
+\subsection{Алгоритм преобразования связи многие-ко-многим}
+
+\subsubsection*{Вход}
+
+Связь:
+
+\[
+    A \; M : N \; B.
+\]
+
+\subsubsection*{Выход}
+
+Три отношения: два основных и одно ассоциативное.
+
+\subsubsection*{Шаги алгоритма}
+
+\begin{enumerate}
+    \item Создать таблицу для сущности $A$.
+    \item Создать таблицу для сущности $B$.
+    \item Создать новую ассоциативную таблицу $AB$.
+    \item Добавить в $AB$ первичный ключ $A$ как внешний ключ.
+    \item Добавить в $AB$ первичный ключ $B$ как внешний ключ.
+    \item Составить первичный ключ $AB$ из внешних ключей $A$ и $B$ либо ввести отдельный суррогатный ключ.
+    \item Добавить атрибуты, относящиеся к самой связи.
+\end{enumerate}
+
+\subsubsection*{Пример}
+
+\[
+    \text{Author} \; M : N \; \text{Book}.
+\]
+
+\begin{verbatim}
+CREATE TABLE Author (
+    author_id INTEGER PRIMARY KEY,
+    full_name VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE Book (
+    book_id INTEGER PRIMARY KEY,
+    title   VARCHAR(300) NOT NULL
+);
+
+CREATE TABLE AuthorBook (
+    author_id INTEGER NOT NULL,
+    book_id   INTEGER NOT NULL,
+    role      VARCHAR(100),
+    PRIMARY KEY (author_id, book_id),
+    FOREIGN KEY (author_id) REFERENCES Author(author_id),
+    FOREIGN KEY (book_id) REFERENCES Book(book_id)
+);
+\end{verbatim}
+
+\section{Место нормализации в CASE-проектировании}
+
+Нормализация --- процесс организации отношений в реляционной БД с целью уменьшения избыточности и предотвращения аномалий вставки, обновления и удаления.
+
+В CASE-проектировании нормализация обычно выполняется после построения логической модели.
+
+\subsection{Первая нормальная форма}
+
+Отношение находится в первой нормальной форме, если все значения его атрибутов атомарны.
+
+Нарушение:
+
+\[
+    \text{Student}(\text{id}, \text{name}, \text{phones}).
+\]
+
+Если в атрибуте \texttt{phones} хранится список телефонов, то значение неатомарно.
+
+Исправление:
+
+\[
+\begin{aligned}
+    \text{Student}(&\underline{\text{id}}, \text{name}),\\
+    \text{StudentPhone}(&\underline{\text{id}, \text{phone}}).
+\end{aligned}
+\]
+
+\subsection{Вторая нормальная форма}
+
+Отношение находится во второй нормальной форме, если оно находится в первой нормальной форме и каждый неключевой атрибут полностью функционально зависит от всего первичного ключа, а не от его части.
+
+Пример нарушения:
+
+\[
+    \text{Enrollment}(\underline{\text{student\_id}, \text{course\_id}}, \text{student\_name}, \text{course\_title}, \text{grade}).
+\]
+
+Здесь:
+
+\[
+    \text{student\_id} \rightarrow \text{student\_name},
+\]
+\[
+    \text{course\_id} \rightarrow \text{course\_title}.
+\]
+
+Следовательно, \texttt{student\_name} и \texttt{course\_title} зависят только от части составного ключа.
+
+Исправление:
+
+\[
+\begin{aligned}
+    \text{Student}(&\underline{\text{student\_id}}, \text{student\_name}),\\
+    \text{Course}(&\underline{\text{course\_id}}, \text{course\_title}),\\
+    \text{Enrollment}(&\underline{\text{student\_id}, \text{course\_id}}, \text{grade}).
+\end{aligned}
+\]
+
+\subsection{Третья нормальная форма}
+
+Отношение находится в третьей нормальной форме, если оно находится во второй нормальной форме и неключевые атрибуты не зависят транзитивно от первичного ключа.
+
+Пример нарушения:
+
+\[
+    \text{Employee}(\underline{\text{employee\_id}}, \text{name}, \text{department\_id}, \text{department\_name}).
+\]
+
+Имеются зависимости:
+
+\[
+    \text{employee\_id} \rightarrow \text{department\_id},
+\]
+\[
+    \text{department\_id} \rightarrow \text{department\_name}.
+\]
+
+Следовательно:
+
+\[
+    \text{employee\_id} \rightarrow \text{department\_name}
+\]
+
+транзитивно.
+
+Исправление:
+
+\[
+\begin{aligned}
+    \text{Employee}(&\underline{\text{employee\_id}}, \text{name}, \text{department\_id}),\\
+    \text{Department}(&\underline{\text{department\_id}}, \text{department\_name}).
+\end{aligned}
+\]
+
+\section{Связь CASE-средств, IDEF0 и IDEF1X}
+
+При проектировании информационной системы удобно использовать несколько моделей одновременно.
+
+\subsection{Общая схема}
+
+\[
+\begin{array}{ccccc}
+\text{Требования}
+& \rightarrow &
+\text{IDEF0-модель процессов}
+& \rightarrow &
+\text{IDEF1X-модель данных}
+\\
+& &
+\downarrow
+& &
+\downarrow
+\\
+& &
+\text{Информационные потоки}
+& \rightarrow &
+\text{Реляционная схема БД}
+\end{array}
+\]
+
+\subsection{Роль IDEF0}
+
+IDEF0 отвечает на вопросы:
+
+\begin{enumerate}
+    \item какие функции выполняет система;
+    \item какие данные поступают на вход;
+    \item какие данные формируются на выходе;
+    \item какие правила управляют процессами;
+    \item какие исполнители и средства участвуют в работе.
+\end{enumerate}
+
+\subsection{Роль IDEF1X}
+
+IDEF1X отвечает на вопросы:
+
+\begin{enumerate}
+    \item какие сущности необходимо хранить;
+    \item какие атрибуты они имеют;
+    \item какие ключи идентифицируют экземпляры;
+    \item какие связи существуют между сущностями;
+    \item как эти связи будут реализованы в реляционной БД.
+\end{enumerate}
+
+\subsection{Роль CASE-средства}
+
+CASE-средство обеспечивает:
+
+\begin{enumerate}
+    \item хранение моделей;
+    \item визуальное редактирование диаграмм;
+    \item проверку согласованности;
+    \item генерацию SQL-кода;
+    \item документирование;
+    \item обратное проектирование;
+    \item сопровождение изменений.
+\end{enumerate}
+
+\section{Пример сквозного проектирования}
+
+Рассмотрим информационную систему библиотеки.
+
+\subsection{IDEF0-уровень}
+
+Основная функция:
+
+\[
+    A0 = \text{Обслуживать читателей библиотеки}.
+\]
+
+Входы:
+
+\[
+    \text{заявка на выдачу книги}, \quad \text{возвращаемая книга}.
+\]
+
+Управления:
+
+\[
+    \text{правила выдачи}, \quad \text{ограничения по срокам}, \quad \text{каталог библиотеки}.
+\]
+
+Выходы:
+
+\[
+    \text{выданная книга}, \quad \text{запись о выдаче}, \quad \text{уведомление о просрочке}.
+\]
+
+Механизмы:
+
+\[
+    \text{библиотекарь}, \quad \text{информационная система}, \quad \text{читательский билет}.
+\]
+
+\subsection{Выделение сущностей}
+
+Из функциональной модели можно выделить сущности:
+
+\[
+    \text{Reader}, \quad \text{Book}, \quad \text{BookCopy}, \quad \text{Loan}, \quad \text{Librarian}.
+\]
+
+\subsection{IDEF1X-модель}
+
+\[
+\begin{aligned}
+    \text{Reader}(&\underline{\text{reader\_id}}, \text{full\_name}, \text{phone}),\\
+    \text{Book}(&\underline{\text{book\_id}}, \text{title}, \text{isbn}),\\
+    \text{BookCopy}(&\underline{\text{copy\_id}}, \text{book\_id}, \text{inventory\_no}),\\
+    \text{Librarian}(&\underline{\text{librarian\_id}}, \text{full\_name}),\\
+    \text{Loan}(&\underline{\text{loan\_id}}, \text{reader\_id}, \text{copy\_id}, \text{librarian\_id}, \text{loan\_date}, \text{return\_date}).
+\end{aligned}
+\]
+
+\subsection{Связи}
+
+\[
+    \text{Book} \; 1 : N \; \text{BookCopy}.
+\]
+
+Одна книга может иметь несколько физических экземпляров.
+
+\[
+    \text{Reader} \; 1 : N \; \text{Loan}.
+\]
+
+Один читатель может иметь много выдач.
+
+\[
+    \text{BookCopy} \; 1 : N \; \text{Loan}.
+\]
+
+Один экземпляр книги может участвовать во многих выдачах в разные моменты времени.
+
+\[
+    \text{Librarian} \; 1 : N \; \text{Loan}.
+\]
+
+Один библиотекарь может оформить много выдач.
+
+\subsection{DDL-фрагмент}
+
+\begin{verbatim}
+CREATE TABLE Reader (
+    reader_id INTEGER PRIMARY KEY,
+    full_name VARCHAR(200) NOT NULL,
+    phone     VARCHAR(30)
+);
+
+CREATE TABLE Book (
+    book_id INTEGER PRIMARY KEY,
+    title   VARCHAR(300) NOT NULL,
+    isbn    VARCHAR(20) UNIQUE
+);
+
+CREATE TABLE BookCopy (
+    copy_id      INTEGER PRIMARY KEY,
+    book_id      INTEGER NOT NULL,
+    inventory_no VARCHAR(50) NOT NULL UNIQUE,
+    FOREIGN KEY (book_id) REFERENCES Book(book_id)
+);
+
+CREATE TABLE Librarian (
+    librarian_id INTEGER PRIMARY KEY,
+    full_name    VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE Loan (
+    loan_id      INTEGER PRIMARY KEY,
+    reader_id    INTEGER NOT NULL,
+    copy_id      INTEGER NOT NULL,
+    librarian_id INTEGER NOT NULL,
+    loan_date    DATE NOT NULL,
+    return_date  DATE,
+    FOREIGN KEY (reader_id) REFERENCES Reader(reader_id),
+    FOREIGN KEY (copy_id) REFERENCES BookCopy(copy_id),
+    FOREIGN KEY (librarian_id) REFERENCES Librarian(librarian_id)
+);
+\end{verbatim}
+
+\section{Примеры CASE-средств для проектирования БД}
+
+К распространенным CASE- и data modeling-средствам относятся:
+
+\begin{enumerate}
+    \item ERwin Data Modeler;
+    \item SAP PowerDesigner;
+    \item Oracle SQL Developer Data Modeler;
+    \item IBM InfoSphere Data Architect;
+    \item Enterprise Architect;
+    \item Visual Paradigm;
+    \item pgModeler;
+    \item MySQL Workbench;
+    \item DBeaver с ER-диаграммами;
+    \item DataGrip с диаграммами зависимостей.
+\end{enumerate}
+
+Типичные возможности таких средств:
+
+\begin{enumerate}
+    \item построение ER-, UML- или IDEF1X-диаграмм;
+    \item описание сущностей, таблиц, атрибутов, ключей;
+    \item генерация DDL;
+    \item reverse engineering существующей БД;
+    \item сравнение модели и физической БД;
+    \item генерация отчетов;
+    \item поддержка нескольких СУБД;
+    \item настройка типов данных для конкретной СУБД.
+\end{enumerate}
+
+\section{Критерии качества модели данных}
+
+Хорошая модель данных должна обладать следующими свойствами:
+
+\begin{enumerate}
+    \item \textbf{полнота} --- отражает все существенные объекты предметной области;
+    \item \textbf{непротиворечивость} --- не содержит логических конфликтов;
+    \item \textbf{минимальная избыточность} --- не дублирует данные без необходимости;
+    \item \textbf{нормализованность} --- устраняет основные аномалии данных;
+    \item \textbf{расширяемость} --- допускает развитие при изменении требований;
+    \item \textbf{реализуемость} --- может быть преобразована в схему конкретной СУБД;
+    \item \textbf{понятность} --- читаема для аналитиков, разработчиков и администраторов;
+    \item \textbf{трассируемость} --- элементы модели связаны с требованиями и бизнес-процессами.
+\end{enumerate}
+
+\section{Типичные ошибки при использовании CASE-средств}
+
+\begin{enumerate}
+    \item построение диаграммы без предварительного анализа предметной области;
+    \item смешение концептуального, логического и физического уровней;
+    \item использование технических идентификаторов без бизнес-смысла там, где нужны естественные ключи;
+    \item отсутствие описаний сущностей и атрибутов;
+    \item некорректное моделирование связей многие-ко-многим;
+    \item чрезмерная денормализация на раннем этапе;
+    \item игнорирование ограничений целостности;
+    \item отсутствие единых правил именования;
+    \item ручное изменение БД без синхронизации с моделью;
+    \item использование CASE-средства только как редактора картинок.
+\end{enumerate}
+
+\section{Выводы}
+
+CASE-средства являются важным инструментом проектирования баз данных. Они позволяют формализовать требования, построить концептуальную и логическую модели, проверить корректность структуры данных, сгенерировать SQL-код и документацию.
+
+Методологии семейства IDEF полезны на разных этапах проектирования. IDEF0 применяется для функционального анализа предметной области и выявления информационных потоков. IDEF1X применяется для детального моделирования данных, сущностей, атрибутов, ключей и связей.
+
+Наиболее эффективный подход состоит в последовательном переходе:
+
+\[
+    \text{требования}
+    \rightarrow
+    \text{функциональная модель}
+    \rightarrow
+    \text{информационная модель}
+    \rightarrow
+    \text{логическая схема}
+    \rightarrow
+    \text{физическая БД}.
+\]
+
+CASE-средство не заменяет аналитика и проектировщика, но существенно повышает качество, согласованность и сопровождаемость проекта базы данных.
+
+\end{document}
