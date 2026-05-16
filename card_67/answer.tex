@@ -1,0 +1,1466 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\geometry{left=2cm,right=2cm,top=2cm,bottom=2cm}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red!60!black},
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    numbersep=8pt,
+    frame=single,
+    breaklines=true,
+    tabsize=4,
+    showstringspaces=false,
+    literate=
+      {А}{{\CYRA}}1
+      {Б}{{\CYRB}}1
+      {В}{{\CYRV}}1
+      {Г}{{\CYRG}}1
+      {Д}{{\CYRD}}1
+      {Е}{{\CYRE}}1
+      {Ё}{{\CYRYO}}1
+      {Ж}{{\CYRZH}}1
+      {З}{{\CYRZ}}1
+      {И}{{\CYRI}}1
+      {Й}{{\CYRISHRT}}1
+      {К}{{\CYRK}}1
+      {Л}{{\CYRL}}1
+      {М}{{\CYRM}}1
+      {Н}{{\CYRN}}1
+      {О}{{\CYRO}}1
+      {П}{{\CYRP}}1
+      {Р}{{\CYRR}}1
+      {С}{{\CYRS}}1
+      {Т}{{\CYRT}}1
+      {У}{{\CYRU}}1
+      {Ф}{{\CYRF}}1
+      {Х}{{\CYRH}}1
+      {Ц}{{\CYRC}}1
+      {Ч}{{\CYRCH}}1
+      {Ш}{{\CYRSH}}1
+      {Щ}{{\CYRSHCH}}1
+      {Ъ}{{\CYRHRDSN}}1
+      {Ы}{{\CYRERY}}1
+      {Ь}{{\CYRSFTSN}}1
+      {Э}{{\CYREREV}}1
+      {Ю}{{\CYRYU}}1
+      {Я}{{\CYRYA}}1
+      {а}{{\cyra}}1
+      {б}{{\cyrb}}1
+      {в}{{\cyrv}}1
+      {г}{{\cyrg}}1
+      {д}{{\cyrd}}1
+      {е}{{\cyre}}1
+      {ё}{{\cyryo}}1
+      {ж}{{\cyrzh}}1
+      {з}{{\cyrz}}1
+      {и}{{\cyri}}1
+      {й}{{\cyrishrt}}1
+      {к}{{\cyrk}}1
+      {л}{{\cyrl}}1
+      {м}{{\cyrm}}1
+      {н}{{\cyrn}}1
+      {о}{{\cyro}}1
+      {п}{{\cyrp}}1
+      {р}{{\cyrr}}1
+      {с}{{\cyrs}}1
+      {т}{{\cyrt}}1
+      {у}{{\cyru}}1
+      {ф}{{\cyrf}}1
+      {х}{{\cyrh}}1
+      {ц}{{\cyrc}}1
+      {ч}{{\cyrch}}1
+      {ш}{{\cyrsh}}1
+      {щ}{{\cyrshch}}1
+      {ъ}{{\cyrhrdsn}}1
+      {ы}{{\cyrery}}1
+      {ь}{{\cyrsftsn}}1
+      {э}{{\cyrerev}}1
+      {ю}{{\cyryu}}1
+      {я}{{\cyrya}}1
+}
+
+\title{Билет №67 \\ \small Операционные средства управления процессами при их реализации на параллельных и распределенных вычислительных системах и сетях: стандарты и программные средства PVM, MPI, OpenMP, POSIX. (ИТМО)}
+\author{Сериков Владислав Александрович}
+\date{16 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Введение}
+
+Параллельные и распределённые вычислительные системы используются для ускорения вычислений, повышения отказоустойчивости, обработки больших объёмов данных и эффективного использования совокупных ресурсов множества процессоров, узлов и сетей.
+
+\textbf{Параллельная вычислительная система} --- система, в которой несколько вычислительных устройств совместно решают одну задачу. Обычно предполагается тесная связь между вычислителями и сравнительно малая задержка обмена.
+
+\textbf{Распределённая вычислительная система} --- совокупность автономных вычислительных узлов, связанных сетью и взаимодействующих посредством обмена сообщениями. Узлы могут быть географически удалены, иметь разные архитектуры и операционные системы.
+
+\textbf{Процесс} --- экземпляр выполняющейся программы, обладающий собственным адресным пространством, набором ресурсов и состоянием выполнения.
+
+\textbf{Поток} --- единица выполнения внутри процесса. Потоки одного процесса разделяют адресное пространство, но имеют собственные регистры, стек и состояние планирования.
+
+\textbf{Управление процессами} в параллельных и распределённых системах включает:
+\begin{itemize}
+    \item создание, запуск и завершение процессов;
+    \item распределение процессов по узлам;
+    \item синхронизацию процессов и потоков;
+    \item обмен сообщениями;
+    \item управление ресурсами;
+    \item обработку ошибок и отказов;
+    \item балансировку нагрузки;
+    \item поддержку переносимости программ.
+\end{itemize}
+
+К основным программным средствам и стандартам, применяемым для этих целей, относятся:
+\begin{itemize}
+    \item PVM --- Parallel Virtual Machine;
+    \item MPI --- Message Passing Interface;
+    \item OpenMP --- Open Multi-Processing;
+    \item POSIX --- Portable Operating System Interface.
+\end{itemize}
+
+\section{Архитектуры параллельных и распределённых систем}
+
+\subsection{Классификация по памяти}
+
+\subsubsection{Системы с общей памятью}
+
+В системах с общей памятью все процессоры имеют доступ к единому адресному пространству.
+
+\[
+P_1, P_2, \ldots, P_n \longrightarrow M
+\]
+
+где $P_i$ --- процессоры, $M$ --- общая память.
+
+Преимущества:
+\begin{itemize}
+    \item простая модель программирования;
+    \item быстрый обмен данными через общие переменные;
+    \item удобная реализация потоков.
+\end{itemize}
+
+Недостатки:
+\begin{itemize}
+    \item ограниченная масштабируемость;
+    \item необходимость синхронизации доступа к памяти;
+    \item возможные состояния гонки.
+\end{itemize}
+
+Типичные средства программирования:
+\begin{itemize}
+    \item POSIX Threads;
+    \item OpenMP;
+    \item C++ Threads.
+\end{itemize}
+
+\subsubsection{Системы с распределённой памятью}
+
+В системах с распределённой памятью каждый процессор или узел имеет собственную локальную память. Обмен данными выполняется через сеть.
+
+\[
+(P_1, M_1) \leftrightarrow (P_2, M_2) \leftrightarrow \ldots \leftrightarrow (P_n, M_n)
+\]
+
+Преимущества:
+\begin{itemize}
+    \item высокая масштабируемость;
+    \item возможность использования кластеров;
+    \item отсутствие общего адресного пространства снижает количество ошибок, связанных с гонками за память.
+\end{itemize}
+
+Недостатки:
+\begin{itemize}
+    \item необходимость явного обмена сообщениями;
+    \item зависимость производительности от сети;
+    \item более сложное программирование.
+\end{itemize}
+
+Типичные средства программирования:
+\begin{itemize}
+    \item MPI;
+    \item PVM.
+\end{itemize}
+
+\subsubsection{Гибридные системы}
+
+Современные суперкомпьютеры часто имеют гибридную архитектуру: несколько узлов связаны сетью, а внутри каждого узла есть многоядерный процессор с общей памятью.
+
+Типичная модель программирования:
+
+\[
+\text{MPI между узлами} + \text{OpenMP внутри узла}.
+\]
+
+\section{Понятие процесса в параллельных вычислениях}
+
+\subsection{Состояния процесса}
+
+В операционной системе процесс обычно находится в одном из следующих состояний:
+\begin{itemize}
+    \item \textbf{создан} --- процесс создан, но ещё не запущен;
+    \item \textbf{готов} --- процесс ожидает выделения процессора;
+    \item \textbf{выполняется} --- процесс исполняется на процессоре;
+    \item \textbf{ожидает} --- процесс ожидает события, например завершения ввода-вывода или получения сообщения;
+    \item \textbf{завершён} --- процесс закончил выполнение.
+\end{itemize}
+
+Схематически:
+
+\[
+\text{создан} \rightarrow \text{готов} \rightarrow \text{выполняется} \rightarrow \text{завершён}.
+\]
+
+Также возможен переход:
+
+\[
+\text{выполняется} \rightarrow \text{ожидает} \rightarrow \text{готов}.
+\]
+
+\subsection{Процессы и потоки}
+
+\begin{center}
+\begin{tabular}{|p{5cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Свойство} & \textbf{Процесс} & \textbf{Поток} \\
+\hline
+Адресное пространство & Собственное & Общее с другими потоками процесса \\
+\hline
+Стоимость создания & Относительно высокая & Относительно низкая \\
+\hline
+Обмен данными & Через IPC, файлы, сокеты, сообщения & Через общие переменные \\
+\hline
+Изоляция & Высокая & Низкая \\
+\hline
+Типичные средства & MPI, PVM, POSIX process API & POSIX Threads, OpenMP \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Основные модели параллельного программирования}
+
+\subsection{Модель передачи сообщений}
+
+В модели передачи сообщений каждый процесс имеет собственную память. Для обмена данными процессы явно отправляют и принимают сообщения.
+
+Основные операции:
+\begin{itemize}
+    \item \texttt{send} --- отправка сообщения;
+    \item \texttt{receive} --- получение сообщения;
+    \item \texttt{broadcast} --- широковещательная рассылка;
+    \item \texttt{reduce} --- коллективное вычисление;
+    \item \texttt{barrier} --- барьерная синхронизация.
+\end{itemize}
+
+Данная модель используется в MPI и PVM.
+
+\subsection{Модель общей памяти}
+
+В модели общей памяти потоки взаимодействуют через общие переменные. Для предотвращения ошибок применяются:
+\begin{itemize}
+    \item мьютексы;
+    \item семафоры;
+    \item критические секции;
+    \item атомарные операции;
+    \item барьеры.
+\end{itemize}
+
+Данная модель используется в OpenMP и POSIX Threads.
+
+\subsection{SPMD-модель}
+
+\textbf{SPMD} --- Single Program Multiple Data.
+
+Все процессы выполняют одну и ту же программу, но обрабатывают разные части данных.
+
+Пример:
+\[
+\text{процесс } i \text{ обрабатывает блок массива } A_i.
+\]
+
+SPMD широко применяется в MPI-программах.
+
+\section{PVM}
+
+\subsection{Общая характеристика}
+
+\textbf{PVM} --- Parallel Virtual Machine --- программная система, позволяющая объединять набор разнородных компьютеров в единую виртуальную параллельную машину.
+
+PVM ориентирована на распределённые системы, состоящие из узлов с разными архитектурами, операционными системами и характеристиками сети.
+
+Главная идея PVM состоит в том, что физически разнородная сеть компьютеров представляется программисту как один параллельный вычислительный ресурс.
+
+\subsection{Архитектура PVM}
+
+PVM состоит из:
+\begin{itemize}
+    \item демона \texttt{pvmd}, работающего на каждом узле;
+    \item библиотеки PVM, подключаемой к пользовательским программам;
+    \item консольных утилит управления виртуальной машиной;
+    \item механизма обмена сообщениями между задачами.
+\end{itemize}
+
+Каждая задача PVM имеет уникальный идентификатор --- \textbf{TID}.
+
+Схема работы:
+
+\[
+\text{программа} \leftrightarrow \text{PVM-библиотека} \leftrightarrow \text{pvmd} \leftrightarrow \text{сеть} \leftrightarrow \text{pvmd}.
+\]
+
+\subsection{Основные функции PVM}
+
+\begin{center}
+\begin{tabular}{|p{5cm}|p{9cm}|}
+\hline
+\textbf{Функция} & \textbf{Назначение} \\
+\hline
+\texttt{pvm\_spawn} & Запуск новых задач \\
+\hline
+\texttt{pvm\_mytid} & Получение идентификатора текущей задачи \\
+\hline
+\texttt{pvm\_parent} & Получение идентификатора родительской задачи \\
+\hline
+\texttt{pvm\_initsend} & Инициализация буфера отправки \\
+\hline
+\texttt{pvm\_pkint}, \texttt{pvm\_pkdouble} & Упаковка данных в сообщение \\
+\hline
+\texttt{pvm\_send} & Отправка сообщения \\
+\hline
+\texttt{pvm\_recv} & Получение сообщения \\
+\hline
+\texttt{pvm\_upkint}, \texttt{pvm\_upkdouble} & Распаковка данных \\
+\hline
+\texttt{pvm\_exit} & Завершение участия задачи в PVM \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Алгоритм запуска задач в PVM}
+
+\textbf{Задача:} запустить несколько рабочих процессов из главного процесса.
+
+\textbf{Шаги алгоритма:}
+\begin{enumerate}
+    \item Главный процесс подключается к виртуальной машине PVM.
+    \item Получает собственный идентификатор \texttt{TID}.
+    \item Вызывает \texttt{pvm\_spawn} для запуска рабочих задач.
+    \item Передаёт рабочим задачам данные через сообщения.
+    \item Рабочие задачи выполняют вычисления.
+    \item Рабочие задачи отправляют результаты главному процессу.
+    \item Главный процесс собирает результаты.
+    \item Все процессы завершают работу с PVM.
+\end{enumerate}
+
+Иллюстрация:
+
+\[
+\text{Master}
+\rightarrow
+\begin{cases}
+\text{Worker}_1,\\
+\text{Worker}_2,\\
+\ldots\\
+\text{Worker}_n
+\end{cases}
+\rightarrow
+\text{Master}.
+\]
+
+\subsection{Минимальный пример PVM}
+
+\subsubsection{Главная программа}
+
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include "pvm3.h"
+
+int main() {
+    int tid;
+    int child;
+    int value = 42;
+    int result;
+
+    tid = pvm_mytid();
+
+    pvm_spawn("worker", NULL, PvmTaskDefault, "", 1, &child);
+
+    pvm_initsend(PvmDataDefault);
+    pvm_pkint(&value, 1, 1);
+    pvm_send(child, 1);
+
+    pvm_recv(child, 2);
+    pvm_upkint(&result, 1, 1);
+
+    printf("Result = %d\n", result);
+
+    pvm_exit();
+    return 0;
+}
+\end{lstlisting}
+
+\subsubsection{Рабочая программа}
+
+\begin{lstlisting}[language=C]
+#include "pvm3.h"
+
+int main() {
+    int parent;
+    int value;
+
+    parent = pvm_parent();
+
+    pvm_recv(parent, 1);
+    pvm_upkint(&value, 1, 1);
+
+    value = value * 2;
+
+    pvm_initsend(PvmDataDefault);
+    pvm_pkint(&value, 1, 1);
+    pvm_send(parent, 2);
+
+    pvm_exit();
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Достоинства и недостатки PVM}
+
+\textbf{Достоинства:}
+\begin{itemize}
+    \item поддержка гетерогенных систем;
+    \item возможность динамического добавления и удаления узлов;
+    \item удобная модель виртуальной машины;
+    \item относительно простая организация распределённых вычислений.
+\end{itemize}
+
+\textbf{Недостатки:}
+\begin{itemize}
+    \item меньшая стандартизованность по сравнению с MPI;
+    \item в современных HPC-системах используется значительно реже MPI;
+    \item более низкая производительность в ряде реализаций;
+    \item ограниченная поддержка современных суперкомпьютерных архитектур.
+\end{itemize}
+
+\section{MPI}
+
+\subsection{Общая характеристика}
+
+\textbf{MPI} --- Message Passing Interface --- стандарт интерфейса передачи сообщений для параллельного программирования в системах с распределённой памятью.
+
+MPI является не конкретной библиотекой, а спецификацией. Существуют разные реализации MPI, например:
+\begin{itemize}
+    \item MPICH;
+    \item Open MPI;
+    \item Intel MPI;
+    \item MVAPICH.
+\end{itemize}
+
+MPI используется в кластерах, суперкомпьютерах и гибридных системах.
+
+\subsection{Основные понятия MPI}
+
+\subsubsection{Коммуникатор}
+
+\textbf{Коммуникатор} --- объект, определяющий группу процессов, которые могут взаимодействовать друг с другом.
+
+Стандартный коммуникатор:
+\[
+\texttt{MPI\_COMM\_WORLD}
+\]
+содержит все процессы, запущенные в рамках MPI-программы.
+
+\subsubsection{Ранг процесса}
+
+\textbf{Ранг} --- целочисленный номер процесса внутри коммуникатора.
+
+Если в коммуникаторе $p$ процессов, то ранги имеют значения:
+\[
+0,1,\ldots,p-1.
+\]
+
+\subsubsection{Сообщение}
+
+Сообщение в MPI задаётся:
+\begin{itemize}
+    \item адресом буфера;
+    \item количеством элементов;
+    \item типом данных;
+    \item рангом отправителя или получателя;
+    \item тегом;
+    \item коммуникатором.
+\end{itemize}
+
+\subsection{Базовая структура MPI-программы}
+
+\begin{lstlisting}[language=C]
+#include <mpi.h>
+#include <stdio.h>
+
+int main(int argc, char **argv) {
+    int rank, size;
+
+    MPI_Init(&argc, &argv);
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    printf("Hello from process %d of %d\n", rank, size);
+
+    MPI_Finalize();
+    return 0;
+}
+\end{lstlisting}
+
+Компиляция и запуск, например:
+
+\begin{lstlisting}
+mpicc hello.c -o hello
+mpirun -np 4 ./hello
+\end{lstlisting}
+
+\subsection{Точечные обмены}
+
+\subsubsection{Блокирующая отправка и получение}
+
+Основные функции:
+\begin{itemize}
+    \item \texttt{MPI\_Send};
+    \item \texttt{MPI\_Recv}.
+\end{itemize}
+
+Пример:
+
+\begin{lstlisting}[language=C]
+if (rank == 0) {
+    int x = 100;
+    MPI_Send(&x, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+} else if (rank == 1) {
+    int x;
+    MPI_Recv(&x, 1, MPI_INT, 0, 0, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
+    printf("Received %d\n", x);
+}
+\end{lstlisting}
+
+\subsubsection{Неблокирующие обмены}
+
+Основные функции:
+\begin{itemize}
+    \item \texttt{MPI\_Isend};
+    \item \texttt{MPI\_Irecv};
+    \item \texttt{MPI\_Wait};
+    \item \texttt{MPI\_Test}.
+\end{itemize}
+
+Неблокирующие операции позволяют перекрывать вычисления и коммуникации.
+
+\begin{lstlisting}[language=C]
+MPI_Request req;
+MPI_Isend(&x, 1, MPI_INT, dest, tag, MPI_COMM_WORLD, &req);
+
+/* Здесь можно выполнять вычисления */
+
+MPI_Wait(&req, MPI_STATUS_IGNORE);
+\end{lstlisting}
+
+\subsection{Коллективные операции MPI}
+
+Коллективные операции выполняются всеми процессами коммуникатора.
+
+\begin{center}
+\begin{tabular}{|p{5cm}|p{9cm}|}
+\hline
+\textbf{Функция} & \textbf{Назначение} \\
+\hline
+\texttt{MPI\_Bcast} & Рассылка данных от одного процесса всем остальным \\
+\hline
+\texttt{MPI\_Scatter} & Разбиение массива и рассылка частей разным процессам \\
+\hline
+\texttt{MPI\_Gather} & Сбор частей массива на одном процессе \\
+\hline
+\texttt{MPI\_Reduce} & Выполнение редукции, например суммы или максимума \\
+\hline
+\texttt{MPI\_Allreduce} & Редукция с выдачей результата всем процессам \\
+\hline
+\texttt{MPI\_Barrier} & Барьерная синхронизация \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Алгоритм параллельного суммирования массива в MPI}
+
+\textbf{Задача:} вычислить сумму элементов массива $A$ длины $N$ на $p$ процессах.
+
+\textbf{Идея:} массив делится на $p$ блоков, каждый процесс суммирует свой блок, затем частичные суммы складываются.
+
+\textbf{Шаги алгоритма:}
+\begin{enumerate}
+    \item Процесс с рангом $0$ создаёт исходный массив $A$.
+    \item Массив разбивается на $p$ частей.
+    \item С помощью \texttt{MPI\_Scatter} каждая часть передаётся соответствующему процессу.
+    \item Каждый процесс вычисляет локальную сумму:
+    \[
+    s_i = \sum_{j \in B_i} A_j,
+    \]
+    где $B_i$ --- блок элементов, назначенный процессу $i$.
+    \item С помощью \texttt{MPI\_Reduce} локальные суммы объединяются:
+    \[
+    S = \sum_{i=0}^{p-1} s_i.
+    \]
+    \item Процесс $0$ получает итоговую сумму $S$.
+\end{enumerate}
+
+Иллюстрация для $p=4$:
+
+\[
+A = [A_0|A_1|A_2|A_3]
+\]
+
+\[
+P_0 \leftarrow A_0,\quad
+P_1 \leftarrow A_1,\quad
+P_2 \leftarrow A_2,\quad
+P_3 \leftarrow A_3.
+\]
+
+\[
+S = s_0+s_1+s_2+s_3.
+\]
+
+\subsection{Минимальный пример MPI-суммирования}
+
+\begin{lstlisting}[language=C]
+#include <mpi.h>
+#include <stdio.h>
+
+int main(int argc, char **argv) {
+    int rank, size;
+    int local_value;
+    int local_sum;
+    int global_sum;
+
+    MPI_Init(&argc, &argv);
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    local_value = rank + 1;
+    local_sum = local_value;
+
+    MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT,
+               MPI_SUM, 0, MPI_COMM_WORLD);
+
+    if (rank == 0) {
+        printf("Sum = %d\n", global_sum);
+    }
+
+    MPI_Finalize();
+    return 0;
+}
+\end{lstlisting}
+
+Если запустить программу на четырёх процессах, значения будут:
+\[
+1,2,3,4,
+\]
+а сумма:
+\[
+1+2+3+4=10.
+\]
+
+\subsection{Синхронизация в MPI}
+
+Основное средство глобальной синхронизации --- барьер:
+
+\begin{lstlisting}[language=C]
+MPI_Barrier(MPI_COMM_WORLD);
+\end{lstlisting}
+
+Барьер означает, что ни один процесс не продолжит выполнение после барьера, пока все процессы коммуникатора не достигнут этой точки.
+
+\subsection{Достоинства и недостатки MPI}
+
+\textbf{Достоинства:}
+\begin{itemize}
+    \item высокий уровень стандартизации;
+    \item переносимость между суперкомпьютерами и кластерами;
+    \item высокая производительность;
+    \item поддержка коллективных операций;
+    \item поддержка сложных топологий и пользовательских типов данных;
+    \item пригодность для масштабирования на тысячи и миллионы процессов.
+\end{itemize}
+
+\textbf{Недостатки:}
+\begin{itemize}
+    \item необходимость явного управления обменами;
+    \item сложность отладки;
+    \item риск взаимных блокировок;
+    \item усложнение программ при нерегулярных обменах.
+\end{itemize}
+
+\section{OpenMP}
+
+\subsection{Общая характеристика}
+
+\textbf{OpenMP} --- стандарт API для параллельного программирования в системах с общей памятью. Он основан на использовании директив компилятора, функций библиотеки и переменных окружения.
+
+OpenMP поддерживает языки:
+\begin{itemize}
+    \item C;
+    \item C++;
+    \item Fortran.
+\end{itemize}
+
+Главная идея OpenMP --- постепенное распараллеливание последовательной программы с помощью директив.
+
+\subsection{Модель выполнения OpenMP}
+
+OpenMP использует модель \textbf{fork-join}.
+
+\begin{enumerate}
+    \item Программа начинается как один главный поток.
+    \item При входе в параллельную область главный поток создаёт группу потоков.
+    \item Потоки совместно выполняют код параллельной области.
+    \item В конце параллельной области потоки синхронизируются.
+    \item Выполнение снова продолжается одним главным потоком.
+\end{enumerate}
+
+Иллюстрация:
+
+\[
+\text{Master}
+\rightarrow
+\begin{cases}
+T_0\\
+T_1\\
+T_2\\
+T_3
+\end{cases}
+\rightarrow
+\text{Master}.
+\]
+
+\subsection{Минимальный пример OpenMP}
+
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+#pragma omp parallel
+    {
+        int id = omp_get_thread_num();
+        int n = omp_get_num_threads();
+        printf("Hello from thread %d of %d\n", id, n);
+    }
+
+    return 0;
+}
+\end{lstlisting}
+
+Компиляция:
+
+\begin{lstlisting}
+gcc -fopenmp hello.c -o hello
+\end{lstlisting}
+
+\subsection{Основные директивы OpenMP}
+
+\begin{center}
+\begin{tabular}{|p{5cm}|p{9cm}|}
+\hline
+\textbf{Директива} & \textbf{Назначение} \\
+\hline
+\texttt{\#pragma omp parallel} & Создание параллельной области \\
+\hline
+\texttt{\#pragma omp for} & Распределение итераций цикла между потоками \\
+\hline
+\texttt{\#pragma omp parallel for} & Совмещённое создание потоков и распараллеливание цикла \\
+\hline
+\texttt{\#pragma omp sections} & Разделение независимых секций кода между потоками \\
+\hline
+\texttt{\#pragma omp single} & Выполнение блока одним потоком \\
+\hline
+\texttt{\#pragma omp critical} & Критическая секция \\
+\hline
+\texttt{\#pragma omp atomic} & Атомарная операция \\
+\hline
+\texttt{\#pragma omp barrier} & Барьерная синхронизация \\
+\hline
+\texttt{\#pragma omp task} & Создание задачи \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Параллельный цикл}
+
+\begin{lstlisting}[language=C]
+#pragma omp parallel for
+for (int i = 0; i < n; i++) {
+    c[i] = a[i] + b[i];
+}
+\end{lstlisting}
+
+Итерации цикла распределяются между потоками.
+
+\subsection{Алгоритм параллельного суммирования в OpenMP}
+
+\textbf{Задача:} вычислить сумму элементов массива $A$.
+
+\textbf{Шаги алгоритма:}
+\begin{enumerate}
+    \item Создать переменную \texttt{sum}.
+    \item Запустить параллельный цикл.
+    \item Разделить итерации между потоками.
+    \item Каждый поток вычисляет частичную сумму.
+    \item OpenMP объединяет частичные суммы с помощью редукции.
+    \item Получается итоговая сумма.
+\end{enumerate}
+
+Математически:
+\[
+S = \sum_{i=0}^{N-1} A_i.
+\]
+
+Если потоки $T_0,\ldots,T_{p-1}$ получают блоки $B_0,\ldots,B_{p-1}$, то:
+\[
+S_k = \sum_{i \in B_k} A_i,
+\]
+\[
+S = \sum_{k=0}^{p-1} S_k.
+\]
+
+\subsection{Минимальный пример редукции OpenMP}
+
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int n = 100;
+    int sum = 0;
+
+#pragma omp parallel for reduction(+:sum)
+    for (int i = 1; i <= n; i++) {
+        sum += i;
+    }
+
+    printf("Sum = %d\n", sum);
+    return 0;
+}
+\end{lstlisting}
+
+Результат:
+\[
+1+2+\ldots+100 = \frac{100 \cdot 101}{2}=5050.
+\]
+
+\subsection{Переменные в OpenMP}
+
+OpenMP различает:
+\begin{itemize}
+    \item \textbf{shared} --- общие переменные;
+    \item \textbf{private} --- локальные переменные потока;
+    \item \textbf{firstprivate} --- локальная копия с начальным значением;
+    \item \textbf{lastprivate} --- сохранение последнего значения после параллельной области;
+    \item \textbf{reduction} --- переменная редукции.
+\end{itemize}
+
+Пример:
+
+\begin{lstlisting}[language=C]
+#pragma omp parallel for private(i) shared(a, b, c)
+for (i = 0; i < n; i++) {
+    c[i] = a[i] + b[i];
+}
+\end{lstlisting}
+
+\subsection{Планирование циклов}
+
+Директива \texttt{schedule} задаёт способ распределения итераций.
+
+\begin{center}
+\begin{tabular}{|p{5cm}|p{9cm}|}
+\hline
+\textbf{Вид планирования} & \textbf{Описание} \\
+\hline
+\texttt{static} & Итерации распределяются заранее равными блоками \\
+\hline
+\texttt{dynamic} & Потоки получают новые блоки по мере освобождения \\
+\hline
+\texttt{guided} & Размер блоков постепенно уменьшается \\
+\hline
+\texttt{runtime} & Способ задаётся переменной окружения \texttt{OMP\_SCHEDULE} \\
+\hline
+\end{tabular}
+\end{center}
+
+Пример:
+
+\begin{lstlisting}[language=C]
+#pragma omp parallel for schedule(dynamic, 10)
+for (int i = 0; i < n; i++) {
+    work(i);
+}
+\end{lstlisting}
+
+\subsection{Состояния гонки}
+
+\textbf{Состояние гонки} возникает, когда несколько потоков одновременно обращаются к общей переменной, хотя бы один поток выполняет запись, а результат зависит от порядка выполнения.
+
+Пример ошибки:
+
+\begin{lstlisting}[language=C]
+int counter = 0;
+
+#pragma omp parallel for
+for (int i = 0; i < 1000; i++) {
+    counter++;
+}
+\end{lstlisting}
+
+Операция \texttt{counter++} не является атомарной.
+
+Исправление через \texttt{atomic}:
+
+\begin{lstlisting}[language=C]
+#pragma omp parallel for
+for (int i = 0; i < 1000; i++) {
+#pragma omp atomic
+    counter++;
+}
+\end{lstlisting}
+
+Но для суммирования лучше использовать \texttt{reduction}.
+
+\subsection{Достоинства и недостатки OpenMP}
+
+\textbf{Достоинства:}
+\begin{itemize}
+    \item простое добавление параллелизма в существующий код;
+    \item удобство для многоядерных систем с общей памятью;
+    \item поддержка директив, библиотечных функций и переменных окружения;
+    \item сравнительно низкий порог входа.
+\end{itemize}
+
+\textbf{Недостатки:}
+\begin{itemize}
+    \item ограниченность системами с общей памятью;
+    \item риск состояний гонки;
+    \item сложность контроля производительности на NUMA-системах;
+    \item зависимость от компилятора и его поддержки стандарта.
+\end{itemize}
+
+\section{POSIX}
+
+\subsection{Общая характеристика}
+
+\textbf{POSIX} --- Portable Operating System Interface --- семейство стандартов, определяющих интерфейсы операционной системы, прежде всего для UNIX-подобных систем.
+
+POSIX описывает:
+\begin{itemize}
+    \item API системных вызовов;
+    \item работу с процессами;
+    \item работу с потоками;
+    \item файловую систему;
+    \item сигналы;
+    \item межпроцессное взаимодействие;
+    \item средства синхронизации;
+    \item командную оболочку и утилиты.
+\end{itemize}
+
+POSIX важен для параллельных и распределённых систем, так как обеспечивает переносимые механизмы управления процессами и потоками.
+
+\subsection{Управление процессами в POSIX}
+
+Основные функции:
+\begin{center}
+\begin{tabular}{|p{5cm}|p{9cm}|}
+\hline
+\textbf{Функция} & \textbf{Назначение} \\
+\hline
+\texttt{fork()} & Создание нового процесса \\
+\hline
+\texttt{exec()} & Замена образа процесса новой программой \\
+\hline
+\texttt{wait()} / \texttt{waitpid()} & Ожидание завершения дочернего процесса \\
+\hline
+\texttt{exit()} & Завершение процесса \\
+\hline
+\texttt{getpid()} & Получение PID текущего процесса \\
+\hline
+\texttt{getppid()} & Получение PID родительского процесса \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Алгоритм создания процесса в POSIX}
+
+\textbf{Шаги алгоритма:}
+\begin{enumerate}
+    \item Родительский процесс вызывает \texttt{fork()}.
+    \item Операционная система создаёт копию процесса.
+    \item В родительском процессе \texttt{fork()} возвращает PID дочернего процесса.
+    \item В дочернем процессе \texttt{fork()} возвращает $0$.
+    \item Дочерний процесс может выполнить другую программу через \texttt{exec()}.
+    \item Родительский процесс ожидает завершения дочернего через \texttt{wait()}.
+\end{enumerate}
+
+Иллюстрация:
+
+\[
+\text{Parent}
+\xrightarrow{\texttt{fork()}}
+\begin{cases}
+\text{Parent},\\
+\text{Child}.
+\end{cases}
+\]
+
+\subsection{Минимальный пример \texttt{fork}}
+
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main() {
+    pid_t pid = fork();
+
+    if (pid == 0) {
+        printf("Child process, pid = %d\n", getpid());
+    } else {
+        wait(NULL);
+        printf("Parent process, child pid = %d\n", pid);
+    }
+
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{POSIX Threads}
+
+\textbf{POSIX Threads}, или \textbf{pthreads}, --- стандартный POSIX-интерфейс для создания и управления потоками.
+
+Основные функции:
+\begin{center}
+\begin{tabular}{|p{5cm}|p{9cm}|}
+\hline
+\textbf{Функция} & \textbf{Назначение} \\
+\hline
+\texttt{pthread\_create} & Создание потока \\
+\hline
+\texttt{pthread\_join} & Ожидание завершения потока \\
+\hline
+\texttt{pthread\_exit} & Завершение потока \\
+\hline
+\texttt{pthread\_mutex\_lock} & Захват мьютекса \\
+\hline
+\texttt{pthread\_mutex\_unlock} & Освобождение мьютекса \\
+\hline
+\texttt{pthread\_cond\_wait} & Ожидание условной переменной \\
+\hline
+\texttt{pthread\_cond\_signal} & Сигнал условной переменной \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Минимальный пример POSIX Threads}
+
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <pthread.h>
+
+void* worker(void* arg) {
+    int id = *(int*)arg;
+    printf("Hello from thread %d\n", id);
+    return NULL;
+}
+
+int main() {
+    pthread_t t;
+    int id = 1;
+
+    pthread_create(&t, NULL, worker, &id);
+    pthread_join(t, NULL);
+
+    return 0;
+}
+\end{lstlisting}
+
+Компиляция:
+
+\begin{lstlisting}
+gcc thread.c -pthread -o thread
+\end{lstlisting}
+
+\subsection{Мьютексы}
+
+\textbf{Мьютекс} --- объект взаимного исключения, позволяющий только одному потоку входить в критическую секцию.
+
+Пример:
+
+\begin{lstlisting}[language=C]
+#include <pthread.h>
+
+int counter = 0;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+void* worker(void* arg) {
+    for (int i = 0; i < 100000; i++) {
+        pthread_mutex_lock(&mutex);
+        counter++;
+        pthread_mutex_unlock(&mutex);
+    }
+    return NULL;
+}
+\end{lstlisting}
+
+\subsection{Условные переменные}
+
+\textbf{Условная переменная} позволяет потоку ожидать наступления некоторого условия.
+
+Типичный шаблон:
+
+\begin{lstlisting}[language=C]
+pthread_mutex_lock(&mutex);
+
+while (!condition) {
+    pthread_cond_wait(&cond, &mutex);
+}
+
+/* condition is true */
+
+pthread_mutex_unlock(&mutex);
+\end{lstlisting}
+
+Важно использовать \texttt{while}, а не \texttt{if}, так как возможны ложные пробуждения.
+
+\subsection{Семафоры POSIX}
+
+Семафор --- счётчик, используемый для управления доступом к ограниченному числу ресурсов.
+
+Основные функции:
+\begin{itemize}
+    \item \texttt{sem\_init};
+    \item \texttt{sem\_wait};
+    \item \texttt{sem\_post};
+    \item \texttt{sem\_destroy}.
+\end{itemize}
+
+Пример:
+
+\begin{lstlisting}[language=C]
+#include <semaphore.h>
+
+sem_t sem;
+
+sem_init(&sem, 0, 1);
+
+sem_wait(&sem);
+/* critical section */
+sem_post(&sem);
+
+sem_destroy(&sem);
+\end{lstlisting}
+
+\subsection{Межпроцессное взаимодействие POSIX}
+
+POSIX предоставляет несколько механизмов IPC:
+\begin{itemize}
+    \item каналы \texttt{pipe};
+    \item именованные каналы FIFO;
+    \item очереди сообщений;
+    \item разделяемую память;
+    \item семафоры;
+    \item сигналы;
+    \item сокеты.
+\end{itemize}
+
+\subsection{Пример канала POSIX}
+
+\begin{lstlisting}[language=C]
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+
+int main() {
+    int fd[2];
+    char buffer[100];
+
+    pipe(fd);
+
+    if (fork() == 0) {
+        close(fd[0]);
+        write(fd[1], "hello", 6);
+        close(fd[1]);
+    } else {
+        close(fd[1]);
+        read(fd[0], buffer, sizeof(buffer));
+        printf("Received: %s\n", buffer);
+        close(fd[0]);
+    }
+
+    return 0;
+}
+\end{lstlisting}
+
+\section{Сравнение PVM, MPI, OpenMP и POSIX}
+
+\begin{center}
+\begin{tabular}{|p{3cm}|p{3cm}|p{3cm}|p{3cm}|p{3cm}|}
+\hline
+\textbf{Критерий} & \textbf{PVM} & \textbf{MPI} & \textbf{OpenMP} & \textbf{POSIX} \\
+\hline
+Основная модель & Передача сообщений & Передача сообщений & Общая память & ОС-интерфейс \\
+\hline
+Тип системы & Распределённая, гетерогенная & Распределённая, HPC & Общая память & UNIX-подобные ОС \\
+\hline
+Единица выполнения & Задача PVM & MPI-процесс & Поток & Процесс/поток \\
+\hline
+Стандартизация & Слабее MPI & Высокая & Высокая & Высокая \\
+\hline
+Создание процессов & Динамическое через \texttt{pvm\_spawn} & Обычно через \texttt{mpirun}; есть динамические процессы & Потоки создаёт runtime & \texttt{fork}, \texttt{pthread\_create} \\
+\hline
+Обмен данными & Сообщения & Сообщения & Общие переменные & IPC, память, сокеты \\
+\hline
+Типичная область & Распределённые гетерогенные сети & Кластеры и суперкомпьютеры & Многоядерные узлы & Системное программирование \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Типовые проблемы управления процессами}
+
+\subsection{Взаимная блокировка}
+
+\textbf{Взаимная блокировка} возникает, когда процессы бесконечно ожидают друг друга.
+
+Пример в MPI:
+
+\begin{lstlisting}[language=C]
+/* Process 0 */
+MPI_Recv(&x, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, &status);
+MPI_Send(&y, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+
+/* Process 1 */
+MPI_Recv(&y, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+MPI_Send(&x, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+\end{lstlisting}
+
+Оба процесса сначала ожидают получение сообщения, которое никто не отправляет.
+
+Способы устранения:
+\begin{itemize}
+    \item изменить порядок операций;
+    \item использовать \texttt{MPI\_Sendrecv};
+    \item использовать неблокирующие операции;
+    \item проектировать протокол обмена без циклического ожидания.
+\end{itemize}
+
+\subsection{Гонка данных}
+
+Гонка данных характерна для многопоточных программ. Она возникает при некорректном доступе к общим данным.
+
+Способы устранения:
+\begin{itemize}
+    \item мьютексы;
+    \item атомарные операции;
+    \item редукции;
+    \item критические секции;
+    \item минимизация общего состояния.
+\end{itemize}
+
+\subsection{Дисбаланс нагрузки}
+
+\textbf{Дисбаланс нагрузки} возникает, когда одни процессы завершают работу раньше других и простаивают.
+
+Способы борьбы:
+\begin{itemize}
+    \item динамическое распределение задач;
+    \item разбиение на мелкие блоки;
+    \item использование планирования \texttt{dynamic} в OpenMP;
+    \item master-worker схема в MPI или PVM;
+    \item профилирование программы.
+\end{itemize}
+
+\section{Алгоритм master-worker}
+
+\subsection{Описание}
+
+Алгоритм master-worker применяется для динамического распределения независимых задач между рабочими процессами.
+
+\textbf{Master} хранит очередь задач и выдаёт их свободным рабочим процессам.
+
+\textbf{Worker} получает задачу, выполняет её и возвращает результат.
+
+\subsection{Шаги алгоритма}
+
+\begin{enumerate}
+    \item Главный процесс формирует список задач.
+    \item Рабочие процессы отправляют запросы на получение задачи.
+    \item Главный процесс выдаёт задачу свободному рабочему.
+    \item Рабочий процесс выполняет задачу.
+    \item Рабочий процесс отправляет результат главному процессу.
+    \item Если задачи остались, рабочему выдаётся новая задача.
+    \item Если задач нет, главный процесс отправляет сигнал завершения.
+    \item Все процессы завершаются.
+\end{enumerate}
+
+\subsection{Иллюстрация}
+
+\[
+\text{Очередь задач: } Q = \{q_1,q_2,\ldots,q_m\}
+\]
+
+\[
+\text{Master} \rightarrow \text{Worker}_i : q_k
+\]
+
+\[
+\text{Worker}_i \rightarrow \text{Master} : r_k
+\]
+
+\subsection{Минимальная MPI-схема}
+
+\begin{lstlisting}[language=C]
+if (rank == 0) {
+    for (int task = 1; task < size; task++) {
+        MPI_Send(&task, 1, MPI_INT, task, 0, MPI_COMM_WORLD);
+    }
+} else {
+    int task;
+    MPI_Recv(&task, 1, MPI_INT, 0, 0, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
+    /* выполнить task */
+}
+\end{lstlisting}
+
+\section{Гибридное программирование MPI + OpenMP}
+
+\subsection{Идея}
+
+В современных кластерах каждый узел содержит несколько ядер. Поэтому часто используют:
+\begin{itemize}
+    \item MPI для обмена между узлами;
+    \item OpenMP для распараллеливания внутри узла.
+\end{itemize}
+
+Схема:
+
+\[
+\text{Узел}_1:
+\begin{cases}
+\text{MPI-процесс}_0 \rightarrow T_0,T_1,\ldots,T_k
+\end{cases}
+\]
+
+\[
+\text{Узел}_2:
+\begin{cases}
+\text{MPI-процесс}_1 \rightarrow T_0,T_1,\ldots,T_k
+\end{cases}
+\]
+
+\subsection{Минимальный пример}
+
+\begin{lstlisting}[language=C]
+#include <mpi.h>
+#include <omp.h>
+#include <stdio.h>
+
+int main(int argc, char **argv) {
+    int rank, size;
+
+    MPI_Init(&argc, &argv);
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+#pragma omp parallel
+    {
+        int tid = omp_get_thread_num();
+        printf("MPI rank %d/%d, OpenMP thread %d\n",
+               rank, size, tid);
+    }
+
+    MPI_Finalize();
+    return 0;
+}
+\end{lstlisting}
+
+\section{Критерии выбора средства}
+
+\subsection{Когда использовать MPI}
+
+MPI целесообразен, если:
+\begin{itemize}
+    \item программа должна работать на кластере;
+    \item память распределена между узлами;
+    \item требуется масштабирование на большое число процессов;
+    \item нужен контроль над обменами;
+    \item важна высокая производительность.
+\end{itemize}
+
+\subsection{Когда использовать OpenMP}
+
+OpenMP целесообразен, если:
+\begin{itemize}
+    \item программа выполняется на одном многоядерном узле;
+    \item данные помещаются в общую память;
+    \item нужно быстро распараллелить циклы;
+    \item требуется сохранить структуру последовательной программы.
+\end{itemize}
+
+\subsection{Когда использовать POSIX}
+
+POSIX используется, если:
+\begin{itemize}
+    \item требуется системное программирование;
+    \item нужно явно управлять процессами или потоками;
+    \item требуется переносимость между UNIX-подобными системами;
+    \item нужны низкоуровневые IPC-механизмы.
+\end{itemize}
+
+\subsection{Когда использовать PVM}
+
+PVM может быть полезен, если:
+\begin{itemize}
+    \item требуется объединить гетерогенные машины в виртуальную вычислительную систему;
+    \item нужна динамическая модель добавления и удаления узлов;
+    \item изучаются исторические и концептуальные основы распределённых вычислений.
+\end{itemize}
+
+\section{Заключение}
+
+Средства управления процессами в параллельных и распределённых системах различаются по уровню абстракции и целевой архитектуре.
+
+\begin{itemize}
+    \item \textbf{PVM} предоставляет модель виртуальной параллельной машины и удобен для гетерогенных распределённых систем.
+    \item \textbf{MPI} является основным стандартом высокопроизводительного программирования с передачей сообщений.
+    \item \textbf{OpenMP} предназначен для параллельного программирования в системах с общей памятью и удобен для распараллеливания циклов.
+    \item \textbf{POSIX} задаёт переносимые системные интерфейсы управления процессами, потоками и межпроцессным взаимодействием.
+\end{itemize}
+
+На практике эти средства часто комбинируются. Например, MPI используется для взаимодействия между узлами кластера, OpenMP --- для распараллеливания внутри узла, а POSIX --- для низкоуровневого управления процессами, потоками, файлами и сигналами.
+
+\end{document}
