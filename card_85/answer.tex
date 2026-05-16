@@ -1,0 +1,163 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage{geometry}
+\geometry{left=2cm, right=2cm, top=2cm, bottom=2cm}
+\usepackage{bm}
+\usepackage{enumitem}
+
+% Настройки теорем и определений
+\newtheorem{theorem}{Теорема}
+\newtheorem{definition}{Определение}
+\renewcommand{\proofname}{\textbf{Доказательство}}
+
+\title{Билет №85 \\ \small Периодические сигналы и системы в многомерном пространстве. (СпБПУ)}
+\author{Сериков Владислав Александрович}
+\date{16 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Введение: Многомерные сигналы}
+
+В многомерной цифровой обработке сигналов рассматриваются функции, зависящие от нескольких независимых переменных. Непрерывный многомерный сигнал обозначается как $x_c(\mathbf{t})$, где $\mathbf{t} = [t_1, t_2, \dots, t_D]^T \in \mathbb{R}^D$ — вектор непрерывных аргументов (например, пространственные координаты или время).
+
+Дискретный многомерный сигнал $x[\mathbf{n}]$ зависит от вектора целочисленных аргументов $\mathbf{n} = [n_1, n_2, \dots, n_D]^T \in \mathbb{Z}^D$. Дискретные сигналы часто получаются путем дискретизации непрерывных: $x[\mathbf{n}] = x_c(\mathbf{Vn})$, где $\mathbf{V}$ — невырожденная матрица дискретизации размера $D \times D$.
+
+\section{Многомерная периодичность}
+
+В отличие от одномерного случая, где период — это скалярная величина, в многомерном пространстве периодичность определяется матрицей.
+
+\begin{definition}
+Дискретный многомерный сигнал $x[\mathbf{n}]$ называется \textbf{периодическим}, если существует такая невырожденная целочисленная матрица $\mathbf{N}$ размера $D \times D$ (матрица периодичности), что для любого целочисленного вектора $\mathbf{r} \in \mathbb{Z}^D$ выполняется условие:
+\begin{equation}
+    x[\mathbf{n}] = x[\mathbf{n} + \mathbf{N}\mathbf{r}]
+\end{equation}
+\end{definition}
+
+Столбцы матрицы $\mathbf{N}$ задают базисные векторы решетки периодичности. Область, содержащая ровно один период сигнала, называется \textbf{фундаментальным параллелепипедом} (или ячейкой) и обозначается $I_{\mathbf{N}}$. Множество векторов в $I_{\mathbf{N}}$ можно определить как:
+\begin{equation}
+    I_{\mathbf{N}} = \{ \mathbf{n} \in \mathbb{Z}^D \mid \mathbf{n} = \mathbf{N}\mathbf{x}, \quad \mathbf{x} \in [0, 1)^D \}
+\end{equation}
+
+\begin{theorem}[О числе отсчетов в периоде]
+Для дискретного периодического сигнала с матрицей периодичности $\mathbf{N}$ число отсчетов $M$, содержащихся в одном фундаментальном периоде $I_{\mathbf{N}}$, равно абсолютному значению определителя матрицы периодичности: $M = |\det \mathbf{N}|$.
+\end{theorem}
+
+\begin{proof}
+Любую целочисленную матрицу $\mathbf{N}$ можно представить в нормальной форме Смита (Smith Normal Form):
+$ \mathbf{N} = \mathbf{U} \mathbf{\Lambda} \mathbf{V} $,
+где $\mathbf{U}$ и $\mathbf{V}$ — унимодулярные целочисленные матрицы (то есть $|\det \mathbf{U}| = |\det \mathbf{V}| = 1$), а $\mathbf{\Lambda}$ — диагональная матрица с целыми элементами $\lambda_i$ на главной диагонали.
+
+Преобразование координат с помощью матрицы $\mathbf{V}$ (то есть переход к $\mathbf{m} = \mathbf{V}\mathbf{n}$) представляет собой биективное отображение решетки $\mathbb{Z}^D$ на себя, так как $\mathbf{V}$ унимодулярна. Аналогично действует и $\mathbf{U}$. Следовательно, количество целых точек в фундаментальном параллелепипеде, образованном столбцами $\mathbf{N}$, совпадает с количеством целых точек в параллелепипеде, образованном столбцами диагональной матрицы $\mathbf{\Lambda}$.
+
+Для диагональной матрицы $\mathbf{\Lambda}$ фундаментальный период представляет собой прямоугольный гиперпараллелепипед со сторонами $\lambda_1, \lambda_2, \dots, \lambda_D$. Так как все $\lambda_i$ — целые числа, количество целых точек внутри такого гиперпараллелепипеда равно произведению длин его сторон:
+$ M = \prod_{i=1}^D |\lambda_i| = |\det \mathbf{\Lambda}| $.
+Учитывая, что $|\det \mathbf{N}| = |\det \mathbf{U}| \cdot |\det \mathbf{\Lambda}| \cdot |\det \mathbf{V}| = 1 \cdot |\det \mathbf{\Lambda}| \cdot 1$, получаем $M = |\det \mathbf{N}|$. Теорема доказана.
+\end{proof}
+
+\section{Многомерные линейные инвариантные к сдвигу системы (ЛИС)}
+
+Многомерная дискретная система осуществляет преобразование входного сигнала $x[\mathbf{n}]$ в выходной $y[\mathbf{n}]$.
+
+\begin{definition}
+Система называется \textbf{линейной}, если выполняется принцип суперпозиции: реакция на взвешенную сумму сигналов равна взвешенной сумме реакций. Система называется \textbf{инвариантной к сдвигу} (пространственно-инвариантной), если сдвиг входного сигнала на вектор $\mathbf{n}_0$ приводит к сдвигу выходного сигнала на тот же вектор.
+\end{definition}
+
+Поведение любой многомерной ЛИС-системы полностью описывается ее \textbf{импульсной характеристикой} $h[\mathbf{n}]$ — реакцией системы на многомерный единичный импульс $\delta[\mathbf{n}]$.
+Связь между входом и выходом задается многомерной линейной сверткой:
+\begin{equation}
+    y[\mathbf{n}] = \sum_{\mathbf{m} \in \mathbb{Z}^D} x[\mathbf{m}] h[\mathbf{n} - \mathbf{m}] = x[\mathbf{n}] \ast h[\mathbf{n}]
+\end{equation}
+
+\section{Многомерное дискретное преобразование Фурье (МДПФ)}
+
+Для анализа периодических сигналов с матрицей $\mathbf{N}$ применяется МДПФ.
+
+Прямое преобразование:
+\begin{equation}
+    X[\mathbf{k}] = \sum_{\mathbf{n} \in I_{\mathbf{N}}} x[\mathbf{n}] \exp\left(-j 2\pi \mathbf{k}^T \mathbf{N}^{-1} \mathbf{n}\right)
+\end{equation}
+Обратное преобразование:
+\begin{equation}
+    x[\mathbf{n}] = \frac{1}{|\det \mathbf{N}|} \sum_{\mathbf{k} \in I_{\mathbf{N}^T}} X[\mathbf{k}] \exp\left(j 2\pi \mathbf{k}^T \mathbf{N}^{-1} \mathbf{n}\right)
+\end{equation}
+где $\mathbf{k} \in \mathbb{Z}^D$ — вектор пространственных частот.
+
+Если матрица $\mathbf{N}$ диагональна (прямоугольная решетка дискретизации, $\mathbf{N} = \text{diag}(N_1, N_2, \dots, N_D)$), ядро преобразования становится сепарабельным, и МДПФ распадается на многократное применение одномерного ДПФ.
+
+\begin{theorem}[О круговой свертке в многомерном пространстве]
+Пусть $x_1[\mathbf{n}]$ и $x_2[\mathbf{n}]$ — периодические сигналы с одинаковой матрицей периодичности $\mathbf{N}$, а их МДПФ равны $X_1[\mathbf{k}]$ и $X_2[\mathbf{k}]$ соответственно. Тогда МДПФ их многомерной круговой свертки
+$ y[\mathbf{n}] = \sum_{\mathbf{m} \in I_{\mathbf{N}}} x_1[\mathbf{m}] x_2[\mathbf{n} - \mathbf{m}] $
+равно произведению их МДПФ: $Y[\mathbf{k}] = X_1[\mathbf{k}] X_2[\mathbf{k}]$.
+\end{theorem}
+
+\begin{proof}
+Применим формулу прямого МДПФ к сигналу $y[\mathbf{n}]$:
+\begin{equation}
+    Y[\mathbf{k}] = \sum_{\mathbf{n} \in I_{\mathbf{N}}} \left( \sum_{\mathbf{m} \in I_{\mathbf{N}}} x_1[\mathbf{m}] x_2[\mathbf{n} - \mathbf{m}] \right) \exp\left(-j 2\pi \mathbf{k}^T \mathbf{N}^{-1} \mathbf{n}\right)
+\end{equation}
+Изменим порядок суммирования:
+\begin{equation}
+    Y[\mathbf{k}] = \sum_{\mathbf{m} \in I_{\mathbf{N}}} x_1[\mathbf{m}] \left( \sum_{\mathbf{n} \in I_{\mathbf{N}}} x_2[\mathbf{n} - \mathbf{m}] \exp\left(-j 2\pi \mathbf{k}^T \mathbf{N}^{-1} \mathbf{n}\right) \right)
+\end{equation}
+Сделаем замену переменной во внутренней сумме: $\mathbf{p} = \mathbf{n} - \mathbf{m}$. Тогда $\mathbf{n} = \mathbf{p} + \mathbf{m}$. Область суммирования сместится на вектор $\mathbf{m}$, образуя смещенный период $I_{\mathbf{N}} - \mathbf{m}$. Учитывая периодичность сигнала $x_2[\mathbf{p}]$ и комплексной экспоненты с матрицей $\mathbf{N}$, суммирование по любому сдвинутому периоду эквивалентно суммированию по базовому периоду $I_{\mathbf{N}}$:
+\begin{align}
+    Y[\mathbf{k}] &= \sum_{\mathbf{m} \in I_{\mathbf{N}}} x_1[\mathbf{m}] \sum_{\mathbf{p} \in I_{\mathbf{N}}} x_2[\mathbf{p}] \exp\left(-j 2\pi \mathbf{k}^T \mathbf{N}^{-1} (\mathbf{p} + \mathbf{m})\right) \\
+    &= \left( \sum_{\mathbf{m} \in I_{\mathbf{N}}} x_1[\mathbf{m}] \exp\left(-j 2\pi \mathbf{k}^T \mathbf{N}^{-1} \mathbf{m}\right) \right) \left( \sum_{\mathbf{p} \in I_{\mathbf{N}}} x_2[\mathbf{p}] \exp\left(-j 2\pi \mathbf{k}^T \mathbf{N}^{-1} \mathbf{p}\right) \right)
+\end{align}
+Выражения в скобках по определению являются МДПФ исходных сигналов. Отсюда $Y[\mathbf{k}] = X_1[\mathbf{k}] X_2[\mathbf{k}]$, что и требовалось доказать.
+\end{proof}
+
+\section{Алгоритмы: Вычисление двумерного ДПФ}
+
+Для прямоугольной матрицы периодичности $\mathbf{N} = \begin{pmatrix} N_1 & 0 \\ 0 & N_2 \end{pmatrix}$ формула двумерного ДПФ имеет вид:
+\begin{equation}
+    X[k_1, k_2] = \sum_{n_1=0}^{N_1-1} \sum_{n_2=0}^{N_2-1} x[n_1, n_2] W_{N_1}^{k_1 n_1} W_{N_2}^{k_2 n_2}
+\end{equation}
+где $W_{N} = \exp(-j 2\pi / N)$. Благодаря свойству сепарабельности ядра, используется \textbf{строчно-столбцовый алгоритм} декомпозиции.
+
+\subsection*{Алгоритм: Строчно-столбцовое вычисление 2D ДПФ}
+\textbf{Вход:} Матрица сигнала $x$ размера $N_1 \times N_2$.
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Шаг 1.} Для каждой из $N_1$ строк исходной матрицы вычисляется одномерное ДПФ длины $N_2$.
+    \begin{equation}
+        G[n_1, k_2] = \sum_{n_2=0}^{N_2-1} x[n_1, n_2] W_{N_2}^{k_2 n_2}, \quad n_1 \in [0, N_1-1], \; k_2 \in [0, N_2-1]
+    \end{equation}
+    Результат записывается в промежуточную матрицу $G$.
+    \item \textbf{Шаг 2.} Для каждого из $N_2$ столбцов промежуточной матрицы $G$ вычисляется одномерное ДПФ длины $N_1$.
+    \begin{equation}
+        X[k_1, k_2] = \sum_{n_1=0}^{N_1-1} G[n_1, k_2] W_{N_1}^{k_1 n_1}, \quad k_1 \in [0, N_1-1], \; k_2 \in [0, N_2-1]
+    \end{equation}
+\end{itemize}
+\textbf{Выход:} Матрица спектра $X$ размера $N_1 \times N_2$.
+
+\textit{Асимптотическая сложность}: Прямое вычисление требует $O(N_1^2 N_2^2)$ операций. При использовании одномерного БПФ (FFT) на шагах 1 и 2 сложность снижается до $O(N_1 N_2 \log(N_1 N_2))$.
+
+\subsection*{Минимальный пример выполнения алгоритма}
+Вычислим 2D ДПФ матрицы $2 \times 2$:
+$ x = \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix} $.
+
+Заметим, что матрица ДПФ длины 2 ($W_2$) — это матрица-бабочка, выполняющая сложение и вычитание (так как $W_2^0=1$, $W_2^1=-1$).
+
+\textbf{Шаг 1: ДПФ по строкам}
+\begin{itemize}
+    \item 1-я строка: $(1, 2) \xrightarrow{ДПФ} (1+2, 1-2) = (3, -1)$
+    \item 2-я строка: $(3, 4) \xrightarrow{ДПФ} (3+4, 3-4) = (7, -1)$
+\end{itemize}
+Промежуточная матрица: $ G = \begin{pmatrix} 3 & -1 \\ 7 & -1 \end{pmatrix} $.
+
+\textbf{Шаг 2: ДПФ по столбцам матрицы $G$}
+\begin{itemize}
+    \item 1-й столбец: $(3, 7)^T \xrightarrow{ДПФ} (3+7, 3-7)^T = (10, -4)^T$
+    \item 2-й столбец: $(-1, -1)^T \xrightarrow{ДПФ} (-1+(-1), -1-(-1))^T = (-2, 0)^T$
+\end{itemize}
+
+Искомая матрица 2D ДПФ:
+$ X = \begin{pmatrix} 10 & -2 \\ -4 & 0 \end{pmatrix} $.
+
+\end{document}

@@ -1,0 +1,188 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\geometry{left=2.5cm, right=2cm, top=2cm, bottom=2cm}
+
+\newtheorem{theorem}{Теорема}
+\newtheorem{definition}{Определение}
+\newtheorem{lemma}{Лемма}
+
+\newcommand{\vect}[1]{\mathbf{#1}}
+
+\title{Билет №87 \\ \small Частотные характеристики многомерных систем. Связь между импульсной и частотной характеристикой систем. Многомерная теорема Котельникова. (СпБПУ)}
+\author{Сериков Владислав Александрович}
+\date{16 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Многомерные сигналы и системы}
+
+Для корректного введения понятий импульсной и частотной характеристик необходимо определить базовые свойства многомерных систем. В данном конспекте рассматриваются непрерывные и дискретные сигналы, зависящие от $N$ независимых переменных.
+
+Пространственный вектор обозначается как $\vect{t} = (t_1, t_2, \dots, t_N)^T \in \mathbb{R}^N$ для непрерывных сигналов и $\vect{n} = (n_1, n_2, \dots, n_N)^T \in \mathbb{Z}^N$ для дискретных. Сигнал представляет собой функцию $x(\vect{t})$ или последовательность $x[\vect{n}]$.
+
+\begin{definition}
+Система $L\{\cdot\}$ называется \textbf{линейной пространственно-инвариантной (ЛПИ)}, если она удовлетворяет принципу суперпозиции и свойству инвариантности к сдвигу:
+1. $L\{a x_1(\vect{t}) + b x_2(\vect{t})\} = a L\{x_1(\vect{t})\} + b L\{x_2(\vect{t})\}$.
+2. Если $L\{x(\vect{t})\} = y(\vect{t})$, то $L\{x(\vect{t} - \vect{\tau})\} = y(\vect{t} - \vect{\tau})$ для любого вектора сдвига $\vect{\tau} \in \mathbb{R}^N$.
+\end{definition}
+
+\begin{definition}
+\textbf{Импульсной характеристикой} ЛПИ-системы называется её реакция на многомерный единичный импульс (дельта-функцию Дирака $\delta(\vect{t})$ для непрерывных или дельта-функцию Кронекера $\delta[\vect{n}]$ для дискретных систем):
+$$ h(\vect{t}) = L\{\delta(\vect{t})\} $$
+\end{definition}
+
+Выходной сигнал $y(\vect{t})$ любой ЛПИ-системы определяется через \textbf{многомерную свертку} входного сигнала $x(\vect{t})$ и импульсной характеристики $h(\vect{t})$:
+\begin{equation}
+y(\vect{t}) = x(\vect{t}) * h(\vect{t}) = \int_{\mathbb{R}^N} x(\vect{\tau}) h(\vect{t} - \vect{\tau}) \, d\vect{\tau}
+\end{equation}
+
+\section{Частотные характеристики многомерных систем}
+
+\begin{definition}
+\textbf{Многомерное преобразование Фурье (МПФ)} непрерывного сигнала $x(\vect{t})$ определяется как:
+\begin{equation}
+X(\vect{\omega}) = \int_{\mathbb{R}^N} x(\vect{t}) e^{-j \vect{\omega}^T \vect{t}} \, d\vect{t}
+\end{equation}
+где $\vect{\omega} = (\omega_1, \dots, \omega_N)^T$ — вектор пространственных частот, $\vect{\omega}^T \vect{t} = \sum_{i=1}^N \omega_i t_i$.
+\end{definition}
+
+Обратное многомерное преобразование Фурье (ОМПФ) задаётся формулой:
+\begin{equation}
+x(\vect{t}) = \frac{1}{(2\pi)^N} \int_{\mathbb{R}^N} X(\vect{\omega}) e^{j \vect{\omega}^T \vect{t}} \, d\vect{\omega}
+\end{equation}
+
+\begin{definition}
+\textbf{Частотной характеристикой} (или передаточной функцией) $H(\vect{\omega})$ ЛПИ-системы называется многомерное преобразование Фурье от её импульсной характеристики $h(\vect{t})$:
+\begin{equation}
+H(\vect{\omega}) = \int_{\mathbb{R}^N} h(\vect{t}) e^{-j \vect{\omega}^T \vect{t}} \, d\vect{t}
+\end{equation}
+\end{definition}
+
+\subsection{Связь между импульсной и частотной характеристикой}
+
+Связь между временным (пространственным) и частотным представлениями системы фундаментальна и описывается теоремой о свертке.
+
+\begin{theorem}[О многомерной свертке]
+Многомерное преобразование Фурье выходного сигнала ЛПИ-системы равно произведению МПФ входного сигнала и частотной характеристики системы:
+$$ Y(\vect{\omega}) = X(\vect{\omega}) H(\vect{\omega}) $$
+\end{theorem}
+
+\begin{proof}
+Запишем выражение для МПФ выходного сигнала $Y(\vect{\omega})$:
+$$ Y(\vect{\omega}) = \int_{\mathbb{R}^N} y(\vect{t}) e^{-j \vect{\omega}^T \vect{t}} \, d\vect{t} $$
+Подставим определение свертки (1) вместо $y(\vect{t})$:
+$$ Y(\vect{\omega}) = \int_{\mathbb{R}^N} \left[ \int_{\mathbb{R}^N} x(\vect{\tau}) h(\vect{t} - \vect{\tau}) \, d\vect{\tau} \right] e^{-j \vect{\omega}^T \vect{t}} \, d\vect{t} $$
+Изменим порядок интегрирования, что допустимо по теореме Фубини (предполагая абсолютную интегрируемость сигналов):
+$$ Y(\vect{\omega}) = \int_{\mathbb{R}^N} x(\vect{\tau}) \left[ \int_{\mathbb{R}^N} h(\vect{t} - \vect{\tau}) e^{-j \vect{\omega}^T \vect{t}} \, d\vect{t} \right] d\vect{\tau} $$
+Выполним замену переменных во внутреннем интеграле: $\vect{u} = \vect{t} - \vect{\tau}$, тогда $d\vect{t} = d\vect{u}$, а показатель экспоненты примет вид $-j \vect{\omega}^T (\vect{u} + \vect{\tau}) = -j \vect{\omega}^T \vect{u} - j \vect{\omega}^T \vect{\tau}$.
+$$ Y(\vect{\omega}) = \int_{\mathbb{R}^N} x(\vect{\tau}) e^{-j \vect{\omega}^T \vect{tau}} \left[ \int_{\mathbb{R}^N} h(\vect{u}) e^{-j \vect{\omega}^T \vect{u}} \, d\vect{u} \right] d\vect{\tau} $$
+Выражение в квадратных скобках есть не что иное, как $H(\vect{\omega})$. Поскольку оно не зависит от $\vect{\tau}$, его можно вынести за знак внешнего интеграла:
+$$ Y(\vect{\omega}) = H(\vect{\omega}) \int_{\mathbb{R}^N} x(\vect{\tau}) e^{-j \vect{\omega}^T \vect{\tau}} \, d\vect{\tau} = H(\vect{\omega}) X(\vect{\omega}) $$
+Теорема доказана.
+\end{proof}
+
+\subsection{Алгоритм быстрой фильтрации многомерных сигналов}
+
+На практике (например, при обработке изображений, где $N=2$) вычисление прямой свертки требует колоссальных вычислительных затрат. Теорема о свертке позволяет реализовать алгоритм быстрой фильтрации с использованием Быстрого Преобразования Фурье (БПФ).
+
+\begin{algorithm}[H]
+\caption{Алгоритм двумерной быстрой фильтрации на основе БПФ}
+\begin{algorithmic}[1]
+\REQUIRE Входное изображение $x[n_1, n_2]$ размера $N_1 \times N_2$, импульсная характеристика (маска фильтра) $h[n_1, n_2]$ размера $M_1 \times M_2$.
+\STATE Определить размерности БПФ для избежания эффекта циклического наложения: $K_1 \ge N_1 + M_1 - 1$, $K_2 \ge N_2 + M_2 - 1$.
+\STATE Дополнить нулями (Zero-padding) массивы $x$ и $h$ до размера $K_1 \times K_2$.
+\STATE Вычислить двумерное БПФ для обоих массивов: \\
+$X[k_1, k_2] = \text{FFT2}(x_{\text{pad}})$, \\
+$H[k_1, k_2] = \text{FFT2}(h_{\text{pad}})$.
+\STATE Выполнить поэлементное умножение спектров: \\
+$Y[k_1, k_2] = X[k_1, k_2] \cdot H[k_1, k_2]$ для всех $k_1, k_2$.
+\STATE Вычислить обратное двумерное БПФ для получения результата: \\
+$y[n_1, n_2] = \text{IFFT2}(Y[k_1, k_2])$.
+\RETURN Отфильтрованное изображение $y[n_1, n_2]$ размера $K_1 \times K_2$.
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Минимальный пример:}
+Пусть дано изображение $x = \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}$ ($2\times2$) и фильтр (например, выделение контуров) $h = \begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix}$ ($2\times2$).
+Размер результата линейной свертки: $(2+2-1) \times (2+2-1) = 3 \times 3$.
+Вместо вычисления 2D БПФ вручную, покажем, как выглядит результат прямой свертки $y$, который в точности совпадет с выходом алгоритма:
+$y[0,0] = x[0,0]h[0,0] = 1 \cdot 1 = 1$.
+$y[1,1] = x[1,1]h[0,0] + x[0,0]h[1,1] = 4(1) + 1(-1) = 3$.
+Полная матрица результата $y$ будет иметь размер $3\times3$. Алгоритм БПФ делает это за $O(K^2 \log K)$ операций вместо $O(K^4)$.
+
+\section{Многомерная теорема Котельникова (Найквиста-Шеннона)}
+
+Теорема Котельникова обобщается на многомерный случай и определяет условия, при которых непрерывный многомерный сигнал может быть точно восстановлен по его дискретным отсчетам.
+
+Рассмотрим дискретизацию на прямоугольной решетке (наиболее частый случай). Отсчеты берутся с шагами $\Delta t_1, \Delta t_2, \dots, \Delta t_N$ по соответствующим осям.
+
+\begin{definition}
+Сигнал $x(\vect{t})$ называется \textbf{сигналом с финитным спектром} (ограниченным в частотной области), если существует такой вектор $\vect{\Omega} = (\Omega_1, \dots, \Omega_N)^T$, что его спектр $X(\vect{\omega}) = 0$ при $|\omega_i| > \Omega_i$ хотя бы для одного $i \in \{1, \dots, N\}$.
+Область $B = [-\Omega_1, \Omega_1] \times \dots \times [-\Omega_N, \Omega_N]$ называется областью финитности спектра (базовым гиперпрямоугольником).
+\end{definition}
+
+\begin{theorem}[Многомерная теорема Котельникова]
+Многомерный сигнал $x(\vect{t})$, спектр которого ограничен гиперпрямоугольной областью $B$, может быть полностью и без искажений восстановлен по своим дискретным отсчетам $x(n_1 \Delta t_1, \dots, n_N \Delta t_N)$, если шаги дискретизации удовлетворяют условию:
+\begin{equation}
+\Delta t_i \le \frac{\pi}{\Omega_i}, \quad \forall i = 1, \dots, N
+\end{equation}
+Формула восстановления имеет вид:
+\begin{equation}
+x(\vect{t}) = \sum_{n_1=-\infty}^{\infty} \dots \sum_{n_N=-\infty}^{\infty} x(\vect{n} \circ \Delta \vect{t}) \prod_{i=1}^N \frac{\sin(\Omega_i (t_i - n_i \Delta t_i))}{\Omega_i (t_i - n_i \Delta t_i)}
+\end{equation}
+где $\vect{n} \circ \Delta \vect{t} = (n_1 \Delta t_1, \dots, n_N \Delta t_N)^T$.
+\end{theorem}
+
+\begin{proof}
+Для упрощения записей примем критическую (предельную) частоту дискретизации, когда $\Delta t_i = \frac{\pi}{\Omega_i}$.
+
+Поскольку спектр $X(\vect{\omega})$ финитен и равен нулю вне области $B$, мы можем рассматривать его внутри $B$ как один период многомерной периодической функции с периодами $2\Omega_1, \dots, 2\Omega_N$ вдоль соответствующих осей.
+
+Такую периодическую функцию можно разложить в многомерный ряд Фурье по базису из комплексных экспонент:
+\begin{equation}
+X(\vect{\omega}) = \sum_{\vect{n} \in \mathbb{Z}^N} c_{\vect{n}} e^{-j \sum_{i=1}^N n_i \Delta t_i \omega_i} \quad \text{при } \vect{\omega} \in B
+\end{equation}
+Коэффициенты ряда Фурье $c_{\vect{n}}$ вычисляются по классической формуле:
+\begin{equation}
+c_{\vect{n}} = \frac{1}{\prod_{i=1}^N (2\Omega_i)} \int_{-\Omega_1}^{\Omega_1} \dots \int_{-\Omega_N}^{\Omega_N} X(\vect{\omega}) e^{j \sum_{i=1}^N n_i \Delta t_i \omega_i} \, d\omega_1 \dots d\omega_N
+\end{equation}
+
+Заметим, что интеграл в формуле (8) в точности совпадает с выражением для обратного МПФ (3), вычисленным в точках дискретизации $\vect{t} = \vect{n} \circ \Delta \vect{t}$:
+$$ x(\vect{n} \circ \Delta \vect{t}) = \frac{1}{(2\pi)^N} \int_{B} X(\vect{\omega}) e^{j \vect{\omega}^T (\vect{n} \circ \Delta \vect{t})} \, d\vect{\omega} $$
+Подставляя это в (8), получаем:
+\begin{equation}
+c_{\vect{n}} = \frac{(2\pi)^N}{\prod_{i=1}^N (2\Omega_i)} x(\vect{n} \circ \Delta \vect{t})
+\end{equation}
+Так как $\Omega_i = \frac{\pi}{\Delta t_i}$, то $\prod_{i=1}^N (2\Omega_i) = \prod_{i=1}^N \frac{2\pi}{\Delta t_i} = \frac{(2\pi)^N}{\prod_{i=1}^N \Delta t_i}$.
+Тогда:
+$$ c_{\vect{n}} = \left( \prod_{i=1}^N \Delta t_i \right) x(\vect{n} \circ \Delta \vect{t}) $$
+
+Теперь подставим разложение спектра (7) с найденными коэффициентами $c_{\vect{n}}$ обратно в формулу ОМПФ для произвольного $\vect{t}$:
+$$ x(\vect{t}) = \frac{1}{(2\pi)^N} \int_{B} \left[ \sum_{\vect{n} \in \mathbb{Z}^N} \left( \prod_{i=1}^N \Delta t_i \right) x(\vect{n} \circ \Delta \vect{t}) e^{-j \sum_{i=1}^N n_i \Delta t_i \omega_i} \right] e^{j \vect{\omega}^T \vect{t}} \, d\vect{\omega} $$
+Поменяем местами суммирование и интегрирование:
+$$ x(\vect{t}) = \sum_{\vect{n} \in \mathbb{Z}^N} x(\vect{n} \circ \Delta \vect{t}) \left( \prod_{i=1}^N \frac{\Delta t_i}{2\pi} \right) \int_{-\Omega_1}^{\Omega_1} \dots \int_{-\Omega_N}^{\Omega_N} e^{j \sum_{i=1}^N \omega_i (t_i - n_i \Delta t_i)} \, d\omega_1 \dots d\omega_N $$
+Кратный интеграл распадается на произведение одномерных интегралов:
+$$ \int_{-\Omega_i}^{\Omega_i} e^{j \omega_i (t_i - n_i \Delta t_i)} \, d\omega_i = \frac{2 \sin(\Omega_i (t_i - n_i \Delta t_i))}{t_i - n_i \Delta t_i} $$
+Подставим это произведение интегралов в исходное выражение. Также учтем, что $\frac{\Delta t_i}{2\pi} \cdot 2 = \frac{\pi / \Omega_i}{\pi} = \frac{1}{\Omega_i}$.
+Получаем окончательную формулу идеальной интерполяции:
+$$ x(\vect{t}) = \sum_{\vect{n} \in \mathbb{Z}^N} x(\vect{n} \circ \Delta \vect{t}) \prod_{i=1}^N \frac{\sin(\Omega_i (t_i - n_i \Delta t_i))}{\Omega_i (t_i - n_i \Delta t_i)} $$
+Теорема доказана.
+\end{proof}
+
+\textbf{Примечание:} Функция $ \text{sinc}(z) = \frac{\sin(z)}{z} $ является ядром идеального многомерного фильтра нижних частот (ФНЧ). В частотной области это соответствует умножению спектра дискретизированного сигнала на многомерную прямоугольную функцию (П-импульс), которая "вырезает" базовый лепесток спектра, подавляя все высокочастотные копии (алиасинг), возникшие в результате дискретизации. При несоблюдении условия (5) спектральные копии перекрываются, и точное восстановление сигнала становится невозможным.
+
+\end{document}

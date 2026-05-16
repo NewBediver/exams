@@ -1,0 +1,189 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{bm}
+
+\geometry{top=2cm, bottom=2cm, left=2.5cm, right=1.5cm}
+
+\newtheorem{theorem}{Теорема}
+\newtheorem{definition}{Определение}
+\newtheorem{lemma}{Лемма}
+\newtheorem{example}{Пример}
+
+\title{Билет №89 \\ \small Дискретизация многомерных систем. Вектор дискретизации. Прямоугольная дискретизация. Гексагональная дискретизация. Связь между спектрами аналогового сигнала и его дискретного представления. (СпБПУ)}
+\author{Сериков Владислав Александрович}
+\date{16 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Введение в многомерную дискретизацию}
+В теории многомерных систем рассматриваются сигналы, зависящие от нескольких независимых переменных, например, двумерные сигналы изображений $x_c(t_1, t_2)$ или трехмерные видеосигналы $x_c(t_1, t_2, t_3)$. В общем случае непрерывный многомерный сигнал обозначается как $x_c(\mathbf{t})$, где $\mathbf{t} = [t_1, t_2, \dots, t_D]^T \in \mathbb{R}^D$ --- вектор непрерывных аргументов.
+
+Для цифровой обработки такой сигнал необходимо дискретизировать, то есть перейти от непрерывного пространства $\mathbb{R}^D$ к дискретной решетке отсчетов.
+
+\section{Вектор и матрица дискретизации}
+\begin{definition}
+Дискретной периодической решеткой $\Lambda$ в пространстве $\mathbb{R}^D$ называется множество точек вида:
+\begin{equation}
+    \mathbf{t} = V \mathbf{n},
+\end{equation}
+где $\mathbf{n} = [n_1, n_2, \dots, n_D]^T \in \mathbb{Z}^D$ --- целочисленный вектор индексов, а $V$ --- невырожденная действительная матрица размера $D \times D$, называемая \textbf{матрицей дискретизации}.
+\end{definition}
+
+Векторы-столбцы матрицы $V$ называются \textbf{векторами дискретизации}. Они задают базис решетки $\Lambda$.
+
+Многомерный дискретный сигнал $x[\mathbf{n}]$ формируется путем выборки значений непрерывного сигнала в узлах решетки:
+\begin{equation}
+    x[\mathbf{n}] = x_c(V \mathbf{n}).
+\end{equation}
+
+Величина $|\det V|$ равна объему (или площади в 2D) фундаментального параллелепипеда решетки и определяет \textbf{шаг дискретизации} многомерной системы (величина, обратная плотности выборки).
+
+\section{Виды дискретизации}
+
+\subsection{Прямоугольная дискретизация}
+При прямоугольной дискретизации векторы дискретизации ортогональны друг другу, а матрица $V$ является диагональной. Для двумерного случая ($D=2$):
+\begin{equation}
+    V_{\text{rect}} = \begin{pmatrix} T_1 & 0 \\ 0 & T_2 \end{pmatrix},
+\end{equation}
+где $T_1, T_2$ --- шаги дискретизации по осям $t_1$ и $t_2$. Отсчеты формируют прямоугольную сетку: $\mathbf{t} = [n_1 T_1, n_2 T_2]^T$.
+
+\subsection{Гексагональная дискретизация}
+Гексагональная решетка строится таким образом, что каждый внутренний узел имеет ровно шесть равноудаленных соседей (в 2D). Такая дискретизация задается матрицей:
+\begin{equation}
+    V_{\text{hex}} = \begin{pmatrix} T & T/2 \\ 0 & T\frac{\sqrt{3}}{2} \end{pmatrix}.
+\end{equation}
+\textbf{Преимущество:} Гексагональная дискретизация является оптимальной для двумерных сигналов с круговым финитным спектром. Для предотвращения наложения спектров (алиасинга) она требует примерно на $13.4\%$ меньше отсчетов на единицу площади по сравнению с прямоугольной решеткой.
+
+\vspace{0.5cm}
+\noindent\textbf{Алгоритм 1: Процесс дискретизации на произвольной решетке}
+\begin{enumerate}
+    \item \textbf{Антиалиасинговая фильтрация.} Пропустить исходный непрерывный сигнал $x_c(\mathbf{t})$ через аналоговый фильтр нижних частот с носителем, соответствующим ячейке Вороного обратной решетки.
+    \item \textbf{Задание базиса.} Выбрать матрицу дискретизации $V$ в зависимости от формы спектра сигнала (например, $V_{\text{rect}}$ или $V_{\text{hex}}$).
+    \item \textbf{Вычисление узлов.} Для каждого вектора индексов $\mathbf{n} \in \mathbb{Z}^D$ вычислить физические координаты $\mathbf{t}_{\mathbf{n}} = V\mathbf{n}$.
+    \item \textbf{Выборка.} Сохранить значения $x[\mathbf{n}] = x_c(\mathbf{t}_{\mathbf{n}})$.
+\end{enumerate}
+
+\textit{Минимальный пример:} Пусть дан сигнал $x_c(t_1, t_2) = \sin(2\pi t_1)$. Если мы используем гексагональную дискретизацию с $T=1$, то $V_{\text{hex}} = \begin{pmatrix} 1 & 0.5 \\ 0 & \frac{\sqrt{3}}{2} \end{pmatrix}$. Для индексов $\mathbf{n} = [1, 1]^T$:
+$\mathbf{t} = \begin{pmatrix} 1 & 0.5 \\ 0 & \frac{\sqrt{3}}{2} \end{pmatrix} \begin{pmatrix} 1 \\ 1 \end{pmatrix} = \begin{pmatrix} 1.5 \\ \frac{\sqrt{3}}{2} \end{pmatrix}$.
+Значение отсчета: $x[1, 1] = \sin(2\pi \cdot 1.5) = \sin(3\pi) = 0$.
+
+\section{Связь между спектрами аналогового сигнала и его дискретного представления}
+
+Обозначим многомерное преобразование Фурье для непрерывного сигнала $x_c(\mathbf{t})$:
+\begin{equation}
+    X_c(\boldsymbol{\Omega}) = \int_{\mathbb{R}^D} x_c(\mathbf{t}) e^{-j \boldsymbol{\Omega}^T \mathbf{t}} d\mathbf{t},
+\end{equation}
+где $\boldsymbol{\Omega} = [\Omega_1, \dots, \Omega_D]^T$ --- вектор непрерывных частот.
+
+Дискретное преобразование Фурье многомерного сигнала (DSFT):
+\begin{equation}
+    X(\boldsymbol{\omega}) = \sum_{\mathbf{n} \in \mathbb{Z}^D} x[\mathbf{n}] e^{-j \boldsymbol{\omega}^T \mathbf{n}},
+\end{equation}
+где $\boldsymbol{\omega} = [\omega_1, \dots, \omega_D]^T$ --- вектор нормированных цифровых частот.
+
+Связь между нормированной частотой $\boldsymbol{\omega}$ и физической частотой $\boldsymbol{\Omega}$ определяется как $\boldsymbol{\omega} = V^T \boldsymbol{\Omega}$.
+
+Для вывода связи спектров введем математическую модель идеального импульсного элемента. Пусть дискретизированный сигнал представлен взвешенной суммой дельта-функций Дирака:
+\begin{equation}
+    x_s(\mathbf{t}) = \sum_{\mathbf{n} \in \mathbb{Z}^D} x_c(V \mathbf{n}) \delta(\mathbf{t} - V \mathbf{n}).
+\end{equation}
+
+С одной стороны, применяя преобразование Фурье к $x_s(\mathbf{t})$, получаем:
+\begin{equation} \label{eq:xs_fourier_1}
+    X_s(\boldsymbol{\Omega}) = \sum_{\mathbf{n} \in \mathbb{Z}^D} x_c(V \mathbf{n}) e^{-j \boldsymbol{\Omega}^T V \mathbf{n}} = X(V^T \boldsymbol{\Omega}).
+\end{equation}
+
+С другой стороны, $x_s(\mathbf{t})$ можно рассматривать как произведение $x_c(\mathbf{t})$ и многомерной последовательности импульсов $p(\mathbf{t}) = \sum_{\mathbf{n}} \delta(\mathbf{t} - V \mathbf{n})$. По теореме о свертке:
+\begin{equation}
+    X_s(\boldsymbol{\Omega}) = \frac{1}{(2\pi)^D} \left( X_c(\boldsymbol{\Omega}) * P(\boldsymbol{\Omega}) \right),
+\end{equation}
+где $P(\boldsymbol{\Omega})$ --- спектр $p(\mathbf{t})$. Пользуясь многомерной формулой суммирования Пуассона, преобразование Фурье для $p(\mathbf{t})$ равно:
+\begin{equation}
+    P(\boldsymbol{\Omega}) = \frac{(2\pi)^D}{|\det V|} \sum_{\mathbf{k} \in \mathbb{Z}^D} \delta(\boldsymbol{\Omega} - 2\pi V^{-T} \mathbf{k}).
+\end{equation}
+Выполняя свертку, получаем фундаментальную формулу:
+\begin{equation} \label{eq:xs_fourier_2}
+    X_s(\boldsymbol{\Omega}) = \frac{1}{|\det V|} \sum_{\mathbf{k} \in \mathbb{Z}^D} X_c(\boldsymbol{\Omega} - 2\pi V^{-T} \mathbf{k}).
+\end{equation}
+
+Приравнивая \eqref{eq:xs_fourier_1} и \eqref{eq:xs_fourier_2} и заменяя $\boldsymbol{\Omega}$ на $V^{-T} \boldsymbol{\omega}$, получаем итоговую связь спектров:
+\begin{equation} \label{eq:spectra_relation}
+    X(\boldsymbol{\omega}) = \frac{1}{|\det V|} \sum_{\mathbf{k} \in \mathbb{Z}^D} X_c \left( V^{-T}(\boldsymbol{\omega} - 2\pi \mathbf{k}) \right).
+\end{equation}
+
+\textbf{Физический смысл:} Спектр дискретного сигнала является периодически размноженным спектром исходного аналогового сигнала. Центры копий спектра располагаются в узлах обратной решетки, задаваемой матрицей $2\pi V^{-T}$.
+
+\section{Теорема Котельникова для многомерных сигналов}
+
+В основе точного восстановления сигнала лежит теорема отсчетов (Шеннона-Котельникова-Найквиста) для многомерных пространств.
+
+\begin{definition}
+Ячейка Вороного $\mathcal{V}^*$ обратной решетки --- это область в частотном пространстве, состоящая из точек, которые расположены ближе к началу координат (где $\mathbf{k}=\mathbf{0}$), чем к любому другому узлу $2\pi V^{-T} \mathbf{k}$.
+\end{definition}
+
+\begin{theorem}[Многомерная теорема отсчетов]
+Пусть многомерный непрерывный сигнал $x_c(\mathbf{t})$ является финитным в частотной области, то есть его спектр $X_c(\boldsymbol{\Omega}) = 0$ для всех $\boldsymbol{\Omega} \notin S_N$, где $S_N$ --- компактная область поддержки спектра.
+
+Сигнал $x_c(\mathbf{t})$ может быть точно и однозначно восстановлен по его отсчетам $x[\mathbf{n}] = x_c(V \mathbf{n})$, если существует матрица дискретизации $V$ такая, что спектральная поддержка $S_N$ полностью помещается внутри ячейки Вороного $\mathcal{V}^*$ обратной решетки:
+$$ S_N \subset \mathcal{V}^* $$
+(или, иными словами, сдвиги спектра $X_c(\boldsymbol{\Omega} - 2\pi V^{-T} \mathbf{k})$ не перекрываются для $\mathbf{k} \neq \mathbf{0}$).
+\end{theorem}
+
+\begin{proof}
+Согласно уравнению \eqref{eq:xs_fourier_2}, спектр импульсно-дискретизированного сигнала равен:
+\begin{equation*}
+    X_s(\boldsymbol{\Omega}) = \frac{1}{|\det V|} \sum_{\mathbf{k} \in \mathbb{Z}^D} X_c(\boldsymbol{\Omega} - 2\pi V^{-T} \mathbf{k}).
+\end{equation*}
+По условию теоремы сдвиги спектра не перекрываются, так как область $S_N$ содержится в центральной ячейке $\mathcal{V}^*$. Тогда в области $\boldsymbol{\Omega} \in \mathcal{V}^*$ (базовой полосе частот) сумма вырождается в одно слагаемое при $\mathbf{k} = \mathbf{0}$:
+\begin{equation*}
+    X_s(\boldsymbol{\Omega}) = \frac{1}{|\det V|} X_c(\boldsymbol{\Omega}), \quad \forall \boldsymbol{\Omega} \in \mathcal{V}^*.
+\end{equation*}
+
+Для выделения базового спектра и подавления всех остальных копий применим к $x_s(\mathbf{t})$ идеальный многомерный фильтр нижних частот, частотная характеристика которого равна:
+\begin{equation}
+    H(\boldsymbol{\Omega}) = \begin{cases} |\det V|, & \boldsymbol{\Omega} \in \mathcal{V}^* \\ 0, & \boldsymbol{\Omega} \notin \mathcal{V}^* \end{cases}.
+\end{equation}
+Тогда восстановленный спектр $\tilde{X}_c(\boldsymbol{\Omega}) = H(\boldsymbol{\Omega}) X_s(\boldsymbol{\Omega}) = X_c(\boldsymbol{\Omega})$.
+
+Во временной области умножению спектров соответствует свертка:
+\begin{equation*}
+    x_c(\mathbf{t}) = x_s(\mathbf{t}) * h(\mathbf{t}) = \left( \sum_{\mathbf{n}} x[\mathbf{n}] \delta(\mathbf{t} - V \mathbf{n}) \right) * h(\mathbf{t}) = \sum_{\mathbf{n}} x[\mathbf{n}] h(\mathbf{t} - V \mathbf{n}),
+\end{equation*}
+где $h(\mathbf{t})$ --- импульсная характеристика идеального фильтра:
+\begin{equation} \label{eq:impulse_resp}
+    h(\mathbf{t}) = \frac{1}{(2\pi)^D} \int_{\mathcal{V}^*} |\det V| e^{j \boldsymbol{\Omega}^T \mathbf{t}} d\boldsymbol{\Omega}.
+\end{equation}
+Таким образом, сигнал $x_c(\mathbf{t})$ восстанавливается точно, что и требовалось доказать.
+\end{proof}
+
+\vspace{0.5cm}
+\noindent\textbf{Алгоритм 2: Идеальное восстановление непрерывного сигнала}
+\begin{enumerate}
+    \item \textbf{Формирование сетки импульсов.} Построить импульсный сигнал $x_s(\mathbf{t})$, поместив значения $x[\mathbf{n}]$ в узлах решетки $V\mathbf{n}$.
+    \item \textbf{Вычисление интерполяционного ядра.} Рассчитать функцию $h(\mathbf{t})$ аналитически согласно \eqref{eq:impulse_resp}.
+    \item \textbf{Свертка.} Вычислить непрерывный сигнал в любой точке $\mathbf{t}$ путем суммирования: $x_c(\mathbf{t}) = \sum_{\mathbf{n}} x[\mathbf{n}] h(\mathbf{t} - V\mathbf{n})$.
+\end{enumerate}
+
+\textit{Минимальный пример (Прямоугольная решетка):}
+Если решетка прямоугольная $V = \begin{pmatrix} T_1 & 0 \\ 0 & T_2 \end{pmatrix}$, то ячейка Вороного представляет собой прямоугольник $\Omega_1 \in [-\pi/T_1, \pi/T_1]$, $\Omega_2 \in [-\pi/T_2, \pi/T_2]$.
+Интеграл \eqref{eq:impulse_resp} распадается на произведение одномерных интегралов:
+\begin{equation}
+    h(t_1, t_2) = \frac{T_1 T_2}{(2\pi)^2} \int_{-\pi/T_1}^{\pi/T_1} e^{j \Omega_1 t_1} d\Omega_1 \int_{-\pi/T_2}^{\pi/T_2} e^{j \Omega_2 t_2} d\Omega_2 = \text{sinc}\left(\frac{\pi t_1}{T_1}\right) \text{sinc}\left(\frac{\pi t_2}{T_2}\right),
+\end{equation}
+где $\text{sinc}(x) = \frac{\sin(x)}{x}$.
+Тогда формула восстановления принимает классический вид двумерного интерполятора Шеннона:
+\begin{equation}
+    x_c(t_1, t_2) = \sum_{n_1=-\infty}^{\infty} \sum_{n_2=-\infty}^{\infty} x[n_1, n_2] \, \text{sinc}\left(\frac{\pi (t_1 - n_1 T_1)}{T_1}\right) \text{sinc}\left(\frac{\pi (t_2 - n_2 T_2)}{T_2}\right).
+\end{equation}
+
+\end{document}
