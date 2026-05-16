@@ -1,0 +1,1344 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+
+\lstdefinestyle{shell}{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    columns=fullflexible,
+    keepspaces=true,
+    backgroundcolor=\color{gray!5},
+    literate=
+      {А}{{\CYRA}}1
+      {Б}{{\CYRB}}1
+      {В}{{\CYRV}}1
+      {Г}{{\CYRG}}1
+      {Д}{{\CYRD}}1
+      {Е}{{\CYRE}}1
+      {Ё}{{\CYRYO}}1
+      {Ж}{{\CYRZH}}1
+      {З}{{\CYRZ}}1
+      {И}{{\CYRI}}1
+      {Й}{{\CYRISHRT}}1
+      {К}{{\CYRK}}1
+      {Л}{{\CYRL}}1
+      {М}{{\CYRM}}1
+      {Н}{{\CYRN}}1
+      {О}{{\CYRO}}1
+      {П}{{\CYRP}}1
+      {Р}{{\CYRR}}1
+      {С}{{\CYRS}}1
+      {Т}{{\CYRT}}1
+      {У}{{\CYRU}}1
+      {Ф}{{\CYRF}}1
+      {Х}{{\CYRH}}1
+      {Ц}{{\CYRC}}1
+      {Ч}{{\CYRCH}}1
+      {Ш}{{\CYRSH}}1
+      {Щ}{{\CYRSHCH}}1
+      {Ъ}{{\CYRHRDSN}}1
+      {Ы}{{\CYRERY}}1
+      {Ь}{{\CYRSFTSN}}1
+      {Э}{{\CYREREV}}1
+      {Ю}{{\CYRYU}}1
+      {Я}{{\CYRYA}}1
+      {а}{{\cyra}}1
+      {б}{{\cyrb}}1
+      {в}{{\cyrv}}1
+      {г}{{\cyrg}}1
+      {д}{{\cyrd}}1
+      {е}{{\cyre}}1
+      {ё}{{\cyryo}}1
+      {ж}{{\cyrzh}}1
+      {з}{{\cyrz}}1
+      {и}{{\cyri}}1
+      {й}{{\cyrishrt}}1
+      {к}{{\cyrk}}1
+      {л}{{\cyrl}}1
+      {м}{{\cyrm}}1
+      {н}{{\cyrn}}1
+      {о}{{\cyro}}1
+      {п}{{\cyrp}}1
+      {р}{{\cyrr}}1
+      {с}{{\cyrs}}1
+      {т}{{\cyrt}}1
+      {у}{{\cyru}}1
+      {ф}{{\cyrf}}1
+      {х}{{\cyrh}}1
+      {ц}{{\cyrc}}1
+      {ч}{{\cyrch}}1
+      {ш}{{\cyrsh}}1
+      {щ}{{\cyrshch}}1
+      {ъ}{{\cyrhrdsn}}1
+      {ы}{{\cyrery}}1
+      {ь}{{\cyrsftsn}}1
+      {э}{{\cyrerev}}1
+      {ю}{{\cyryu}}1
+      {я}{{\cyrya}}1
+}
+
+\lstset{style=shell}
+
+\title{Билет №51 \\ \small Командные оболочки, языки сценариев командных оболочек. Командные оболочки различных семейств операционных систем (Windows, Unix-подобных). (СпБГУ)}
+\author{Сериков Владислав Александрович}
+\date{16 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Понятие командной оболочки}
+
+\textbf{Командная оболочка} --- это программа-посредник между пользователем и операционной системой, предназначенная для ввода, интерпретации и выполнения команд.
+
+Оболочка обычно выполняет следующие функции:
+\begin{enumerate}
+    \item принимает команды пользователя в интерактивном режиме;
+    \item читает команды из файлов сценариев;
+    \item выполняет лексический и синтаксический анализ командной строки;
+    \item запускает внешние программы;
+    \item предоставляет встроенные команды;
+    \item управляет переменными, окружением, потоками ввода-вывода;
+    \item поддерживает перенаправление, конвейеры, подстановки, шаблоны имён файлов;
+    \item обеспечивает средства автоматизации административных и пользовательских задач.
+\end{enumerate}
+
+Командная оболочка не является ядром операционной системы. Она использует системные вызовы или системные API для запуска процессов, работы с файлами, потоками, переменными окружения и другими ресурсами.
+
+\subsection{Интерактивная и неинтерактивная работа}
+
+Оболочка может работать в двух основных режимах.
+
+\begin{description}
+    \item[Интерактивный режим] Пользователь вводит команды с клавиатуры, оболочка немедленно их интерпретирует и выводит результат.
+    \item[Пакетный режим] Команды считываются из файла сценария и выполняются последовательно или согласно управляющим конструкциям.
+\end{description}
+
+Пример интерактивной работы в Unix-подобной системе:
+
+\begin{lstlisting}
+$ pwd
+/home/student
+$ ls
+main.c  notes.txt  script.sh
+\end{lstlisting}
+
+Пример сценария:
+
+\begin{lstlisting}
+#!/bin/sh
+echo "Текущий каталог:"
+pwd
+\end{lstlisting}
+
+\section{Командная строка и модель выполнения команды}
+
+\subsection{Команда}
+
+\textbf{Команда} --- это инструкция, передаваемая оболочке. Она может быть:
+\begin{enumerate}
+    \item встроенной командой оболочки;
+    \item внешней программой;
+    \item функцией оболочки;
+    \item псевдонимом;
+    \item управляющей конструкцией языка сценариев.
+\end{enumerate}
+
+Например, в Unix-подобной системе:
+
+\begin{lstlisting}
+echo Hello
+ls -l /tmp
+cd /home/student
+\end{lstlisting}
+
+Здесь \texttt{echo} может быть встроенной командой, \texttt{ls} обычно является внешней программой, а \texttt{cd} почти всегда является встроенной командой, так как изменение текущего каталога должно происходить внутри процесса оболочки.
+
+\subsection{Общий алгоритм обработки командной строки}
+
+Типичная командная оболочка выполняет команду в несколько этапов.
+
+\textbf{Алгоритм обработки команды:}
+\begin{enumerate}
+    \item Считать строку команды.
+    \item Разбить строку на лексемы с учётом кавычек, экранирования и специальных символов.
+    \item Выполнить подстановки:
+    \begin{enumerate}
+        \item подстановку переменных;
+        \item командную подстановку;
+        \item арифметическую подстановку;
+        \item подстановку имён файлов по шаблону;
+        \item разбиение на слова, если оно предусмотрено языком оболочки.
+    \end{enumerate}
+    \item Распознать перенаправления ввода-вывода.
+    \item Определить тип команды: встроенная команда, функция, внешняя программа, управляющая конструкция.
+    \item Подготовить окружение для выполнения.
+    \item Выполнить команду.
+    \item Получить код завершения.
+    \item Вернуть управление пользователю или перейти к следующей команде сценария.
+\end{enumerate}
+
+Пример:
+
+\begin{lstlisting}
+echo "Current directory: $(pwd)"
+\end{lstlisting}
+
+Иллюстрация шагов:
+\begin{enumerate}
+    \item оболочка читает строку \texttt{echo "Current directory: \$(pwd)"};
+    \item распознаёт командную подстановку \texttt{\$(pwd)};
+    \item выполняет команду \texttt{pwd};
+    \item подставляет её результат;
+    \item запускает \texttt{echo} с готовым аргументом.
+\end{enumerate}
+
+\section{Языки сценариев командных оболочек}
+
+\textbf{Язык сценариев командной оболочки} --- это язык программирования, встроенный в оболочку или тесно связанный с ней, предназначенный для автоматизации выполнения команд операционной системы.
+
+Обычно такой язык поддерживает:
+\begin{enumerate}
+    \item переменные;
+    \item условные операторы;
+    \item циклы;
+    \item функции или процедуры;
+    \item обработку аргументов командной строки;
+    \item работу с кодами завершения;
+    \item перенаправление потоков;
+    \item конвейеры;
+    \item вызов внешних программ.
+\end{enumerate}
+
+\subsection{Особенности языков сценариев оболочек}
+
+Языки оболочек отличаются от универсальных языков программирования следующими свойствами:
+\begin{enumerate}
+    \item основной объект выполнения --- команда операционной системы;
+    \item широко используется текстовый ввод-вывод;
+    \item программы часто строятся как композиции внешних утилит;
+    \item синтаксис ориентирован на краткость интерактивного ввода;
+    \item ошибки часто связаны с пробелами, кавычками и подстановками;
+    \item большое значение имеют коды завершения команд.
+\end{enumerate}
+
+\section{Коды завершения}
+
+Каждая команда обычно возвращает \textbf{код завершения}. В Unix-подобных системах код \texttt{0} означает успешное завершение, а ненулевое значение --- ошибку или особое состояние.
+
+Пример:
+
+\begin{lstlisting}
+#!/bin/sh
+
+mkdir testdir
+
+if [ $? -eq 0 ]; then
+    echo "Каталог создан"
+else
+    echo "Ошибка создания каталога"
+fi
+\end{lstlisting}
+
+Более идиоматический вариант:
+
+\begin{lstlisting}
+#!/bin/sh
+
+if mkdir testdir; then
+    echo "Каталог создан"
+else
+    echo "Ошибка создания каталога"
+fi
+\end{lstlisting}
+
+В PowerShell также существует понятие успешности выполнения, но оно устроено иначе: есть автоматическая переменная \texttt{\$?}, переменная \texttt{\$LASTEXITCODE} для внешних программ и система исключений.
+
+Пример PowerShell:
+
+\begin{lstlisting}
+New-Item -ItemType Directory -Path testdir
+
+if ($?) {
+    Write-Output "Каталог создан"
+} else {
+    Write-Output "Ошибка создания каталога"
+}
+\end{lstlisting}
+
+\section{Потоки ввода-вывода}
+
+\subsection{Стандартные потоки}
+
+В Unix-подобных системах процесс обычно имеет три стандартных потока:
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+Номер & Имя & Назначение \\
+\hline
+0 & stdin & стандартный ввод \\
+1 & stdout & стандартный вывод \\
+2 & stderr & стандартный поток ошибок \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Перенаправление}
+
+Перенаправление позволяет изменить источник ввода или назначение вывода.
+
+Примеры для Unix-подобных оболочек:
+
+\begin{lstlisting}
+ls > files.txt          # записать stdout в файл
+ls >> files.txt         # дописать stdout в файл
+cat < input.txt         # читать stdin из файла
+ls 2> errors.txt        # записать stderr в файл
+ls > out.txt 2> err.txt # разделить stdout и stderr
+ls > all.txt 2>&1       # объединить stdout и stderr
+\end{lstlisting}
+
+Примеры для Windows CMD:
+
+\begin{lstlisting}
+dir > files.txt
+dir >> files.txt
+dir 2> errors.txt
+dir > all.txt 2>&1
+\end{lstlisting}
+
+В PowerShell есть несколько потоков: success output, error, warning, verbose, debug, information. Поэтому перенаправление устроено богаче:
+
+\begin{lstlisting}
+Get-ChildItem > files.txt
+Get-ChildItem 2> errors.txt
+Get-ChildItem *> all.txt
+\end{lstlisting}
+
+\section{Конвейеры}
+
+\textbf{Конвейер} --- это механизм соединения вывода одной команды со вводом другой.
+
+В Unix-подобных оболочках конвейер обычно передаёт байтовый или текстовый поток:
+
+\begin{lstlisting}
+cat access.log | grep "ERROR" | wc -l
+\end{lstlisting}
+
+Эта команда:
+\begin{enumerate}
+    \item читает файл \texttt{access.log};
+    \item выбирает строки, содержащие \texttt{ERROR};
+    \item считает количество таких строк.
+\end{enumerate}
+
+Более экономичный вариант без лишнего \texttt{cat}:
+
+\begin{lstlisting}
+grep "ERROR" access.log | wc -l
+\end{lstlisting}
+
+В PowerShell конвейер передаёт не просто текст, а объекты .NET:
+
+\begin{lstlisting}
+Get-Process | Where-Object { $_.CPU -gt 10 } | Sort-Object CPU
+\end{lstlisting}
+
+Здесь:
+\begin{enumerate}
+    \item \texttt{Get-Process} возвращает объекты процессов;
+    \item \texttt{Where-Object} фильтрует объекты;
+    \item \texttt{Sort-Object} сортирует их по свойству \texttt{CPU}.
+\end{enumerate}
+
+Это фундаментальное отличие PowerShell от традиционных текстовых оболочек Unix.
+
+\section{Переменные и окружение}
+
+\subsection{Переменные оболочки}
+
+Переменная оболочки хранит значение, доступное внутри текущей оболочки.
+
+Пример POSIX shell / Bash:
+
+\begin{lstlisting}
+name="Alice"
+echo "$name"
+\end{lstlisting}
+
+Важно: вокруг знака \texttt{=} не должно быть пробелов.
+
+Неверно:
+
+\begin{lstlisting}
+name = "Alice"
+\end{lstlisting}
+
+\subsection{Переменные окружения}
+
+\textbf{Переменные окружения} --- это пары ``имя--значение'', передаваемые дочерним процессам.
+
+Пример:
+
+\begin{lstlisting}
+export PATH="/usr/local/bin:$PATH"
+\end{lstlisting}
+
+Переменная \texttt{PATH} содержит список каталогов, в которых оболочка ищет исполняемые файлы.
+
+Минимальный пример:
+
+\begin{lstlisting}
+#!/bin/sh
+
+MYVAR="local"
+export EXPORTED="visible"
+
+sh -c 'echo "MYVAR=$MYVAR"; echo "EXPORTED=$EXPORTED"'
+\end{lstlisting}
+
+Ожидаемый результат:
+
+\begin{lstlisting}
+MYVAR=
+EXPORTED=visible
+\end{lstlisting}
+
+Переменная \texttt{MYVAR} не была экспортирована, поэтому дочерняя оболочка её не получила.
+
+\subsection{Переменные в Windows CMD}
+
+В CMD переменные окружения записываются через \texttt{\%NAME\%}:
+
+\begin{lstlisting}
+set NAME=Alice
+echo %NAME%
+\end{lstlisting}
+
+Для изменения \texttt{PATH}:
+
+\begin{lstlisting}
+set PATH=C:\Tools;%PATH%
+\end{lstlisting}
+
+\subsection{Переменные в PowerShell}
+
+В PowerShell переменные имеют префикс \texttt{\$}:
+
+\begin{lstlisting}
+$name = "Alice"
+Write-Output $name
+\end{lstlisting}
+
+Переменные окружения доступны через псевдодиск \texttt{Env:}:
+
+\begin{lstlisting}
+$env:PATH
+$env:MYVAR = "value"
+\end{lstlisting}
+
+\section{Кавычки и экранирование}
+
+Кавычки определяют, как оболочка интерпретирует специальные символы.
+
+\subsection{POSIX shell и Bash}
+
+Одинарные кавычки запрещают почти все подстановки:
+
+\begin{lstlisting}
+name="Alice"
+echo '$name'
+\end{lstlisting}
+
+Результат:
+
+\begin{lstlisting}
+$name
+\end{lstlisting}
+
+Двойные кавычки допускают подстановку переменных:
+
+\begin{lstlisting}
+name="Alice"
+echo "$name"
+\end{lstlisting}
+
+Результат:
+
+\begin{lstlisting}
+Alice
+\end{lstlisting}
+
+Обратная косая черта экранирует следующий символ:
+
+\begin{lstlisting}
+echo "Цена: \$100"
+\end{lstlisting}
+
+Результат:
+
+\begin{lstlisting}
+Цена: $100
+\end{lstlisting}
+
+\subsection{CMD}
+
+В CMD переменные чаще всего раскрываются через \texttt{\%VAR\%}:
+
+\begin{lstlisting}
+set NAME=Alice
+echo %NAME%
+\end{lstlisting}
+
+Экранирование специальных символов часто выполняется символом \texttt{\^}:
+
+\begin{lstlisting}
+echo 1 ^> 2
+\end{lstlisting}
+
+\subsection{PowerShell}
+
+В PowerShell одинарные кавычки задают литеральную строку:
+
+\begin{lstlisting}
+$name = "Alice"
+'$name'
+\end{lstlisting}
+
+Результат:
+
+\begin{lstlisting}
+$name
+\end{lstlisting}
+
+Двойные кавычки выполняют интерполяцию:
+
+\begin{lstlisting}
+$name = "Alice"
+"$name"
+\end{lstlisting}
+
+Результат:
+
+\begin{lstlisting}
+Alice
+\end{lstlisting}
+
+Для экранирования используется обратный апостроф:
+
+\begin{lstlisting}
+"Цена: `$100"
+\end{lstlisting}
+
+\section{Шаблоны имён файлов}
+
+В Unix-подобных оболочках часто используется \textbf{globbing} --- подстановка имён файлов по шаблонам.
+
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Шаблон & Значение \\
+\hline
+\texttt{*} & любая строка символов \\
+\texttt{?} & ровно один символ \\
+\texttt{[abc]} & один символ из множества \texttt{a}, \texttt{b}, \texttt{c} \\
+\texttt{[0-9]} & одна цифра \\
+\hline
+\end{tabular}
+\end{center}
+
+Примеры:
+
+\begin{lstlisting}
+ls *.txt
+rm file?.log
+cp image[0-9].png backup/
+\end{lstlisting}
+
+Важно понимать, что шаблоны раскрывает сама оболочка до запуска программы. Например, команда:
+
+\begin{lstlisting}
+echo *.txt
+\end{lstlisting}
+
+может быть преобразована оболочкой в:
+
+\begin{lstlisting}
+echo a.txt b.txt c.txt
+\end{lstlisting}
+
+\section{Командные оболочки Unix-подобных систем}
+
+\subsection{Исторические и современные оболочки}
+
+В Unix-подобных системах существует множество командных оболочек.
+
+\begin{longtable}{|p{3cm}|p{4cm}|p{7cm}|}
+\hline
+Оболочка & Семейство & Особенности \\
+\hline
+\texttt{sh} & Bourne shell & классическая Unix-оболочка, основа POSIX shell \\
+\hline
+\texttt{bash} & Bourne-like & GNU Bourne Again Shell, распространена в Linux \\
+\hline
+\texttt{dash} & POSIX shell & компактная и быстрая оболочка, часто используется как \texttt{/bin/sh} \\
+\hline
+\texttt{ksh} & Korn shell & расширения над Bourne shell, сильные средства сценариев \\
+\hline
+\texttt{zsh} & Bourne-like & развитая интерактивная оболочка, автодополнение, темы, плагины \\
+\hline
+\texttt{csh}, \texttt{tcsh} & C shell & синтаксис, частично напоминающий C; исторически популярен в BSD-системах \\
+\hline
+\texttt{fish} & Friendly Interactive Shell & удобство интерактивной работы, автодополнение, подсветка, не является POSIX-совместимой \\
+\hline
+\end{longtable}
+
+\subsection{POSIX shell}
+
+\textbf{POSIX shell} --- стандартный командный язык, определённый спецификацией POSIX для утилиты \texttt{sh}. Он задаёт переносимый минимум возможностей оболочки.
+
+Пример POSIX-совместимого сценария:
+
+\begin{lstlisting}
+#!/bin/sh
+
+for file in *.txt
+do
+    echo "File: $file"
+done
+\end{lstlisting}
+
+Если сценарий должен быть переносимым между Unix-подобными системами, следует избегать специфических расширений Bash, Zsh или Fish.
+
+\subsection{Bash}
+
+\textbf{Bash} --- одна из наиболее распространённых Unix-подобных оболочек. Она совместима с Bourne shell в значительной степени и содержит многочисленные расширения.
+
+К возможностям Bash относятся:
+\begin{enumerate}
+    \item история команд;
+    \item автодополнение;
+    \item массивы;
+    \item арифметические выражения;
+    \item функции;
+    \item расширенные шаблоны;
+    \item командная подстановка;
+    \item процессная подстановка;
+    \item управление заданиями.
+\end{enumerate}
+
+Пример Bash-скрипта с массивом:
+
+\begin{lstlisting}
+#!/usr/bin/env bash
+
+names=("Alice" "Bob" "Charlie")
+
+for name in "${names[@]}"; do
+    echo "Hello, $name"
+done
+\end{lstlisting}
+
+Такой сценарий не является строго POSIX-совместимым, поскольку массивы вида \texttt{name=(...)} не входят в POSIX shell.
+
+\subsection{Запуск сценариев в Unix-подобных системах}
+
+Файл сценария обычно начинается со строки \textbf{shebang}:
+
+\begin{lstlisting}
+#!/bin/sh
+\end{lstlisting}
+
+или:
+
+\begin{lstlisting}
+#!/usr/bin/env bash
+\end{lstlisting}
+
+Эта строка указывает системе, какой интерпретатор использовать для выполнения файла.
+
+Алгоритм запуска сценария:
+\begin{enumerate}
+    \item Пользователь вводит имя файла сценария.
+    \item Ядро проверяет право на исполнение.
+    \item Если файл начинается с \texttt{\#!}, ядро извлекает путь к интерпретатору.
+    \item Запускается интерпретатор.
+    \item Интерпретатор читает файл сценария и выполняет команды.
+\end{enumerate}
+
+Пример:
+
+\begin{lstlisting}
+chmod +x script.sh
+./script.sh
+\end{lstlisting}
+
+\section{Основы сценариев POSIX shell и Bash}
+
+\subsection{Условный оператор}
+
+Общий вид:
+
+\begin{lstlisting}
+if command; then
+    commands
+elif other_command; then
+    other_commands
+else
+    fallback_commands
+fi
+\end{lstlisting}
+
+Пример:
+
+\begin{lstlisting}
+#!/bin/sh
+
+if [ -f "input.txt" ]; then
+    echo "Файл существует"
+else
+    echo "Файл не найден"
+fi
+\end{lstlisting}
+
+Здесь \texttt{[} --- это команда проверки условия, также известная как \texttt{test}. Между \texttt{[}, аргументами и \texttt{]} обязательны пробелы.
+
+\subsection{Цикл for}
+
+\begin{lstlisting}
+#!/bin/sh
+
+for file in *.txt
+do
+    echo "Обрабатывается файл $file"
+done
+\end{lstlisting}
+
+\subsection{Цикл while}
+
+\begin{lstlisting}
+#!/bin/sh
+
+i=1
+while [ "$i" -le 5 ]
+do
+    echo "$i"
+    i=$((i + 1))
+done
+\end{lstlisting}
+
+\subsection{Чтение строк файла}
+
+\begin{lstlisting}
+#!/bin/sh
+
+while IFS= read -r line
+do
+    echo "Строка: $line"
+done < input.txt
+\end{lstlisting}
+
+Здесь:
+\begin{enumerate}
+    \item \texttt{IFS=} предотвращает удаление начальных и конечных разделителей;
+    \item \texttt{read -r} запрещает специальную обработку обратной косой черты;
+    \item \texttt{< input.txt} перенаправляет файл на стандартный ввод цикла.
+\end{enumerate}
+
+\subsection{Функции}
+
+\begin{lstlisting}
+#!/bin/sh
+
+greet() {
+    echo "Hello, $1"
+}
+
+greet "Alice"
+greet "Bob"
+\end{lstlisting}
+
+Аргументы функции доступны как \texttt{\$1}, \texttt{\$2}, и так далее.
+
+\subsection{Аргументы командной строки}
+
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Переменная & Значение \\
+\hline
+\texttt{\$0} & имя сценария \\
+\texttt{\$1}, \texttt{\$2}, \ldots & позиционные аргументы \\
+\texttt{\$\#} & количество аргументов \\
+\texttt{\$@} & список всех аргументов \\
+\texttt{\$?} & код завершения последней команды \\
+\texttt{\$\$} & идентификатор текущего процесса оболочки \\
+\hline
+\end{tabular}
+\end{center}
+
+Пример:
+
+\begin{lstlisting}
+#!/bin/sh
+
+echo "Имя сценария: $0"
+echo "Первый аргумент: $1"
+echo "Количество аргументов: $#"
+\end{lstlisting}
+
+\section{Командные оболочки Windows}
+
+\subsection{Общие сведения}
+
+В Windows исторически применялись и применяются несколько средств командной работы:
+\begin{enumerate}
+    \item \texttt{COMMAND.COM} в MS-DOS и ранних Windows;
+    \item \texttt{cmd.exe}, или Windows Command Prompt;
+    \item Windows Script Host;
+    \item Windows PowerShell;
+    \item PowerShell 7 и новее;
+    \item Windows Terminal как современный терминальный эмулятор, способный запускать разные оболочки.
+\end{enumerate}
+
+Важно различать терминал и оболочку. Терминал предоставляет окно и средства ввода-вывода, а оболочка интерпретирует команды. Например, Windows Terminal может запускать PowerShell, CMD, WSL Bash и другие оболочки.
+
+\subsection{CMD}
+
+\textbf{CMD} --- традиционная командная оболочка Windows NT-семейства. Она поддерживает интерактивные команды и пакетные файлы с расширениями \texttt{.bat} и \texttt{.cmd}.
+
+Пример пакетного файла:
+
+\begin{lstlisting}
+@echo off
+echo Hello, %USERNAME%
+dir
+\end{lstlisting}
+
+Здесь:
+\begin{enumerate}
+    \item \texttt{@echo off} отключает вывод самих команд;
+    \item \texttt{\%USERNAME\%} раскрывается в имя текущего пользователя;
+    \item \texttt{dir} выводит содержимое каталога.
+\end{enumerate}
+
+\subsection{Условные операторы CMD}
+
+\begin{lstlisting}
+@echo off
+
+if exist input.txt (
+    echo Файл найден
+) else (
+    echo Файл не найден
+)
+\end{lstlisting}
+
+Проверка кода завершения:
+
+\begin{lstlisting}
+@echo off
+
+mkdir testdir
+
+if errorlevel 1 (
+    echo Ошибка
+) else (
+    echo Каталог создан
+)
+\end{lstlisting}
+
+Особенность \texttt{if errorlevel N}: условие истинно, если код завершения больше или равен \texttt{N}.
+
+\subsection{Циклы CMD}
+
+Пример цикла по файлам:
+
+\begin{lstlisting}
+@echo off
+
+for %%f in (*.txt) do (
+    echo Файл: %%f
+)
+\end{lstlisting}
+
+В интерактивной командной строке используется один знак процента:
+
+\begin{lstlisting}
+for %f in (*.txt) do echo %f
+\end{lstlisting}
+
+В пакетном файле используется двойной знак процента:
+
+\begin{lstlisting}
+for %%f in (*.txt) do echo %%f
+\end{lstlisting}
+
+\subsection{PowerShell}
+
+\textbf{PowerShell} --- командная оболочка и язык сценариев, основанный на объектной модели .NET. В отличие от традиционных оболочек, PowerShell передаёт по конвейеру объекты, а не только текст.
+
+Команды PowerShell называются \textbf{cmdlet}. Их имена обычно имеют форму:
+
+\[
+\texttt{Verb-Noun}
+\]
+
+Примеры:
+
+\begin{lstlisting}
+Get-Process
+Get-Service
+Set-Location
+New-Item
+Remove-Item
+\end{lstlisting}
+
+\subsection{Сценарии PowerShell}
+
+Файлы сценариев PowerShell имеют расширение \texttt{.ps1}.
+
+Пример:
+
+\begin{lstlisting}
+$name = "Alice"
+Write-Output "Hello, $name"
+\end{lstlisting}
+
+Условный оператор:
+
+\begin{lstlisting}
+if (Test-Path "input.txt") {
+    Write-Output "Файл найден"
+} else {
+    Write-Output "Файл не найден"
+}
+\end{lstlisting}
+
+Цикл:
+
+\begin{lstlisting}
+foreach ($file in Get-ChildItem *.txt) {
+    Write-Output "Файл: $($file.Name)"
+}
+\end{lstlisting}
+
+Функция:
+
+\begin{lstlisting}
+function Say-Hello {
+    param(
+        [string]$Name
+    )
+
+    Write-Output "Hello, $Name"
+}
+
+Say-Hello -Name "Alice"
+\end{lstlisting}
+
+\subsection{Объектный конвейер PowerShell}
+
+Рассмотрим команду:
+
+\begin{lstlisting}
+Get-Process | Where-Object { $_.WorkingSet -gt 100MB } |
+    Sort-Object WorkingSet -Descending |
+    Select-Object -First 5 Name, WorkingSet
+\end{lstlisting}
+
+Шаги выполнения:
+\begin{enumerate}
+    \item \texttt{Get-Process} получает список процессов как объекты.
+    \item \texttt{Where-Object} оставляет только процессы, использующие более 100 МБ памяти.
+    \item \texttt{Sort-Object} сортирует объекты по рабочему набору памяти.
+    \item \texttt{Select-Object} выбирает первые пять объектов и нужные свойства.
+\end{enumerate}
+
+В Unix-подобной оболочке аналогичная задача часто решается обработкой текста:
+
+\begin{lstlisting}
+ps aux | sort -nrk 6 | head -5
+\end{lstlisting}
+
+Однако текстовый подход менее структурирован: программа должна знать, в каком столбце находится нужное значение.
+
+\section{Сравнение Unix shell, CMD и PowerShell}
+
+\begin{longtable}{|p{4cm}|p{3.5cm}|p{3.5cm}|p{3.5cm}|}
+\hline
+Критерий & Unix shell / Bash & CMD & PowerShell \\
+\hline
+Основная модель & текстовые команды и потоки & текстовые команды Windows & объектный конвейер .NET \\
+\hline
+Тип сценариев & \texttt{.sh} & \texttt{.bat}, \texttt{.cmd} & \texttt{.ps1} \\
+\hline
+Переменные & \texttt{\$VAR} & \texttt{\%VAR\%} & \texttt{\$var} \\
+\hline
+Переменные окружения & \texttt{\$PATH}, \texttt{export} & \texttt{\%PATH\%}, \texttt{set} & \texttt{\$env:PATH} \\
+\hline
+Конвейер & байты/текст & текст & объекты \\
+\hline
+Условие успеха & код завершения 0 & \texttt{ERRORLEVEL} & \texttt{\$?}, исключения, \texttt{\$LASTEXITCODE} \\
+\hline
+Типичные задачи & администрирование Unix/Linux, автоматизация, сборка & автоматизация Windows-задач старого типа & современное администрирование Windows и кроссплатформенная автоматизация \\
+\hline
+\end{longtable}
+
+\section{Встроенные и внешние команды}
+
+\textbf{Встроенная команда} выполняется самой оболочкой. \textbf{Внешняя команда} является отдельной программой.
+
+Примеры встроенных команд POSIX shell:
+\begin{enumerate}
+    \item \texttt{cd};
+    \item \texttt{echo};
+    \item \texttt{export};
+    \item \texttt{read};
+    \item \texttt{set};
+    \item \texttt{alias} в оболочках, где он поддерживается.
+\end{enumerate}
+
+Команда \texttt{cd} должна быть встроенной, потому что текущий каталог является свойством процесса. Если бы \texttt{cd} выполнялась внешней программой, она изменила бы каталог только своего дочернего процесса, после чего этот процесс завершился бы, а каталог родительской оболочки остался бы прежним.
+
+Иллюстрация:
+
+\begin{lstlisting}
+# Внешняя программа не может изменить текущий каталог родительской оболочки
+some_external_cd /tmp
+pwd
+\end{lstlisting}
+
+Поэтому \texttt{cd} реализуется внутри оболочки.
+
+\section{Поиск исполняемых файлов}
+
+Когда пользователь вводит команду, оболочка должна определить, что именно выполнять.
+
+\subsection{Алгоритм поиска команды в Unix-подобной оболочке}
+
+Упрощённый алгоритм:
+\begin{enumerate}
+    \item Если команда содержит символ \texttt{/}, рассматривать её как путь.
+    \item Иначе проверить, не является ли команда ключевым словом языка оболочки.
+    \item Проверить, не является ли команда функцией.
+    \item Проверить, не является ли команда встроенной командой.
+    \item Проверить псевдонимы, если они применимы в данном контексте.
+    \item Последовательно просмотреть каталоги из переменной \texttt{PATH}.
+    \item Если исполняемый файл найден, запустить его.
+    \item Если не найден, вывести ошибку.
+\end{enumerate}
+
+Пример:
+
+\begin{lstlisting}
+echo $PATH
+which ls
+command -v ls
+\end{lstlisting}
+
+\subsection{Поиск команд в CMD}
+
+CMD ищет исполняемые файлы с учётом переменной \texttt{PATH} и расширений из \texttt{PATHEXT}.
+
+Например, если введено:
+
+\begin{lstlisting}
+notepad
+\end{lstlisting}
+
+CMD может найти файл:
+
+\begin{lstlisting}
+C:\Windows\System32\notepad.exe
+\end{lstlisting}
+
+\section{Управление заданиями в Unix-подобных оболочках}
+
+\textbf{Задание} --- это команда или конвейер, запущенный оболочкой и отслеживаемый ею.
+
+Запуск в фоновом режиме:
+
+\begin{lstlisting}
+sleep 100 &
+\end{lstlisting}
+
+Просмотр заданий:
+
+\begin{lstlisting}
+jobs
+\end{lstlisting}
+
+Возврат задания на передний план:
+
+\begin{lstlisting}
+fg %1
+\end{lstlisting}
+
+Продолжение в фоне:
+
+\begin{lstlisting}
+bg %1
+\end{lstlisting}
+
+Завершение процесса:
+
+\begin{lstlisting}
+kill %1
+\end{lstlisting}
+
+Управление заданиями тесно связано с процессами, группами процессов, терминалом и сигналами.
+
+\section{Сигналы и обработка завершения}
+
+В Unix-подобных системах процессы могут получать сигналы. Например:
+\begin{enumerate}
+    \item \texttt{SIGINT} --- обычно посылается при нажатии \texttt{Ctrl+C};
+    \item \texttt{SIGTERM} --- вежливая просьба завершиться;
+    \item \texttt{SIGKILL} --- принудительное завершение;
+    \item \texttt{SIGHUP} --- разрыв соединения с терминалом или сигнал перечитать конфигурацию.
+\end{enumerate}
+
+В shell-сценариях можно использовать \texttt{trap}.
+
+Пример:
+
+\begin{lstlisting}
+#!/bin/sh
+
+cleanup() {
+    echo "Очистка временных файлов"
+    rm -f /tmp/my_temp_file
+}
+
+trap cleanup EXIT INT TERM
+
+echo "temporary data" > /tmp/my_temp_file
+sleep 10
+\end{lstlisting}
+
+Здесь функция \texttt{cleanup} будет вызвана при завершении сценария или получении некоторых сигналов.
+
+\section{Безопасность сценариев оболочки}
+
+Сценарии оболочки часто работают с файлами, внешним вводом и командами ОС, поэтому ошибки могут иметь серьёзные последствия.
+
+\subsection{Типичные проблемы}
+
+\begin{enumerate}
+    \item отсутствие кавычек вокруг переменных;
+    \item использование непроверенного пользовательского ввода;
+    \item небезопасное создание временных файлов;
+    \item выполнение строк как команд;
+    \item предположение о фиксированном формате вывода внешних программ;
+    \item зависимость от текущего каталога;
+    \item неявная зависимость от \texttt{PATH}.
+\end{enumerate}
+
+\subsection{Пример ошибки из-за отсутствия кавычек}
+
+Ненадёжный вариант:
+
+\begin{lstlisting}
+rm $filename
+\end{lstlisting}
+
+Если \texttt{filename} пустая или содержит пробелы, результат может быть неожиданным.
+
+Лучше:
+
+\begin{lstlisting}
+rm -- "$filename"
+\end{lstlisting}
+
+Здесь:
+\begin{enumerate}
+    \item кавычки сохраняют значение как один аргумент;
+    \item \texttt{--} обозначает конец опций и защищает от имён файлов, начинающихся с дефиса.
+\end{enumerate}
+
+\subsection{Строгий режим Bash}
+
+В Bash часто используют:
+
+\begin{lstlisting}
+set -euo pipefail
+\end{lstlisting}
+
+Значение:
+\begin{enumerate}
+    \item \texttt{-e} --- завершать сценарий при ошибке команды;
+    \item \texttt{-u} --- считать ошибкой обращение к неустановленной переменной;
+    \item \texttt{pipefail} --- считать конвейер ошибочным, если ошиблась любая команда конвейера.
+\end{enumerate}
+
+Однако этот режим требует понимания исключений и особенностей поведения, особенно в условиях, циклах и конвейерах.
+
+\section{Минимальные практические примеры}
+
+\subsection{Резервное копирование каталога в shell}
+
+\begin{lstlisting}
+#!/bin/sh
+
+src="$1"
+dst="$2"
+
+if [ "$#" -ne 2 ]; then
+    echo "Использование: $0 SOURCE DESTINATION" >&2
+    exit 1
+fi
+
+if [ ! -d "$src" ]; then
+    echo "Источник не является каталогом" >&2
+    exit 1
+fi
+
+mkdir -p "$dst"
+
+archive="$dst/backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+
+tar -czf "$archive" "$src"
+
+echo "Создан архив: $archive"
+\end{lstlisting}
+
+Шаги:
+\begin{enumerate}
+    \item проверить количество аргументов;
+    \item проверить, что источник является каталогом;
+    \item создать каталог назначения;
+    \item сформировать имя архива с датой;
+    \item вызвать \texttt{tar};
+    \item вывести путь к архиву.
+\end{enumerate}
+
+\subsection{Поиск больших файлов в PowerShell}
+
+\begin{lstlisting}
+$path = "C:\Users"
+$limit = 100MB
+
+Get-ChildItem -Path $path -Recurse -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Length -gt $limit } |
+    Sort-Object Length -Descending |
+    Select-Object FullName, Length
+\end{lstlisting}
+
+Шаги:
+\begin{enumerate}
+    \item получить файлы рекурсивно;
+    \item отбросить ошибки доступа;
+    \item оставить файлы больше заданного размера;
+    \item отсортировать по размеру;
+    \item вывести имя и размер.
+\end{enumerate}
+
+\subsection{Пакетный файл CMD для вывода файлов}
+
+\begin{lstlisting}
+@echo off
+
+if "%~1"=="" (
+    echo Использование: listfiles.bat DIRECTORY
+    exit /b 1
+)
+
+if not exist "%~1" (
+    echo Каталог не найден
+    exit /b 1
+)
+
+for %%f in ("%~1\*") do (
+    echo %%~nxf
+)
+\end{lstlisting}
+
+Шаги:
+\begin{enumerate}
+    \item проверить наличие аргумента;
+    \item проверить существование пути;
+    \item пройти циклом по файлам;
+    \item вывести имена файлов.
+\end{enumerate}
+
+\section{Типичные ошибки начинающих}
+
+\subsection{Ошибки в shell}
+
+\begin{enumerate}
+    \item Пробелы вокруг \texttt{=}:
+\begin{lstlisting}
+x = 1   # ошибка
+x=1     # правильно
+\end{lstlisting}
+
+    \item Отсутствие кавычек:
+\begin{lstlisting}
+cp $file $dest      # опасно
+cp -- "$file" "$dest" # лучше
+\end{lstlisting}
+
+    \item Неверное сравнение строк и чисел:
+\begin{lstlisting}
+[ "$x" = "10" ]   # строковое сравнение
+[ "$x" -eq 10 ]   # числовое сравнение
+\end{lstlisting}
+
+    \item Использование Bash-расширений в сценарии с \texttt{\#!/bin/sh}.
+\end{enumerate}
+
+\subsection{Ошибки в CMD}
+
+\begin{enumerate}
+    \item Использование \texttt{\%f} вместо \texttt{\%\%f} в пакетном файле.
+    \item Непонимание поведения \texttt{if errorlevel N}.
+    \item Проблемы с пробелами в путях без кавычек.
+\end{enumerate}
+
+\subsection{Ошибки в PowerShell}
+
+\begin{enumerate}
+    \item Ожидание текстового поведения конвейера вместо объектного.
+    \item Непонимание различия между \texttt{\$?} и \texttt{\$LASTEXITCODE}.
+    \item Использование строк там, где можно работать со свойствами объектов.
+\end{enumerate}
+
+\section{Краткие выводы}
+
+Командная оболочка является важным компонентом пользовательского и административного взаимодействия с операционной системой. Она предоставляет интерактивную командную строку и язык сценариев для автоматизации.
+
+В Unix-подобных системах доминируют оболочки семейства Bourne shell: \texttt{sh}, \texttt{bash}, \texttt{dash}, \texttt{ksh}, \texttt{zsh}. Их модель основана на запуске программ, текстовых потоках, кодах завершения, перенаправлениях и конвейерах.
+
+В Windows традиционно используется \texttt{cmd.exe} с пакетными файлами \texttt{.bat} и \texttt{.cmd}. Для современной автоматизации Windows и кроссплатформенных задач применяется PowerShell, отличающийся объектным конвейером и тесной интеграцией с .NET.
+
+Основные понятия, необходимые для уверенной работы с оболочками:
+\begin{enumerate}
+    \item команда;
+    \item аргументы;
+    \item переменные;
+    \item переменные окружения;
+    \item стандартные потоки;
+    \item перенаправление;
+    \item конвейер;
+    \item код завершения;
+    \item сценарий;
+    \item встроенные и внешние команды;
+    \item кавычки и экранирование;
+    \item поиск команд через \texttt{PATH}.
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,1622 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+
+\geometry{left=25mm,right=20mm,top=20mm,bottom=20mm}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\bfseries\color{blue!60!black},
+  commentstyle=\itshape\color{green!40!black},
+  stringstyle=\color{red!60!black},
+  numbers=left,
+  numberstyle=\tiny,
+  stepnumber=1,
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  tabsize=2,
+  showstringspaces=false,
+  literate=
+    {А}{{\CYRA}}1
+    {Б}{{\CYRB}}1
+    {В}{{\CYRV}}1
+    {Г}{{\CYRG}}1
+    {Д}{{\CYRD}}1
+    {Е}{{\CYRE}}1
+    {Ё}{{\CYRYO}}1
+    {Ж}{{\CYRZH}}1
+    {З}{{\CYRZ}}1
+    {И}{{\CYRI}}1
+    {Й}{{\CYRISHRT}}1
+    {К}{{\CYRK}}1
+    {Л}{{\CYRL}}1
+    {М}{{\CYRM}}1
+    {Н}{{\CYRN}}1
+    {О}{{\CYRO}}1
+    {П}{{\CYRP}}1
+    {Р}{{\CYRR}}1
+    {С}{{\CYRS}}1
+    {Т}{{\CYRT}}1
+    {У}{{\CYRU}}1
+    {Ф}{{\CYRF}}1
+    {Х}{{\CYRH}}1
+    {Ц}{{\CYRC}}1
+    {Ч}{{\CYRCH}}1
+    {Ш}{{\CYRSH}}1
+    {Щ}{{\CYRSHCH}}1
+    {Ъ}{{\CYRHRDSN}}1
+    {Ы}{{\CYRERY}}1
+    {Ь}{{\CYRSFTSN}}1
+    {Э}{{\CYREREV}}1
+    {Ю}{{\CYRYU}}1
+    {Я}{{\CYRYA}}1
+    {а}{{\cyra}}1
+    {б}{{\cyrb}}1
+    {в}{{\cyrv}}1
+    {г}{{\cyrg}}1
+    {д}{{\cyrd}}1
+    {е}{{\cyre}}1
+    {ё}{{\cyryo}}1
+    {ж}{{\cyrzh}}1
+    {з}{{\cyrz}}1
+    {и}{{\cyri}}1
+    {й}{{\cyrishrt}}1
+    {к}{{\cyrk}}1
+    {л}{{\cyrl}}1
+    {м}{{\cyrm}}1
+    {н}{{\cyrn}}1
+    {о}{{\cyro}}1
+    {п}{{\cyrp}}1
+    {р}{{\cyrr}}1
+    {с}{{\cyrs}}1
+    {т}{{\cyrt}}1
+    {у}{{\cyru}}1
+    {ф}{{\cyrf}}1
+    {х}{{\cyrh}}1
+    {ц}{{\cyrc}}1
+    {ч}{{\cyrch}}1
+    {ш}{{\cyrsh}}1
+    {щ}{{\cyrshch}}1
+    {ъ}{{\cyrhrdsn}}1
+    {ы}{{\cyrery}}1
+    {ь}{{\cyrsftsn}}1
+    {э}{{\cyrerev}}1
+    {ю}{{\cyryu}}1
+    {я}{{\cyrya}}1
+}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Определение}
+\newtheorem{example}{Пример}
+\newtheorem{remark}{Замечание}
+\newtheorem{statement}{Утверждение}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Теорема}
+\newtheorem{proposition}{Утверждение}
+
+\title{Билет №54 \\ \small Автоматическое построение лексических и синтаксических анализаторов по формальным описаниям грамматик. Инструменты генерации лексических и синтаксических анализаторов: lex, yacc, ANTLR, парсер-комбинаторы. (СпБГУ)}
+\author{Сериков Владислав Александрович}
+\date{16 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Автоматическое построение лексических и синтаксических анализаторов}
+
+\subsection{Общая схема фронтенда компилятора}
+
+\textbf{Лексический анализатор} разбивает входной поток символов на поток токенов:
+\[
+\text{символы} \longrightarrow \text{токены}.
+\]
+Например, строка
+\[
+\texttt{x = 12 + y}
+\]
+может быть преобразована в поток:
+\[
+\langle ID(x), ASSIGN, NUM(12), PLUS, ID(y), EOF\rangle.
+\]
+
+\textbf{Синтаксический анализатор} проверяет, соответствует ли поток токенов грамматике языка, и строит дерево разбора или абстрактное синтаксическое дерево:
+\[
+\text{токены} \longrightarrow \text{дерево разбора / AST}.
+\]
+
+Типичная архитектура:
+\[
+\boxed{
+\text{исходный текст}
+\to
+\text{лексер}
+\to
+\text{поток токенов}
+\to
+\text{парсер}
+\to
+\text{AST}
+}
+\]
+
+Автоматическое построение анализаторов основано на том, что лексическая структура языков обычно описывается \textbf{регулярными выражениями}, а синтаксическая структура --- \textbf{контекстно-свободными грамматиками}.
+
+\subsection{Алфавиты, слова, языки}
+
+\begin{definition}
+\textbf{Алфавит} $\Sigma$ --- конечное непустое множество символов.
+\end{definition}
+
+\begin{definition}
+\textbf{Слово} над алфавитом $\Sigma$ --- конечная последовательность символов из $\Sigma$.
+\end{definition}
+
+Пустое слово обозначается $\varepsilon$.
+
+Множество всех слов над $\Sigma$ обозначается $\Sigma^*$.
+
+\begin{definition}
+\textbf{Язык} над алфавитом $\Sigma$ --- произвольное подмножество $\Sigma^*$.
+\end{definition}
+
+Например, если
+\[
+\Sigma = \{a,b\},
+\]
+то
+\[
+\Sigma^* = \{\varepsilon, a, b, aa, ab, ba, bb, aaa, \ldots\}.
+\]
+
+\subsection{Регулярные языки и регулярные выражения}
+
+Лексические классы обычно описываются регулярными выражениями.
+
+\begin{definition}
+Регулярные выражения над алфавитом $\Sigma$ определяются индуктивно:
+\begin{enumerate}
+    \item $\varnothing$ --- регулярное выражение;
+    \item $\varepsilon$ --- регулярное выражение;
+    \item если $a \in \Sigma$, то $a$ --- регулярное выражение;
+    \item если $r$ и $s$ --- регулярные выражения, то $(r|s)$, $(rs)$ и $(r^*)$ также регулярные выражения.
+\end{enumerate}
+\end{definition}
+
+Семантика:
+\[
+L(\varnothing)=\varnothing,
+\]
+\[
+L(\varepsilon)=\{\varepsilon\},
+\]
+\[
+L(a)=\{a\},
+\]
+\[
+L(r|s)=L(r)\cup L(s),
+\]
+\[
+L(rs)=\{xy \mid x\in L(r),\ y\in L(s)\},
+\]
+\[
+L(r^*)=\bigcup_{k\geq 0} L(r)^k.
+\]
+
+Примеры:
+\[
+[0-9]^+
+\]
+задаёт непустые последовательности цифр.
+
+\[
+[a-zA-Z\_][a-zA-Z0-9\_]*
+\]
+задаёт идентификаторы в стиле языков C.
+
+\subsection{Конечные автоматы}
+
+\begin{definition}
+\textbf{Детерминированный конечный автомат} --- пятёрка
+\[
+D = (Q,\Sigma,\delta,q_0,F),
+\]
+где:
+\begin{itemize}
+    \item $Q$ --- конечное множество состояний;
+    \item $\Sigma$ --- входной алфавит;
+    \item $\delta: Q \times \Sigma \to Q$ --- функция переходов;
+    \item $q_0\in Q$ --- начальное состояние;
+    \item $F\subseteq Q$ --- множество допускающих состояний.
+\end{itemize}
+\end{definition}
+
+\begin{definition}
+\textbf{Недетерминированный конечный автомат} --- пятёрка
+\[
+N=(Q,\Sigma,\Delta,q_0,F),
+\]
+где
+\[
+\Delta: Q\times(\Sigma\cup\{\varepsilon\})\to 2^Q.
+\]
+\end{definition}
+
+Недетерминированный автомат может:
+\begin{itemize}
+    \item иметь несколько переходов по одному символу;
+    \item иметь $\varepsilon$-переходы, не потребляющие символ входа.
+\end{itemize}
+
+\subsection{Теорема Клини}
+
+\begin{theorem}[Клини]
+Класс языков, задаваемых регулярными выражениями, совпадает с классом языков, распознаваемых конечными автоматами.
+\end{theorem}
+
+\begin{proof}
+Докажем две стороны.
+
+\textbf{1. Всякий регулярный язык распознаётся конечным автоматом.}
+
+Докажем индукцией по построению регулярного выражения.
+
+\begin{enumerate}
+    \item Для $\varnothing$ строится автомат без допускающих путей.
+    \item Для $\varepsilon$ строится автомат:
+    \[
+    q_0 \xrightarrow{\varepsilon} q_f.
+    \]
+    \item Для символа $a$ строится автомат:
+    \[
+    q_0 \xrightarrow{a} q_f.
+    \]
+    \item Для объединения $r|s$ берём автоматы для $r$ и $s$, добавляем новое начальное состояние и $\varepsilon$-переходы к начальным состояниям обоих автоматов. Новое допускающее состояние достижимо из допускающих состояний обоих автоматов.
+    \item Для конкатенации $rs$ соединяем каждое допускающее состояние автомата для $r$ с начальным состоянием автомата для $s$ $\varepsilon$-переходом.
+    \item Для итерации $r^*$ добавляем возможность:
+    \begin{itemize}
+        \item принять пустое слово;
+        \item после распознавания одного экземпляра $r$ вернуться к началу автомата для $r$.
+    \end{itemize}
+\end{enumerate}
+
+Таким образом, по любому регулярному выражению можно построить НКА.
+
+\textbf{2. Всякий язык, распознаваемый конечным автоматом, задаётся регулярным выражением.}
+
+Рассмотрим конечный автомат с состояниями
+\[
+q_1,\ldots,q_n.
+\]
+Для каждой пары состояний $q_i,q_j$ и числа $k$ определим регулярное выражение
+\[
+R_{ij}^{(k)},
+\]
+задающее множество всех слов, переводящих автомат из $q_i$ в $q_j$ с использованием в качестве промежуточных только состояний из множества
+\[
+\{q_1,\ldots,q_k\}.
+\]
+
+База:
+\[
+R_{ij}^{(0)}
+\]
+задаёт все прямые переходы из $q_i$ в $q_j$, а также $\varepsilon$, если $i=j$.
+
+Переход:
+\[
+R_{ij}^{(k)}
+=
+R_{ij}^{(k-1)}
+\mid
+R_{ik}^{(k-1)}
+\left(R_{kk}^{(k-1)}\right)^*
+R_{kj}^{(k-1)}.
+\]
+
+Идея формулы:
+\begin{itemize}
+    \item либо путь из $q_i$ в $q_j$ не проходит через $q_k$;
+    \item либо впервые входит в $q_k$, затем некоторое число раз делает циклы через $q_k$, затем выходит из $q_k$ в $q_j$.
+\end{itemize}
+
+Итоговое регулярное выражение для языка автомата:
+\[
+\bigcup_{q_f\in F} R_{0f}^{(n)}.
+\]
+
+Следовательно, всякий автоматный язык является регулярным.
+
+Обе стороны доказаны, значит классы совпадают.
+\end{proof}
+
+\subsection{Построение лексического анализатора}
+
+Генератор лексических анализаторов принимает набор правил вида:
+\[
+\text{регулярное выражение} \quad \{ \text{действие} \}.
+\]
+
+Например:
+\begin{verbatim}
+[0-9]+                 { return NUM; }
+[a-zA-Z_][a-zA-Z0-9_]* { return ID; }
+[ \t\n]+               { skip; }
+\end{verbatim}
+
+Общая схема генерации:
+\[
+\boxed{
+\text{регулярные выражения}
+\to
+\text{НКА}
+\to
+\text{ДКА}
+\to
+\text{минимизированный ДКА}
+\to
+\text{программа-лексер}
+}
+\]
+
+\subsection{Алгоритм Томпсона: регулярное выражение $\to$ НКА}
+
+Алгоритм Томпсона строит НКА с $\varepsilon$-переходами по структуре регулярного выражения.
+
+\subsubsection*{Базовые случаи}
+
+Для символа $a$:
+\[
+q_0 \xrightarrow{a} q_1.
+\]
+
+Для $\varepsilon$:
+\[
+q_0 \xrightarrow{\varepsilon} q_1.
+\]
+
+Для $\varnothing$ строится фрагмент без пути от начального состояния к конечному.
+
+\subsubsection*{Объединение}
+
+Для $r|s$:
+\[
+\begin{array}{ccccc}
+& & q_r & \cdots & f_r \\
+q_0 & \xrightarrow{\varepsilon} & & & \xrightarrow{\varepsilon} q_f\\
+& & q_s & \cdots & f_s
+\end{array}
+\]
+
+\subsubsection*{Конкатенация}
+
+Для $rs$ конечное состояние автомата для $r$ соединяется $\varepsilon$-переходом с начальным состоянием автомата для $s$:
+\[
+q_r \cdots f_r \xrightarrow{\varepsilon} q_s \cdots f_s.
+\]
+
+\subsubsection*{Звезда Клини}
+
+Для $r^*$:
+\[
+q_0 \xrightarrow{\varepsilon} q_f,
+\]
+\[
+q_0 \xrightarrow{\varepsilon} q_r,
+\]
+\[
+f_r \xrightarrow{\varepsilon} q_r,
+\]
+\[
+f_r \xrightarrow{\varepsilon} q_f.
+\]
+
+\subsubsection*{Пример}
+
+Построим НКА для выражения:
+\[
+(a|b)^*abb.
+\]
+
+Сначала строится НКА для $a|b$, затем добавляется звезда Клини, затем конкатенируются автоматы для $a$, $b$, $b$.
+
+Этот автомат распознаёт все слова над $\{a,b\}$, заканчивающиеся на $abb$:
+\[
+abb,\ aabb,\ babb,\ aaabb,\ ababb,\ldots
+\]
+
+\subsection{Детерминизация НКА: алгоритм подмножеств}
+
+\begin{definition}
+$\varepsilon$-замыкание множества состояний $S$, обозначаемое
+\[
+\varepsilon\text{-closure}(S),
+\]
+--- множество всех состояний, достижимых из состояний $S$ по нулю или более $\varepsilon$-переходам.
+\end{definition}
+
+\subsubsection*{Алгоритм подмножеств}
+
+Вход:
+\[
+N=(Q,\Sigma,\Delta,q_0,F).
+\]
+
+Выход:
+\[
+D=(Q_D,\Sigma,\delta_D,S_0,F_D).
+\]
+
+Шаги:
+\begin{enumerate}
+    \item Начальное состояние ДКА:
+    \[
+    S_0=\varepsilon\text{-closure}(\{q_0\}).
+    \]
+    \item Пока есть необработанное состояние $S\subseteq Q$:
+    \begin{enumerate}
+        \item для каждого символа $a\in\Sigma$ вычислить:
+        \[
+        T=\varepsilon\text{-closure}
+        \left(
+        \bigcup_{q\in S}\Delta(q,a)
+        \right);
+        \]
+        \item добавить переход:
+        \[
+        \delta_D(S,a)=T;
+        \]
+        \item если $T$ ещё не встречалось, добавить его в множество состояний ДКА.
+    \end{enumerate}
+    \item Допускающие состояния ДКА:
+    \[
+    F_D=\{S\subseteq Q \mid S\cap F\neq \varnothing\}.
+    \]
+\end{enumerate}
+
+\subsubsection*{Минимальный пример}
+
+Пусть НКА распознаёт $a|b$:
+\[
+q_0 \xrightarrow{\varepsilon} q_1,\quad q_1\xrightarrow{a}q_2,
+\]
+\[
+q_0 \xrightarrow{\varepsilon} q_3,\quad q_3\xrightarrow{b}q_4.
+\]
+
+Тогда:
+\[
+S_0=\{q_0,q_1,q_3\}.
+\]
+
+По символу $a$:
+\[
+\{q_0,q_1,q_3\}\xrightarrow{a}\{q_2\}.
+\]
+
+По символу $b$:
+\[
+\{q_0,q_1,q_3\}\xrightarrow{b}\{q_4\}.
+\]
+
+Состояния $\{q_2\}$ и $\{q_4\}$ являются допускающими.
+
+\subsection{Правило максимального соответствия в лексерах}
+
+Если несколько токенов могут быть распознаны из текущей позиции, лексер обычно применяет два правила:
+
+\begin{enumerate}
+    \item выбирается самый длинный возможный префикс;
+    \item если несколько правил дают одинаково длинный префикс, выбирается правило, записанное раньше.
+\end{enumerate}
+
+Например, для входа:
+\[
+\texttt{ifx}
+\]
+и правил:
+\[
+\texttt{if} \to IF,
+\]
+\[
+[a-z]+ \to ID,
+\]
+будет выбран токен:
+\[
+ID(\texttt{ifx}),
+\]
+потому что он длиннее, чем \texttt{if}.
+
+Для входа:
+\[
+\texttt{if}
+\]
+оба правила подходят, но выбирается первое:
+\[
+IF.
+\]
+
+\subsection{Контекстно-свободные грамматики}
+
+\begin{definition}
+\textbf{Контекстно-свободная грамматика} --- четвёрка
+\[
+G=(N,\Sigma,P,S),
+\]
+где:
+\begin{itemize}
+    \item $N$ --- конечное множество нетерминалов;
+    \item $\Sigma$ --- конечное множество терминалов;
+    \item $P$ --- конечное множество продукций вида
+    \[
+    A\to \alpha,
+    \]
+    где $A\in N$, $\alpha\in (N\cup\Sigma)^*$;
+    \item $S\in N$ --- стартовый символ.
+\end{itemize}
+\end{definition}
+
+Пример грамматики арифметических выражений:
+\[
+E \to E + T \mid T,
+\]
+\[
+T \to T * F \mid F,
+\]
+\[
+F \to (E) \mid id.
+\]
+
+Эта грамматика задаёт выражения с приоритетом умножения над сложением.
+
+\subsection{Дерево вывода и левосторонний вывод}
+
+Для грамматики:
+\[
+E \to E+T \mid T,
+\]
+\[
+T \to id
+\]
+слово
+\[
+id+id
+\]
+имеет левосторонний вывод:
+\[
+E \Rightarrow E+T \Rightarrow T+T \Rightarrow id+T \Rightarrow id+id.
+\]
+
+Дерево разбора:
+
+\[
+\begin{array}{c}
+E\\
+/\ \backslash\\
+E\quad +\quad T\\
+|\quad\quad\quad |\\
+T\quad\quad\quad id\\
+|\\
+id
+\end{array}
+\]
+
+\subsection{Неоднозначность грамматики}
+
+\begin{definition}
+Грамматика называется \textbf{неоднозначной}, если существует слово, имеющее два различных дерева разбора.
+\end{definition}
+
+Классический пример:
+\[
+E \to E+E \mid E*E \mid id.
+\]
+
+Слово:
+\[
+id+id*id
+\]
+имеет два разбора:
+\[
+(id+id)*id
+\]
+и
+\[
+id+(id*id).
+\]
+
+Для устранения неоднозначности вводят уровни приоритета:
+\[
+E \to E+T \mid T,
+\]
+\[
+T \to T*F \mid F,
+\]
+\[
+F \to id \mid (E).
+\]
+
+\subsection{FIRST и FOLLOW}
+
+Множества FIRST и FOLLOW используются при построении LL-анализаторов.
+
+\begin{definition}
+\[
+FIRST(\alpha)
+\]
+--- множество терминалов, с которых может начинаться строка, выводимая из $\alpha$.
+Если $\alpha\Rightarrow^*\varepsilon$, то $\varepsilon\in FIRST(\alpha)$.
+\end{definition}
+
+\begin{definition}
+\[
+FOLLOW(A)
+\]
+--- множество терминалов, которые могут непосредственно следовать за нетерминалом $A$ в некоторой сентенциальной форме.
+Для стартового символа $S$ всегда:
+\[
+EOF\in FOLLOW(S).
+\]
+\end{definition}
+
+\subsubsection*{Пример}
+
+Пусть:
+\[
+S\to AB,
+\]
+\[
+A\to a \mid \varepsilon,
+\]
+\[
+B\to b.
+\]
+
+Тогда:
+\[
+FIRST(A)=\{a,\varepsilon\},
+\]
+\[
+FIRST(B)=\{b\},
+\]
+\[
+FIRST(S)=\{a,b\}.
+\]
+
+Поскольку после $A$ стоит $B$:
+\[
+FOLLOW(A)=\{b\}.
+\]
+
+Поскольку $S$ --- стартовый символ:
+\[
+FOLLOW(S)=\{EOF\}.
+\]
+
+Поскольку $B$ стоит в конце продукции $S\to AB$:
+\[
+FOLLOW(B)=\{EOF\}.
+\]
+
+\subsection{LL(1)-анализ}
+
+LL(1)-парсер:
+\begin{itemize}
+    \item читает вход слева направо;
+    \item строит левосторонний вывод;
+    \item использует один символ предпросмотра.
+\end{itemize}
+
+\[
+LL(1)=
+\text{Left-to-right scan, Leftmost derivation, 1 lookahead}.
+\]
+
+\subsubsection*{Условие LL(1)}
+
+Для каждого нетерминала $A$ и любых двух различных продукций:
+\[
+A\to \alpha,
+\]
+\[
+A\to \beta
+\]
+должны выполняться условия:
+\[
+FIRST(\alpha)\cap FIRST(\beta)=\varnothing,
+\]
+а если
+\[
+\varepsilon\in FIRST(\alpha),
+\]
+то
+\[
+FIRST(\beta)\cap FOLLOW(A)=\varnothing.
+\]
+
+Аналогично, если
+\[
+\varepsilon\in FIRST(\beta),
+\]
+то
+\[
+FIRST(\alpha)\cap FOLLOW(A)=\varnothing.
+\]
+
+\subsection{Построение таблицы LL(1)}
+
+Для каждой продукции:
+\[
+A\to \alpha
+\]
+выполняются шаги:
+
+\begin{enumerate}
+    \item Для каждого терминала
+    \[
+    a\in FIRST(\alpha)\setminus\{\varepsilon\}
+    \]
+    занести продукцию $A\to\alpha$ в ячейку
+    \[
+    M[A,a].
+    \]
+    \item Если
+    \[
+    \varepsilon\in FIRST(\alpha),
+    \]
+    то для каждого
+    \[
+    b\in FOLLOW(A)
+    \]
+    занести продукцию $A\to\alpha$ в ячейку
+    \[
+    M[A,b].
+    \]
+    \item Если в какую-либо ячейку попадает более одной продукции, грамматика не является LL(1).
+\end{enumerate}
+
+\subsubsection*{Пример}
+
+Грамматика:
+\[
+S\to aS \mid b.
+\]
+
+\[
+FIRST(aS)=\{a\},
+\]
+\[
+FIRST(b)=\{b\}.
+\]
+
+Таблица:
+\[
+M[S,a]=S\to aS,
+\]
+\[
+M[S,b]=S\to b.
+\]
+
+Разбор строки:
+\[
+aaab.
+\]
+
+Стек и вход:
+
+\[
+\begin{array}{c|c|c}
+\text{Стек} & \text{Вход} & \text{Действие}\\
+\hline
+SEOF & aaabEOF & S\to aS\\
+aSEOF & aaabEOF & \text{съесть } a\\
+SEOF & aabEOF & S\to aS\\
+aSEOF & aabEOF & \text{съесть } a\\
+SEOF & abEOF & S\to aS\\
+aSEOF & abEOF & \text{съесть } a\\
+SEOF & bEOF & S\to b\\
+bEOF & bEOF & \text{съесть } b\\
+EOF & EOF & \text{принять}
+\end{array}
+\]
+
+\subsection{Левая рекурсия}
+
+\begin{definition}
+Грамматика имеет \textbf{левую рекурсию}, если существует нетерминал $A$ такой, что
+\[
+A\Rightarrow^+ A\alpha.
+\]
+\end{definition}
+
+Непосредственная левая рекурсия:
+\[
+A\to A\alpha \mid \beta.
+\]
+
+LL-парсеры не могут напрямую работать с левой рекурсией, так как рекурсивный спуск зациклится.
+
+Преобразование:
+\[
+A\to A\alpha_1 \mid \cdots \mid A\alpha_m \mid \beta_1 \mid \cdots \mid \beta_n
+\]
+заменяется на:
+\[
+A\to \beta_1A' \mid \cdots \mid \beta_nA',
+\]
+\[
+A'\to \alpha_1A' \mid \cdots \mid \alpha_mA' \mid \varepsilon.
+\]
+
+\subsubsection*{Пример}
+
+Было:
+\[
+E\to E+T \mid T.
+\]
+
+После устранения левой рекурсии:
+\[
+E\to TE',
+\]
+\[
+E'\to +TE' \mid \varepsilon.
+\]
+
+\subsection{Левая факторизация}
+
+Левая факторизация устраняет общий префикс альтернатив.
+
+Если:
+\[
+A\to \alpha\beta_1 \mid \alpha\beta_2,
+\]
+то заменяем на:
+\[
+A\to \alpha A',
+\]
+\[
+A'\to \beta_1 \mid \beta_2.
+\]
+
+Пример:
+\[
+S\to if\ E\ then\ S\ else\ S \mid if\ E\ then\ S.
+\]
+
+После факторизации:
+\[
+S\to if\ E\ then\ S\ S',
+\]
+\[
+S'\to else\ S \mid \varepsilon.
+\]
+
+\subsection{LR-анализ}
+
+LR-парсер:
+\begin{itemize}
+    \item читает вход слева направо;
+    \item строит правосторонний вывод в обратном порядке;
+    \item использует стек состояний;
+    \item работает с действиями shift и reduce.
+\end{itemize}
+
+\[
+LR(k)=
+\text{Left-to-right scan, Rightmost derivation in reverse, }k\text{ lookahead}.
+\]
+
+\subsection{Расширенная грамматика}
+
+Для построения LR-анализатора грамматику расширяют новой стартовой продукцией:
+\[
+S'\to S.
+\]
+
+Цель:
+\[
+S'\to S\cdot
+\]
+означает успешное завершение разбора.
+
+\subsection{LR(0)-элементы}
+
+\begin{definition}
+\textbf{LR(0)-элемент} --- продукция грамматики с точкой в правой части.
+\end{definition}
+
+Если есть продукция:
+\[
+A\to XYZ,
+\]
+то возможные LR(0)-элементы:
+\[
+A\to \cdot XYZ,
+\]
+\[
+A\to X\cdot YZ,
+\]
+\[
+A\to XY\cdot Z,
+\]
+\[
+A\to XYZ\cdot.
+\]
+
+Точка показывает, какая часть правой части уже распознана.
+
+\subsection{Операция closure}
+
+Если в множестве элементов есть:
+\[
+A\to \alpha\cdot B\beta,
+\]
+то для каждой продукции:
+\[
+B\to \gamma
+\]
+нужно добавить:
+\[
+B\to \cdot\gamma.
+\]
+
+Алгоритм:
+\begin{enumerate}
+    \item Начать с заданного множества элементов $I$.
+    \item Если в $I$ есть элемент вида
+    \[
+    A\to \alpha\cdot B\beta,
+    \]
+    добавить все элементы
+    \[
+    B\to \cdot\gamma.
+    \]
+    \item Повторять, пока множество не перестанет изменяться.
+\end{enumerate}
+
+\subsection{Операция goto}
+
+Для множества элементов $I$ и грамматического символа $X$:
+\[
+goto(I,X)=closure(\{A\to \alpha X\cdot \beta \mid A\to \alpha\cdot X\beta\in I\}).
+\]
+
+\subsection{Каноническая коллекция LR(0)-множеств}
+
+Алгоритм:
+\begin{enumerate}
+    \item Построить начальное множество:
+    \[
+    I_0=closure(\{S'\to \cdot S\}).
+    \]
+    \item Для каждого построенного множества $I$ и каждого символа $X$ вычислить:
+    \[
+    goto(I,X).
+    \]
+    \item Если результат непустой и ещё не встречался, добавить его.
+    \item Повторять до неподвижной точки.
+\end{enumerate}
+
+\subsection{Пример LR(0)-построения}
+
+Грамматика:
+\[
+S'\to S,
+\]
+\[
+S\to a.
+\]
+
+Начальное множество:
+\[
+I_0=closure(\{S'\to \cdot S\}).
+\]
+
+Поскольку после точки стоит $S$, добавляем:
+\[
+S\to \cdot a.
+\]
+
+Итак:
+\[
+I_0=
+\{
+S'\to \cdot S,\
+S\to \cdot a
+\}.
+\]
+
+Переход по $S$:
+\[
+goto(I_0,S)=\{S'\to S\cdot\}=I_1.
+\]
+
+Переход по $a$:
+\[
+goto(I_0,a)=\{S\to a\cdot\}=I_2.
+\]
+
+Действия:
+\[
+I_0 \xrightarrow{a} I_2,
+\]
+\[
+I_0 \xrightarrow{S} I_1.
+\]
+
+В состоянии $I_2$ выполняется reduce по продукции:
+\[
+S\to a.
+\]
+
+В состоянии $I_1$ выполняется accept.
+
+\subsection{Действия LR-парсера}
+
+LR-парсер использует таблицы:
+\[
+ACTION[state, terminal],
+\]
+\[
+GOTO[state, nonterminal].
+\]
+
+Возможные действия:
+
+\begin{itemize}
+    \item \textbf{shift} $s$ --- считать текущий токен и перейти в состояние $s$;
+    \item \textbf{reduce} $A\to\alpha$ --- заменить на стеке правую часть $\alpha$ нетерминалом $A$;
+    \item \textbf{accept} --- успешное завершение;
+    \item \textbf{error} --- синтаксическая ошибка.
+\end{itemize}
+
+\subsubsection*{Алгоритм LR-разбора}
+
+Вход:
+\[
+wEOF.
+\]
+
+Стек содержит состояния.
+
+\begin{enumerate}
+    \item Поместить в стек начальное состояние $0$.
+    \item Пусть $s$ --- верхнее состояние стека, $a$ --- текущий входной токен.
+    \item Посмотреть:
+    \[
+    ACTION[s,a].
+    \]
+    \item Если действие равно $shift\ t$, то:
+    \begin{enumerate}
+        \item поместить $a$ и состояние $t$ в стек;
+        \item перейти к следующему входному токену.
+    \end{enumerate}
+    \item Если действие равно $reduce\ A\to\beta$, то:
+    \begin{enumerate}
+        \item удалить со стека $|\beta|$ грамматических символов и состояний;
+        \item пусть $s'$ --- новое верхнее состояние;
+        \item поместить $A$;
+        \item поместить состояние
+        \[
+        GOTO[s',A].
+        \]
+    \end{enumerate}
+    \item Если действие равно $accept$, принять вход.
+    \item Если действие равно $error$, сообщить об ошибке.
+\end{enumerate}
+
+\subsection{Конфликты LR-анализа}
+
+При построении LR-таблиц могут возникнуть конфликты.
+
+\subsubsection*{Shift/reduce-конфликт}
+
+Возникает, когда в одной ячейке таблицы возможны:
+\[
+shift
+\]
+и
+\[
+reduce.
+\]
+
+Классический пример --- висячий \texttt{else}:
+\[
+S\to if\ E\ then\ S,
+\]
+\[
+S\to if\ E\ then\ S\ else\ S.
+\]
+
+Обычно конфликт разрешается в пользу \texttt{shift}, чтобы \texttt{else} связывался с ближайшим \texttt{if}.
+
+\subsubsection*{Reduce/reduce-конфликт}
+
+Возникает, когда в одной ячейке возможны два разных reduce.
+
+Например:
+\[
+A\to x,
+\]
+\[
+B\to x.
+\]
+
+После чтения $x$ парсер может не знать, сворачивать ли $x$ в $A$ или в $B$.
+
+\subsection{SLR, LR(1), LALR}
+
+\subsubsection*{SLR(1)}
+
+SLR использует LR(0)-элементы и множества FOLLOW.
+
+Если в состоянии есть элемент:
+\[
+A\to \alpha\cdot,
+\]
+то reduce по продукции $A\to\alpha$ помещается только для терминалов:
+\[
+a\in FOLLOW(A).
+\]
+
+\subsubsection*{LR(1)}
+
+LR(1)-элемент имеет вид:
+\[
+[A\to \alpha\cdot\beta,\ a],
+\]
+где $a$ --- символ предпросмотра.
+
+Смысл: продукцию $A\to\alpha\beta$ можно использовать в контексте, где после $A$ ожидается $a$.
+
+LR(1) точнее SLR, но обычно порождает больше состояний.
+
+\subsubsection*{LALR(1)}
+
+LALR(1) строится из LR(1), но состояния с одинаковым LR(0)-ядром объединяются.
+
+\[
+\text{LALR(1)}:
+\]
+\begin{itemize}
+    \item мощнее SLR(1);
+    \item обычно компактнее LR(1);
+    \item используется в классических генераторах вроде yacc и bison.
+\end{itemize}
+
+\subsection{Автоматическая генерация анализаторов}
+
+\subsubsection{Lex}
+
+\textbf{lex} --- генератор лексических анализаторов.
+
+Файл lex обычно имеет структуру:
+\[
+\begin{array}{c}
+\%\{\\
+\text{C-код объявлений}\\
+\%\}\\
+\%\%\\
+\text{лексические правила}\\
+\%\%\\
+\text{дополнительный C-код}
+\end{array}
+\]
+
+Минимальный пример:
+
+\begin{verbatim}
+%{
+#include "y.tab.h"
+%}
+
+%%
+[0-9]+                 { return NUM; }
+[a-zA-Z_][a-zA-Z0-9_]* { return ID; }
+"+"                    { return PLUS; }
+[ \t\n]+               { /* skip whitespace */ }
+.                      { return yytext[0]; }
+%%
+
+int yywrap(void) {
+    return 1;
+}
+\end{verbatim}
+
+Правило:
+\[
+\text{\texttt{[0-9]+}}
+\]
+распознаёт целые числа.
+
+Переменная \texttt{yytext} содержит текст распознанной лексемы.
+
+Функция \texttt{yylex()} возвращает следующий токен.
+
+\subsubsection{Yacc}
+
+\textbf{yacc} --- генератор синтаксических анализаторов, обычно использующий LALR(1)-анализ.
+
+Файл yacc имеет структуру:
+\[
+\begin{array}{c}
+\%\{\\
+\text{C-код объявлений}\\
+\%\}\\
+\text{объявления токенов}\\
+\%\%\\
+\text{грамматические правила}\\
+\%\%\\
+\text{дополнительный C-код}
+\end{array}
+\]
+
+Минимальный пример калькулятора:
+
+\begin{verbatim}
+%token NUM
+%left '+'
+%left '*'
+
+%%
+expr:
+      expr '+' expr
+    | expr '*' expr
+    | '(' expr ')'
+    | NUM
+    ;
+%%
+\end{verbatim}
+
+Директивы:
+\[
+\%left '+'
+\]
+и
+\[
+\%left '*'
+\]
+задают левую ассоциативность.
+
+Порядок объявлений приоритетов обычно идёт от меньшего приоритета к большему. Поэтому \texttt{*}, объявленный после \texttt{+}, имеет больший приоритет.
+
+\subsubsection*{Связка lex и yacc}
+
+Обычно:
+\begin{itemize}
+    \item lex генерирует функцию \texttt{yylex()};
+    \item yacc генерирует функцию \texttt{yyparse()};
+    \item \texttt{yyparse()} вызывает \texttt{yylex()} для получения токенов.
+\end{itemize}
+
+Схема:
+\[
+\texttt{input}
+\to
+\texttt{yylex()}
+\to
+\texttt{tokens}
+\to
+\texttt{yyparse()}.
+\]
+
+\subsection{ANTLR}
+
+\textbf{ANTLR} --- современный генератор лексических и синтаксических анализаторов.
+
+В отличие от классической пары lex/yacc, ANTLR обычно позволяет описывать лексические и синтаксические правила в одном файле грамматики.
+
+Пример грамматики:
+
+\begin{verbatim}
+grammar Expr;
+
+prog: expr EOF;
+
+expr
+    : expr '*' expr
+    | expr '+' expr
+    | INT
+    | '(' expr ')'
+    ;
+
+INT: [0-9]+;
+WS : [ \t\r\n]+ -> skip;
+\end{verbatim}
+
+ANTLR поддерживает генерацию парсеров для разных целевых языков.
+
+Типичная структура:
+\[
+\text{ANTLR-грамматика}
+\to
+\text{лексер}
++
+\text{парсер}
++
+\text{visitor/listener}.
+\]
+
+\subsubsection*{Listener и Visitor}
+
+ANTLR может генерировать два основных интерфейса обхода дерева:
+
+\begin{itemize}
+    \item \textbf{Listener} --- автоматически вызывается при входе и выходе из узлов дерева;
+    \item \textbf{Visitor} --- пользователь явно управляет обходом дерева.
+\end{itemize}
+
+Пример visitor-идеи:
+\[
+visitExpr(node)
+\]
+возвращает значение выражения или строит фрагмент AST.
+
+\subsection{Парсер-комбинаторы}
+
+\textbf{Парсер-комбинаторы} --- подход, при котором парсер является обычной функцией, а сложные парсеры строятся из простых с помощью комбинаторов.
+
+Типовая абстракция:
+\[
+Parser\ a = String \to [(a,String)].
+\]
+
+То есть парсер значения типа $a$ принимает строку и возвращает список возможных результатов:
+\[
+\text{результат разбора},\ \text{остаток входа}.
+\]
+
+\subsubsection*{Базовые парсеры}
+
+Парсер одного символа:
+
+\[
+item : Parser\ Char.
+\]
+
+Он читает первый символ входа.
+
+Парсер, проверяющий предикат:
+
+\[
+satisfy(p)
+\]
+читает символ, если он удовлетворяет предикату $p$.
+
+Парсер конкретного символа:
+\[
+char(c)=satisfy(\lambda x.\ x=c).
+\]
+
+\subsubsection*{Основные комбинаторы}
+
+\[
+p \mid q
+\]
+--- альтернатива: попробовать $p$, если не получилось --- $q$.
+
+\[
+p \gg= f
+\]
+--- последовательная композиция: выполнить $p$, затем по его результату выбрать следующий парсер.
+
+\[
+many(p)
+\]
+--- повторить $p$ ноль или более раз.
+
+\[
+many1(p)
+\]
+--- повторить $p$ один или более раз.
+
+\subsubsection*{Пример}
+
+Парсер натурального числа:
+
+\begin{verbatim}
+digit  = satisfy isDigit
+number = many1 digit
+\end{verbatim}
+
+Парсер суммы чисел:
+
+\begin{verbatim}
+expr = number `chainl1` plus
+plus = char '+' >> return (+)
+\end{verbatim}
+
+Идея \texttt{chainl1}: разобрать цепочку левоассоциативных операций.
+
+Строка:
+\[
+\texttt{1+2+3}
+\]
+разбирается как:
+\[
+(1+2)+3.
+\]
+
+\subsection{Сравнение подходов}
+
+\[
+\begin{array}{|c|c|c|c|}
+\hline
+\text{Инструмент} & \text{Описание лексики} & \text{Описание синтаксиса} & \text{Типичный метод}\\
+\hline
+lex & \text{регулярные выражения} & - & \text{ДКА}\\
+\hline
+yacc & - & \text{КС-грамматика} & \text{LALR(1)}\\
+\hline
+ANTLR & \text{лексические правила} & \text{грамматические правила} & \text{адаптивный LL(*)}\\
+\hline
+\text{парсер-комбинаторы} & \text{код} & \text{код} & \text{рекурсивный спуск}\\
+\hline
+\end{array}
+\]
+
+\subsection{Преимущества и недостатки}
+
+\subsubsection*{lex/yacc}
+
+Преимущества:
+\begin{itemize}
+    \item классический и хорошо изученный подход;
+    \item эффективные анализаторы;
+    \item хорошая теоретическая база;
+    \item удобно для языков с LALR-грамматиками.
+\end{itemize}
+
+Недостатки:
+\begin{itemize}
+    \item не всегда удобная диагностика ошибок;
+    \item конфликты shift/reduce и reduce/reduce могут быть трудны для начинающих;
+    \item синтаксис инструментов исторически ориентирован на C.
+\end{itemize}
+
+\subsubsection*{ANTLR}
+
+Преимущества:
+\begin{itemize}
+    \item единый файл грамматики для лексики и синтаксиса;
+    \item генерация parse tree;
+    \item listener/visitor-модель;
+    \item поддержка нескольких целевых языков.
+\end{itemize}
+
+Недостатки:
+\begin{itemize}
+    \item грамматики требуют знания особенностей ANTLR;
+    \item некоторые неоднозначности и приоритеты нужно описывать явно;
+    \item для очень низкоуровневой оптимизации может быть менее прозрачен, чем рукописный парсер.
+\end{itemize}
+
+\subsubsection*{Парсер-комбинаторы}
+
+Преимущества:
+\begin{itemize}
+    \item парсер пишется на основном языке программирования;
+    \item удобно строить AST;
+    \item высокая композиционность;
+    \item хорошие возможности для встроенных DSL.
+\end{itemize}
+
+Недостатки:
+\begin{itemize}
+    \item наивные реализации могут быть медленными;
+    \item левая рекурсия обычно приводит к зацикливанию;
+    \item диагностика ошибок требует отдельной работы;
+    \item производительность зависит от реализации.
+\end{itemize}
+
+\subsection{Минимальный сквозной пример}
+
+Рассмотрим язык арифметических выражений:
+\[
+1+2*3.
+\]
+
+Лексические правила:
+\[
+\text{\texttt{[0-9]+}} \to NUM,
+\]
+\[
++ \to PLUS,
+\]
+\[
+* \to MUL.
+\]
+
+Поток токенов:
+\[
+\langle NUM(1), PLUS, NUM(2), MUL, NUM(3), EOF \rangle.
+\]
+
+Грамматика:
+\[
+E\to E+T \mid T,
+\]
+\[
+T\to T*F \mid F,
+\]
+\[
+F\to NUM \mid (E).
+\]
+
+Разбор:
+\[
+\begin{aligned}
+E &\Rightarrow E+T \\
+  &\Rightarrow T+T \\
+  &\Rightarrow F+T \\
+  &\Rightarrow NUM+T \\
+  &\Rightarrow NUM+T*F \\
+  &\Rightarrow NUM+F*F \\
+  &\Rightarrow NUM+NUM*NUM.
+\end{aligned}
+\]
+
+AST:
+\[
++
+\left(
+1,
+*
+\left(
+2,
+3
+\right)
+\right).
+\]
+
+То есть выражение интерпретируется как:
+\[
+1+(2*3),
+\]
+а не как:
+\[
+(1+2)*3.
+\]
+
+\subsection{Итог}
+
+Автоматическое построение лексических и синтаксических анализаторов основано на строгом соответствии между формальными описаниями и алгоритмическими моделями:
+
+\[
+\text{регулярные выражения}
+\leftrightarrow
+\text{конечные автоматы}
+\leftrightarrow
+\text{лексеры},
+\]
+
+\[
+\text{контекстно-свободные грамматики}
+\leftrightarrow
+\text{LL/LR-анализ}
+\leftrightarrow
+\text{парсеры}.
+\]
+
+Инструменты вроде lex и yacc реализуют классическую схему:
+\[
+\text{регулярные выражения} + \text{КС-грамматика}
+\to
+\text{лексер} + \text{LALR-парсер}.
+\]
+
+ANTLR предоставляет более современную интегрированную модель генерации анализаторов, а парсер-комбинаторы позволяют описывать парсеры как обычные программы, сохраняя математическую композиционность.
+
+\end{document}

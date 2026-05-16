@@ -1,0 +1,1294 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+
+\lstdefinestyle{shell}{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    columns=fullflexible,
+    keepspaces=true,
+    backgroundcolor=\color{gray!5},
+    literate=
+      {А}{{\CYRA}}1
+      {Б}{{\CYRB}}1
+      {В}{{\CYRV}}1
+      {Г}{{\CYRG}}1
+      {Д}{{\CYRD}}1
+      {Е}{{\CYRE}}1
+      {Ё}{{\CYRYO}}1
+      {Ж}{{\CYRZH}}1
+      {З}{{\CYRZ}}1
+      {И}{{\CYRI}}1
+      {Й}{{\CYRISHRT}}1
+      {К}{{\CYRK}}1
+      {Л}{{\CYRL}}1
+      {М}{{\CYRM}}1
+      {Н}{{\CYRN}}1
+      {О}{{\CYRO}}1
+      {П}{{\CYRP}}1
+      {Р}{{\CYRR}}1
+      {С}{{\CYRS}}1
+      {Т}{{\CYRT}}1
+      {У}{{\CYRU}}1
+      {Ф}{{\CYRF}}1
+      {Х}{{\CYRH}}1
+      {Ц}{{\CYRC}}1
+      {Ч}{{\CYRCH}}1
+      {Ш}{{\CYRSH}}1
+      {Щ}{{\CYRSHCH}}1
+      {Ъ}{{\CYRHRDSN}}1
+      {Ы}{{\CYRERY}}1
+      {Ь}{{\CYRSFTSN}}1
+      {Э}{{\CYREREV}}1
+      {Ю}{{\CYRYU}}1
+      {Я}{{\CYRYA}}1
+      {а}{{\cyra}}1
+      {б}{{\cyrb}}1
+      {в}{{\cyrv}}1
+      {г}{{\cyrg}}1
+      {д}{{\cyrd}}1
+      {е}{{\cyre}}1
+      {ё}{{\cyryo}}1
+      {ж}{{\cyrzh}}1
+      {з}{{\cyrz}}1
+      {и}{{\cyri}}1
+      {й}{{\cyrishrt}}1
+      {к}{{\cyrk}}1
+      {л}{{\cyrl}}1
+      {м}{{\cyrm}}1
+      {н}{{\cyrn}}1
+      {о}{{\cyro}}1
+      {п}{{\cyrp}}1
+      {р}{{\cyrr}}1
+      {с}{{\cyrs}}1
+      {т}{{\cyrt}}1
+      {у}{{\cyru}}1
+      {ф}{{\cyrf}}1
+      {х}{{\cyrh}}1
+      {ц}{{\cyrc}}1
+      {ч}{{\cyrch}}1
+      {ш}{{\cyrsh}}1
+      {щ}{{\cyrshch}}1
+      {ъ}{{\cyrhrdsn}}1
+      {ы}{{\cyrery}}1
+      {ь}{{\cyrsftsn}}1
+      {э}{{\cyrerev}}1
+      {ю}{{\cyryu}}1
+      {я}{{\cyrya}}1
+}
+
+\lstset{style=shell}
+
+\title{Билет №52 \\ \small Инструменты обработки текстовых данных и файловых систем на примере find, sed, grep. (СпБГУ)}
+\author{Сериков Владислав Александрович}
+\date{16 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Инструменты обработки текстовых данных и файловых систем на примере \texttt{find}, \texttt{sed}, \texttt{grep}}
+
+\subsection{Общая идея Unix-инструментов обработки данных}
+
+В Unix-подобных системах значительная часть системного администрирования, анализа данных и разработки выполняется с помощью небольших утилит командной строки. Их философия обычно формулируется так:
+
+\begin{enumerate}
+    \item каждая программа делает одну задачу, но делает её хорошо;
+    \item программы работают с текстовыми потоками;
+    \item программы легко комбинируются через конвейеры;
+    \item формат ввода и вывода по возможности остаётся простым и человекочитаемым.
+\end{enumerate}
+
+Основными механизмами взаимодействия таких программ являются стандартные потоки:
+
+\begin{itemize}
+    \item \texttt{stdin} --- стандартный ввод;
+    \item \texttt{stdout} --- стандартный вывод;
+    \item \texttt{stderr} --- стандартный поток ошибок.
+\end{itemize}
+
+Например:
+
+\begin{verbatim}
+grep "error" app.log
+\end{verbatim}
+
+ищет строки со словом \texttt{error} в файле \texttt{app.log}, а команда
+
+\begin{verbatim}
+grep "error" app.log | sed 's/error/ERROR/g'
+\end{verbatim}
+
+сначала выбирает строки, содержащие \texttt{error}, а затем заменяет \texttt{error} на \texttt{ERROR}.
+
+Символ \texttt{|} задаёт конвейер: стандартный вывод одной команды становится стандартным вводом другой.
+
+\subsection{Файловая система и текстовые данные}
+
+\subsubsection{Файловая система}
+
+Файловая система --- это способ организации хранения данных на внешних носителях. В Unix-подобных системах файловая система имеет древовидную структуру. Вершиной дерева является корневой каталог \texttt{/}.
+
+Основные типы объектов файловой системы:
+
+\begin{itemize}
+    \item обычный файл;
+    \item каталог;
+    \item символическая ссылка;
+    \item устройство;
+    \item именованный канал;
+    \item сокет.
+\end{itemize}
+
+Путь к файлу бывает:
+
+\begin{itemize}
+    \item абсолютным, если начинается с корня, например:
+    \begin{verbatim}
+    /home/student/project/main.c
+    \end{verbatim}
+
+    \item относительным, если задаётся относительно текущего каталога, например:
+    \begin{verbatim}
+    project/main.c
+    \end{verbatim}
+\end{itemize}
+
+\subsubsection{Текстовый файл}
+
+Текстовый файл --- это файл, содержимое которого интерпретируется как последовательность строк. Строки обычно отделяются символом перевода строки \texttt{\textbackslash n}.
+
+Многие классические Unix-инструменты ориентированы именно на построчную обработку текстовых файлов.
+
+\subsection{Регулярные выражения}
+
+Команды \texttt{grep} и \texttt{sed} активно используют регулярные выражения.
+
+\subsubsection{Определение}
+
+Регулярное выражение --- это формальный шаблон, описывающий множество строк.
+
+Например, регулярное выражение
+
+\begin{verbatim}
+[0-9]+
+\end{verbatim}
+
+описывает непустую последовательность десятичных цифр.
+
+\subsubsection{Основные метасимволы}
+
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Символ & Значение \\
+\hline
+\texttt{.} & Любой один символ, кроме перевода строки \\
+\hline
+\texttt{*} & Ноль или более повторений предыдущего выражения \\
+\hline
+\texttt{+} & Одно или более повторений предыдущего выражения \\
+\hline
+\texttt{?} & Ноль или одно повторение предыдущего выражения \\
+\hline
+\texttt{\^{}} & Начало строки \\
+\hline
+\texttt{\$} & Конец строки \\
+\hline
+\texttt{[abc]} & Один символ из множества: \texttt{a}, \texttt{b}, \texttt{c} \\
+\hline
+\texttt{[\string^abc]} & Один символ, не входящий в указанное множество \\
+\hline
+\texttt{[0-9]} & Одна цифра \\
+\hline
+\texttt{(expr)} & Группировка выражения \\
+\hline
+\texttt{expr1|expr2} & Альтернатива: \texttt{expr1} или \texttt{expr2} \\
+\hline
+\end{tabular}
+\end{center}
+
+Следует различать базовые и расширенные регулярные выражения.
+
+\begin{itemize}
+    \item BRE --- basic regular expressions;
+    \item ERE --- extended regular expressions.
+\end{itemize}
+
+В \texttt{grep} расширенный синтаксис включается опцией \texttt{-E}:
+
+\begin{verbatim}
+grep -E "cat|dog" animals.txt
+\end{verbatim}
+
+\subsection{\texttt{grep}: поиск строк по шаблону}
+
+\subsubsection{Назначение}
+
+\texttt{grep} --- утилита для поиска строк, соответствующих заданному шаблону. Название исторически связано с командой редактора \texttt{ed}:
+
+\begin{verbatim}
+g/re/p
+\end{verbatim}
+
+то есть ``global regular expression print''.
+
+Общий вид команды:
+
+\begin{verbatim}
+grep [options] pattern [file...]
+\end{verbatim}
+
+Если файл не указан, \texttt{grep} читает данные из стандартного ввода.
+
+\subsubsection{Минимальные примеры}
+
+Пусть есть файл \texttt{log.txt}:
+
+\begin{verbatim}
+INFO server started
+WARNING disk almost full
+ERROR cannot open file
+INFO request completed
+\end{verbatim}
+
+Найти строки с \texttt{ERROR}:
+
+\begin{verbatim}
+grep "ERROR" log.txt
+\end{verbatim}
+
+Результат:
+
+\begin{verbatim}
+ERROR cannot open file
+\end{verbatim}
+
+Найти строки, начинающиеся с \texttt{INFO}:
+
+\begin{verbatim}
+grep "^INFO" log.txt
+\end{verbatim}
+
+Результат:
+
+\begin{verbatim}
+INFO server started
+INFO request completed
+\end{verbatim}
+
+Найти строки, содержащие \texttt{ERROR} или \texttt{WARNING}:
+
+\begin{verbatim}
+grep -E "ERROR|WARNING" log.txt
+\end{verbatim}
+
+Результат:
+
+\begin{verbatim}
+WARNING disk almost full
+ERROR cannot open file
+\end{verbatim}
+
+\subsubsection{Часто используемые опции \texttt{grep}}
+
+\begin{center}
+\begin{tabular}{|c|p{10cm}|}
+\hline
+Опция & Назначение \\
+\hline
+\texttt{-i} & Игнорировать регистр символов \\
+\hline
+\texttt{-v} & Вывести строки, не соответствующие шаблону \\
+\hline
+\texttt{-n} & Показывать номера строк \\
+\hline
+\texttt{-c} & Вывести только количество найденных строк \\
+\hline
+\texttt{-l} & Вывести только имена файлов, где найдено совпадение \\
+\hline
+\texttt{-r}, \texttt{-R} & Рекурсивный поиск по каталогам \\
+\hline
+\texttt{-E} & Использовать расширенные регулярные выражения \\
+\hline
+\texttt{-F} & Интерпретировать шаблон как фиксированную строку, а не регулярное выражение \\
+\hline
+\texttt{-w} & Искать только целые слова \\
+\hline
+\texttt{-x} & Совпадение должно занимать всю строку \\
+\hline
+\texttt{-A n} & Показать \texttt{n} строк после найденной \\
+\hline
+\texttt{-B n} & Показать \texttt{n} строк до найденной \\
+\hline
+\texttt{-C n} & Показать \texttt{n} строк контекста до и после найденной \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Примеры использования опций}
+
+Поиск без учёта регистра:
+
+\begin{verbatim}
+grep -i "error" log.txt
+\end{verbatim}
+
+Вывести номера строк:
+
+\begin{verbatim}
+grep -n "INFO" log.txt
+\end{verbatim}
+
+Результат:
+
+\begin{verbatim}
+1:INFO server started
+4:INFO request completed
+\end{verbatim}
+
+Вывести строки, не содержащие \texttt{INFO}:
+
+\begin{verbatim}
+grep -v "INFO" log.txt
+\end{verbatim}
+
+Результат:
+
+\begin{verbatim}
+WARNING disk almost full
+ERROR cannot open file
+\end{verbatim}
+
+Подсчитать количество строк с ошибками:
+
+\begin{verbatim}
+grep -c "ERROR" log.txt
+\end{verbatim}
+
+\subsubsection{Рекурсивный поиск}
+
+Пусть есть каталог проекта:
+
+\begin{verbatim}
+project/
+    main.py
+    utils.py
+    README.md
+\end{verbatim}
+
+Найти все упоминания функции \texttt{connect}:
+
+\begin{verbatim}
+grep -R "connect" project/
+\end{verbatim}
+
+Найти только имена файлов, где встречается \texttt{TODO}:
+
+\begin{verbatim}
+grep -Rl "TODO" project/
+\end{verbatim}
+
+\subsubsection{Алгоритм работы \texttt{grep} на концептуальном уровне}
+
+На высоком уровне \texttt{grep} выполняет следующие шаги:
+
+\begin{enumerate}
+    \item Получить шаблон поиска.
+    \item Преобразовать регулярное выражение во внутреннее представление.
+    \item Открыть входной файл или использовать стандартный ввод.
+    \item Читать входной поток построчно.
+    \item Для каждой строки проверить, есть ли совпадение с шаблоном.
+    \item Если строка удовлетворяет условию поиска, вывести её или выполнить действие, заданное опциями.
+    \item После обработки всех строк завершить работу и вернуть код завершения.
+\end{enumerate}
+
+\subsubsection{Иллюстрация алгоритма}
+
+Файл:
+
+\begin{verbatim}
+1: alpha
+2: beta
+3: alphabet
+4: gamma
+\end{verbatim}
+
+Команда:
+
+\begin{verbatim}
+grep "alpha" file.txt
+\end{verbatim}
+
+Пошаговая обработка:
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+Строка & Проверка шаблона \texttt{alpha} & Действие \\
+\hline
+\texttt{alpha} & совпадает & вывести \\
+\hline
+\texttt{beta} & не совпадает & пропустить \\
+\hline
+\texttt{alphabet} & совпадает & вывести \\
+\hline
+\texttt{gamma} & не совпадает & пропустить \\
+\hline
+\end{tabular}
+\end{center}
+
+Результат:
+
+\begin{verbatim}
+alpha
+alphabet
+\end{verbatim}
+
+\subsubsection{Коды завершения \texttt{grep}}
+
+Обычно \texttt{grep} возвращает:
+
+\begin{itemize}
+    \item \texttt{0}, если совпадение найдено;
+    \item \texttt{1}, если совпадение не найдено;
+    \item \texttt{2}, если произошла ошибка.
+\end{itemize}
+
+Это удобно использовать в сценариях командной оболочки:
+
+\begin{verbatim}
+if grep -q "ERROR" log.txt; then
+    echo "Errors found"
+else
+    echo "No errors"
+fi
+\end{verbatim}
+
+Опция \texttt{-q} подавляет вывод и используется только для проверки факта совпадения.
+
+\subsection{\texttt{sed}: потоковый редактор}
+
+\subsubsection{Назначение}
+
+\texttt{sed} --- потоковый редактор. Он читает входной поток, применяет к нему заданный сценарий редактирования и выводит результат.
+
+Общий вид:
+
+\begin{verbatim}
+sed [options] 'script' [file...]
+\end{verbatim}
+
+Ключевая особенность \texttt{sed}: он обрабатывает данные последовательно, строка за строкой, не требуя загрузки всего файла в память.
+
+\subsubsection{Основной цикл работы \texttt{sed}}
+
+Типичный цикл работы \texttt{sed} можно описать так:
+
+\begin{enumerate}
+    \item Прочитать очередную строку из входного потока в рабочую область, называемую pattern space.
+    \item Применить к ней команды сценария.
+    \item Если автоматическая печать не отключена, вывести содержимое pattern space.
+    \item Очистить pattern space.
+    \item Перейти к следующей строке.
+\end{enumerate}
+
+\subsubsection{Иллюстрация цикла}
+
+Файл \texttt{names.txt}:
+
+\begin{verbatim}
+Ann
+Bob
+Alice
+\end{verbatim}
+
+Команда:
+
+\begin{verbatim}
+sed 's/A/a/' names.txt
+\end{verbatim}
+
+Пошагово:
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+Входная строка & После команды \texttt{s/A/a/} & Вывод \\
+\hline
+\texttt{Ann} & \texttt{ann} & \texttt{ann} \\
+\hline
+\texttt{Bob} & \texttt{Bob} & \texttt{Bob} \\
+\hline
+\texttt{Alice} & \texttt{alice} & \texttt{alice} \\
+\hline
+\end{tabular}
+\end{center}
+
+Результат:
+
+\begin{verbatim}
+ann
+Bob
+alice
+\end{verbatim}
+
+\subsubsection{Команда подстановки}
+
+Наиболее часто используется команда \texttt{s}:
+
+\begin{verbatim}
+s/pattern/replacement/flags
+\end{verbatim}
+
+где:
+
+\begin{itemize}
+    \item \texttt{pattern} --- регулярное выражение;
+    \item \texttt{replacement} --- строка замены;
+    \item \texttt{flags} --- дополнительные флаги.
+\end{itemize}
+
+Пример:
+
+\begin{verbatim}
+echo "one two one" | sed 's/one/ONE/'
+\end{verbatim}
+
+Результат:
+
+\begin{verbatim}
+ONE two one
+\end{verbatim}
+
+По умолчанию заменяется только первое вхождение в строке. Чтобы заменить все вхождения, используется флаг \texttt{g}:
+
+\begin{verbatim}
+echo "one two one" | sed 's/one/ONE/g'
+\end{verbatim}
+
+Результат:
+
+\begin{verbatim}
+ONE two ONE
+\end{verbatim}
+
+\subsubsection{Адресация строк в \texttt{sed}}
+
+Команды \texttt{sed} можно применять не ко всем строкам, а только к выбранным.
+
+Примеры адресов:
+
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Адрес & Значение \\
+\hline
+\texttt{3} & Только третья строка \\
+\hline
+\texttt{1,5} & Строки с первой по пятую \\
+\hline
+\texttt{\$} & Последняя строка \\
+\hline
+\texttt{/regex/} & Строки, соответствующие регулярному выражению \\
+\hline
+\end{tabular}
+\end{center}
+
+Пример: заменить \texttt{error} на \texttt{ERROR} только в строках, содержащих \texttt{critical}:
+
+\begin{verbatim}
+sed '/critical/s/error/ERROR/g' log.txt
+\end{verbatim}
+
+Удалить вторую строку:
+
+\begin{verbatim}
+sed '2d' file.txt
+\end{verbatim}
+
+Вывести только строки с 10-й по 20-ю:
+
+\begin{verbatim}
+sed -n '10,20p' file.txt
+\end{verbatim}
+
+Здесь опция \texttt{-n} отключает автоматическую печать, а команда \texttt{p} явно печатает выбранные строки.
+
+\subsubsection{Основные команды \texttt{sed}}
+
+\begin{center}
+\begin{tabular}{|c|p{10cm}|}
+\hline
+Команда & Назначение \\
+\hline
+\texttt{p} & Напечатать строку \\
+\hline
+\texttt{d} & Удалить строку из вывода \\
+\hline
+\texttt{s} & Выполнить замену \\
+\hline
+\texttt{a} & Добавить строку после текущей \\
+\hline
+\texttt{i} & Вставить строку перед текущей \\
+\hline
+\texttt{c} & Заменить выбранную строку целиком \\
+\hline
+\texttt{q} & Завершить обработку \\
+\hline
+\texttt{y} & Транслитерировать символы \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Примеры редактирования}
+
+Удалить пустые строки:
+
+\begin{verbatim}
+sed '/^$/d' file.txt
+\end{verbatim}
+
+Удалить комментарии, начинающиеся с \texttt{\#}:
+
+\begin{verbatim}
+sed '/^#/d' config.conf
+\end{verbatim}
+
+Заменить несколько пробелов одним пробелом:
+
+\begin{verbatim}
+sed -E 's/[ ]+/ /g' file.txt
+\end{verbatim}
+
+Добавить строку после первой:
+
+\begin{verbatim}
+sed '1a inserted line' file.txt
+\end{verbatim}
+
+Вставить строку перед первой:
+
+\begin{verbatim}
+sed '1i header line' file.txt
+\end{verbatim}
+
+\subsubsection{Редактирование файла на месте}
+
+По умолчанию \texttt{sed} не изменяет исходный файл, а выводит результат в стандартный вывод.
+
+Например:
+
+\begin{verbatim}
+sed 's/foo/bar/g' file.txt
+\end{verbatim}
+
+не изменяет \texttt{file.txt}. Чтобы записать результат в файл, можно использовать перенаправление:
+
+\begin{verbatim}
+sed 's/foo/bar/g' file.txt > new_file.txt
+\end{verbatim}
+
+В GNU \texttt{sed} есть опция \texttt{-i}, которая изменяет файл на месте:
+
+\begin{verbatim}
+sed -i 's/foo/bar/g' file.txt
+\end{verbatim}
+
+Безопаснее делать резервную копию:
+
+\begin{verbatim}
+sed -i.bak 's/foo/bar/g' file.txt
+\end{verbatim}
+
+После этого появится файл \texttt{file.txt.bak}.
+
+\subsubsection{Группы и обратные ссылки}
+
+Пусть есть файл:
+
+\begin{verbatim}
+Ivan Petrov
+Anna Sidorova
+\end{verbatim}
+
+Нужно поменять имя и фамилию местами:
+
+\begin{verbatim}
+sed -E 's/([A-Za-z]+) ([A-Za-z]+)/\2, \1/' names.txt
+\end{verbatim}
+
+Результат:
+
+\begin{verbatim}
+Petrov, Ivan
+Sidorova, Anna
+\end{verbatim}
+
+Здесь:
+
+\begin{itemize}
+    \item \texttt{([A-Za-z]+)} --- первая группа;
+    \item пробел разделяет имя и фамилию;
+    \item \texttt{([A-Za-z]+)} --- вторая группа;
+    \item \texttt{\textbackslash 1} --- содержимое первой группы;
+    \item \texttt{\textbackslash 2} --- содержимое второй группы.
+\end{itemize}
+
+\subsection{\texttt{find}: поиск объектов файловой системы}
+
+\subsubsection{Назначение}
+
+\texttt{find} --- утилита для обхода дерева каталогов и поиска файлов по заданным условиям.
+
+Общий вид:
+
+\begin{verbatim}
+find [path...] [expression]
+\end{verbatim}
+
+Примеры:
+
+\begin{verbatim}
+find .
+find /home/student -name "*.txt"
+find . -type f -size +10M
+\end{verbatim}
+
+Если путь не указан, обычно используется текущий каталог. Точка \texttt{.} явно обозначает текущий каталог.
+
+\subsubsection{Основные критерии поиска}
+
+\begin{center}
+\begin{tabular}{|c|p{10cm}|}
+\hline
+Критерий & Назначение \\
+\hline
+\texttt{-name pattern} & Поиск по имени файла \\
+\hline
+\texttt{-iname pattern} & Поиск по имени без учёта регистра \\
+\hline
+\texttt{-type f} & Обычные файлы \\
+\hline
+\texttt{-type d} & Каталоги \\
+\hline
+\texttt{-type l} & Символические ссылки \\
+\hline
+\texttt{-size n} & Поиск по размеру \\
+\hline
+\texttt{-mtime n} & Поиск по времени изменения в днях \\
+\hline
+\texttt{-user name} & Файлы указанного пользователя \\
+\hline
+\texttt{-group name} & Файлы указанной группы \\
+\hline
+\texttt{-perm mode} & Поиск по правам доступа \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Минимальные примеры}
+
+Найти все файлы с расширением \texttt{.txt} в текущем каталоге и подкаталогах:
+
+\begin{verbatim}
+find . -name "*.txt"
+\end{verbatim}
+
+Найти все обычные файлы:
+
+\begin{verbatim}
+find . -type f
+\end{verbatim}
+
+Найти все каталоги:
+
+\begin{verbatim}
+find . -type d
+\end{verbatim}
+
+Найти файлы больше 100 мегабайт:
+
+\begin{verbatim}
+find . -type f -size +100M
+\end{verbatim}
+
+Найти файлы, изменённые за последние 7 дней:
+
+\begin{verbatim}
+find . -type f -mtime -7
+\end{verbatim}
+
+Найти файлы, изменённые более 30 дней назад:
+
+\begin{verbatim}
+find . -type f -mtime +30
+\end{verbatim}
+
+\subsubsection{Действия \texttt{find}}
+
+\texttt{find} не только ищет файлы, но и выполняет действия над найденными объектами.
+
+\begin{center}
+\begin{tabular}{|c|p{10cm}|}
+\hline
+Действие & Назначение \\
+\hline
+\texttt{-print} & Напечатать путь \\
+\hline
+\texttt{-delete} & Удалить найденные объекты \\
+\hline
+\texttt{-exec command \{\} \textbackslash;} & Выполнить команду для каждого найденного объекта \\
+\hline
+\texttt{-exec command \{\} +} & Выполнить команду с группой найденных объектов \\
+\hline
+\end{tabular}
+\end{center}
+
+Пример: удалить временные файлы:
+
+\begin{verbatim}
+find . -name "*.tmp" -type f -delete
+\end{verbatim}
+
+Пример: показать подробную информацию о найденных файлах:
+
+\begin{verbatim}
+find . -name "*.txt" -exec ls -l {} \;
+\end{verbatim}
+
+Пример: передать несколько файлов одной команде:
+
+\begin{verbatim}
+find . -name "*.txt" -exec wc -l {} +
+\end{verbatim}
+
+Разница:
+
+\begin{itemize}
+    \item \texttt{\{\} \textbackslash;} --- команда запускается отдельно для каждого файла;
+    \item \texttt{\{\} +} --- команда запускается для группы файлов, что обычно эффективнее.
+\end{itemize}
+
+\subsubsection{Логические операции в \texttt{find}}
+
+Выражения \texttt{find} можно комбинировать логическими операторами.
+
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Оператор & Значение \\
+\hline
+\texttt{-a} & Логическое И, часто подразумевается неявно \\
+\hline
+\texttt{-o} & Логическое ИЛИ \\
+\hline
+\texttt{!} & Логическое НЕ \\
+\hline
+\texttt{( expr )} & Группировка условий \\
+\hline
+\end{tabular}
+\end{center}
+
+Пример: найти \texttt{.c} и \texttt{.h} файлы:
+
+\begin{verbatim}
+find . \( -name "*.c" -o -name "*.h" \) -type f
+\end{verbatim}
+
+Скобки экранируются, потому что иначе их может интерпретировать командная оболочка.
+
+Найти все файлы, кроме \texttt{.log}:
+
+\begin{verbatim}
+find . -type f ! -name "*.log"
+\end{verbatim}
+
+\subsubsection{Алгоритм обхода дерева каталогов}
+
+Утилита \texttt{find} концептуально выполняет обход дерева файловой системы.
+
+Один из возможных вариантов обхода --- поиск в глубину.
+
+\paragraph{Алгоритм обхода в глубину для \texttt{find}.}
+
+\begin{enumerate}
+    \item Поместить начальный каталог в стек.
+    \item Пока стек не пуст:
+    \begin{enumerate}
+        \item извлечь очередной путь;
+        \item получить информацию об объекте файловой системы;
+        \item проверить объект на соответствие выражению поиска;
+        \item если объект удовлетворяет условиям, выполнить заданное действие;
+        \item если объект является каталогом, добавить его содержимое в стек.
+    \end{enumerate}
+    \item Завершить работу после обработки всех доступных объектов.
+\end{enumerate}
+
+\subsubsection{Иллюстрация обхода}
+
+Пусть дерево каталогов имеет вид:
+
+\begin{verbatim}
+project/
+    README.md
+    src/
+        main.c
+        util.c
+    tests/
+        test_main.c
+\end{verbatim}
+
+Команда:
+
+\begin{verbatim}
+find project -name "*.c"
+\end{verbatim}
+
+Возможная последовательность обработки:
+
+\begin{enumerate}
+    \item проверить \texttt{project};
+    \item проверить \texttt{project/README.md};
+    \item перейти в \texttt{project/src};
+    \item проверить \texttt{project/src/main.c};
+    \item проверить \texttt{project/src/util.c};
+    \item перейти в \texttt{project/tests};
+    \item проверить \texttt{project/tests/test\_main.c}.
+\end{enumerate}
+
+Результат:
+
+\begin{verbatim}
+project/src/main.c
+project/src/util.c
+project/tests/test_main.c
+\end{verbatim}
+
+\subsubsection{Ограничение глубины поиска}
+
+Иногда нужно искать не во всём дереве каталогов, а только на определённой глубине.
+
+Найти файлы только в текущем каталоге, без подкаталогов:
+
+\begin{verbatim}
+find . -maxdepth 1 -type f
+\end{verbatim}
+
+Искать начиная с глубины 2:
+
+\begin{verbatim}
+find . -mindepth 2 -type f
+\end{verbatim}
+
+\subsubsection{Работа с датами}
+
+Найти файлы, изменённые ровно 1 день назад:
+
+\begin{verbatim}
+find . -mtime 1
+\end{verbatim}
+
+Найти файлы, изменённые менее суток назад:
+
+\begin{verbatim}
+find . -mtime -1
+\end{verbatim}
+
+Найти файлы, изменённые более 10 дней назад:
+
+\begin{verbatim}
+find . -mtime +10
+\end{verbatim}
+
+Полезные критерии времени:
+
+\begin{itemize}
+    \item \texttt{-mtime} --- время последнего изменения содержимого файла;
+    \item \texttt{-atime} --- время последнего доступа;
+    \item \texttt{-ctime} --- время последнего изменения метаданных.
+\end{itemize}
+
+\subsection{Совместное использование \texttt{find}, \texttt{grep} и \texttt{sed}}
+
+\subsubsection{Поиск файлов и поиск текста внутри них}
+
+Найти все файлы \texttt{.py}, содержащие строку \texttt{import requests}:
+
+\begin{verbatim}
+find . -name "*.py" -type f -exec grep -n "import requests" {} +
+\end{verbatim}
+
+Здесь:
+
+\begin{itemize}
+    \item \texttt{find .} ищет в текущем каталоге;
+    \item \texttt{-name "*.py"} выбирает Python-файлы;
+    \item \texttt{-type f} оставляет только обычные файлы;
+    \item \texttt{-exec grep -n ... {} +} запускает \texttt{grep} для найденных файлов.
+\end{itemize}
+
+\subsubsection{Массовая замена в найденных файлах}
+
+Заменить \texttt{localhost} на \texttt{127.0.0.1} во всех \texttt{.conf}-файлах:
+
+\begin{verbatim}
+find . -name "*.conf" -type f -exec sed -i.bak 's/localhost/127.0.0.1/g' {} +
+\end{verbatim}
+
+При этом создаются резервные копии с расширением \texttt{.bak}.
+
+\subsubsection{Конвейерная обработка}
+
+Вывести строки с ошибками из всех логов, заменив \texttt{ERROR} на \texttt{ERR}:
+
+\begin{verbatim}
+find . -name "*.log" -type f -exec grep "ERROR" {} + | sed 's/ERROR/ERR/g'
+\end{verbatim}
+
+\subsection{Проблема пробелов и специальных символов в именах файлов}
+
+Имена файлов могут содержать пробелы, табуляции и даже символы перевода строки. Поэтому конструкции вида:
+
+\begin{verbatim}
+for f in $(find . -name "*.txt"); do
+    echo "$f"
+done
+\end{verbatim}
+
+опасны: результат \texttt{find} разбивается оболочкой по пробельным символам.
+
+Более безопасный способ:
+
+\begin{verbatim}
+find . -name "*.txt" -type f -print0 |
+while IFS= read -r -d '' file; do
+    echo "$file"
+done
+\end{verbatim}
+
+Здесь:
+
+\begin{itemize}
+    \item \texttt{-print0} отделяет имена файлов нулевым байтом;
+    \item \texttt{read -d ''} читает до нулевого байта;
+    \item \texttt{IFS=} отключает разбиение по пробелам;
+    \item \texttt{-r} запрещает специальную обработку обратной косой черты.
+\end{itemize}
+
+Также часто используется связка с \texttt{xargs -0}:
+
+\begin{verbatim}
+find . -name "*.txt" -type f -print0 | xargs -0 grep "pattern"
+\end{verbatim}
+
+\subsection{Сравнение \texttt{find}, \texttt{grep}, \texttt{sed}}
+
+\begin{center}
+\begin{tabular}{|c|p{4cm}|p{6cm}|}
+\hline
+Утилита & Основная задача & Типичный пример \\
+\hline
+\texttt{find} & Поиск файлов и каталогов по свойствам & Найти все \texttt{.log}-файлы старше 30 дней \\
+\hline
+\texttt{grep} & Поиск строк в текстовом потоке & Найти строки с \texttt{ERROR} \\
+\hline
+\texttt{sed} & Потоковое редактирование текста & Заменить \texttt{foo} на \texttt{bar} \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Типовые практические задачи}
+
+\subsubsection{Найти большие файлы}
+
+\begin{verbatim}
+find . -type f -size +1G
+\end{verbatim}
+
+\subsubsection{Найти и удалить пустые каталоги}
+
+\begin{verbatim}
+find . -type d -empty -delete
+\end{verbatim}
+
+\subsubsection{Найти строки с IPv4-адресами}
+
+\begin{verbatim}
+grep -E "([0-9]{1,3}\.){3}[0-9]{1,3}" file.txt
+\end{verbatim}
+
+Это выражение синтаксически находит последовательности вида \texttt{192.168.0.1}, но не проверяет строго, что каждое число лежит в диапазоне от 0 до 255.
+
+\subsubsection{Удалить завершающие пробелы}
+
+\begin{verbatim}
+sed 's/[[:space:]]*$//' file.txt
+\end{verbatim}
+
+\subsubsection{Переименовать расширение через \texttt{find} и shell}
+
+Например, заменить расширение \texttt{.txt} на \texttt{.bak}:
+
+\begin{verbatim}
+find . -type f -name "*.txt" -exec sh -c '
+for file do
+    mv "$file" "${file%.txt}.bak"
+done
+' sh {} +
+\end{verbatim}
+
+Здесь конструкция \texttt{\$\{file\%.txt\}} удаляет суффикс \texttt{.txt} из значения переменной \texttt{file}.
+
+\subsection{Теоретические замечания о регулярных выражениях}
+
+\subsubsection{Регулярные языки}
+
+\textbf{Определение.}
+Алфавит --- конечное множество символов. Слово над алфавитом --- конечная последовательность символов этого алфавита. Язык --- множество слов над заданным алфавитом.
+
+\textbf{Определение.}
+Класс регулярных языков над алфавитом $\Sigma$ определяется индуктивно:
+
+\begin{enumerate}
+    \item $\varnothing$ является регулярным языком;
+    \item $\{\varepsilon\}$ является регулярным языком, где $\varepsilon$ --- пустое слово;
+    \item для каждого $a \in \Sigma$ язык $\{a\}$ является регулярным;
+    \item если $L_1$ и $L_2$ регулярны, то $L_1 \cup L_2$ регулярный;
+    \item если $L_1$ и $L_2$ регулярны, то $L_1 L_2$ регулярный, где
+    \[
+        L_1 L_2 = \{xy \mid x \in L_1, y \in L_2\};
+    \]
+    \item если $L$ регулярен, то $L^*$ регулярный, где
+    \[
+        L^* = \bigcup_{n=0}^{\infty} L^n.
+    \]
+\end{enumerate}
+
+Регулярные выражения являются синтаксическим способом задания регулярных языков.
+
+\subsubsection{Теорема Клини}
+
+\textbf{Теорема Клини.}
+Язык является регулярным тогда и только тогда, когда он распознаётся некоторым конечным автоматом.
+
+\textbf{Доказательство.}
+
+Докажем обе стороны.
+
+\paragraph{1. Если язык задаётся регулярным выражением, то он распознаётся конечным автоматом.}
+
+Доказательство проводится структурной индукцией по построению регулярного выражения.
+
+\begin{enumerate}
+    \item Для языка $\varnothing$ строится автомат без принимающих состояний.
+    \item Для языка $\{\varepsilon\}$ строится автомат, начальное состояние которого является принимающим.
+    \item Для языка $\{a\}$ строится автомат с переходом по символу $a$ из начального состояния в принимающее.
+\end{enumerate}
+
+Теперь покажем замкнутость относительно операций регулярных выражений.
+
+Пусть языки $L_1$ и $L_2$ распознаются конечными автоматами $A_1$ и $A_2$.
+
+\begin{itemize}
+    \item Для объединения $L_1 \cup L_2$ строится новый автомат с новым начальным состоянием, из которого есть $\varepsilon$-переходы в начальные состояния автоматов $A_1$ и $A_2$. Принимающими состояниями являются принимающие состояния обоих автоматов.
+    \item Для конкатенации $L_1L_2$ добавляются $\varepsilon$-переходы из каждого принимающего состояния автомата $A_1$ в начальное состояние автомата $A_2$. Начальным состоянием становится начальное состояние $A_1$, принимающими --- принимающие состояния $A_2$.
+    \item Для итерации $L_1^*$ добавляется новое начальное принимающее состояние. Из него проводится $\varepsilon$-переход в начальное состояние $A_1$, а из принимающих состояний $A_1$ проводятся $\varepsilon$-переходы обратно в начальное состояние $A_1$ и в новое принимающее состояние.
+\end{itemize}
+
+Таким образом, для любого регулярного выражения можно построить конечный автомат, распознающий тот же язык.
+
+\paragraph{2. Если язык распознаётся конечным автоматом, то он задаётся регулярным выражением.}
+
+Пусть дан конечный автомат
+\[
+    A = (Q, \Sigma, \delta, q_0, F),
+\]
+где $Q$ --- конечное множество состояний, $\Sigma$ --- алфавит, $\delta$ --- функция переходов, $q_0$ --- начальное состояние, $F$ --- множество принимающих состояний.
+
+Идея доказательства состоит в последовательном исключении состояний автомата с сохранением языка.
+
+Рассмотрим обобщённый конечный автомат, в котором переходы помечаются регулярными выражениями, а не отдельными символами. Добавим новое начальное состояние $s$ и новое финальное состояние $t$. Проведём $\varepsilon$-переход из $s$ в старое начальное состояние $q_0$, а из каждого старого принимающего состояния проведём $\varepsilon$-переход в $t$.
+
+Далее будем удалять промежуточные состояния. Пусть удаляется состояние $r$. Для каждой пары состояний $i$ и $j$, отличных от $r$, обновим метку перехода из $i$ в $j$ по формуле:
+\[
+    R_{ij}' = R_{ij} \cup R_{ir}(R_{rr})^*R_{rj}.
+\]
+
+Смысл формулы следующий:
+
+\begin{itemize}
+    \item $R_{ij}$ описывает все пути из $i$ в $j$, не проходящие через $r$;
+    \item $R_{ir}(R_{rr})^*R_{rj}$ описывает пути, которые идут из $i$ в $r$, затем любое число раз проходят цикл из $r$ в $r$, а затем идут из $r$ в $j$.
+\end{itemize}
+
+После удаления всех промежуточных состояний останутся только $s$ и $t$, а метка перехода из $s$ в $t$ будет регулярным выражением, описывающим ровно язык автомата.
+
+Следовательно, всякий язык, распознаваемый конечным автоматом, задаётся регулярным выражением.
+
+Обе импликации доказаны, значит теорема доказана.
+
+\subsection{Практические рекомендации}
+
+\begin{enumerate}
+    \item Для простого поиска фиксированной строки использовать:
+    \begin{verbatim}
+    grep -F "text" file
+    \end{verbatim}
+
+    \item Для поиска по регулярному выражению использовать:
+    \begin{verbatim}
+    grep -E "regex" file
+    \end{verbatim}
+
+    \item Для безопасного изменения файлов через \texttt{sed} сначала делать резервную копию:
+    \begin{verbatim}
+    sed -i.bak 's/old/new/g' file
+    \end{verbatim}
+
+    \item Для поиска файлов по имени использовать \texttt{find}:
+    \begin{verbatim}
+    find . -name "*.txt"
+    \end{verbatim}
+
+    \item Для обработки имён файлов с пробелами использовать \texttt{-print0} и \texttt{xargs -0}:
+    \begin{verbatim}
+    find . -type f -print0 | xargs -0 grep "pattern"
+    \end{verbatim}
+
+    \item Перед массовым удалением сначала проверять список:
+    \begin{verbatim}
+    find . -name "*.tmp" -type f -print
+    \end{verbatim}
+
+    и только затем выполнять:
+    \begin{verbatim}
+    find . -name "*.tmp" -type f -delete
+    \end{verbatim}
+\end{enumerate}
+
+\subsection{Краткое резюме}
+
+\begin{itemize}
+    \item \texttt{grep} используется для поиска строк по шаблону.
+    \item \texttt{sed} используется для потокового редактирования текста.
+    \item \texttt{find} используется для поиска объектов файловой системы по имени, типу, размеру, времени изменения, правам доступа и другим признакам.
+    \item Эти утилиты особенно эффективны в комбинации друг с другом через конвейеры и \texttt{-exec}.
+    \item Регулярные выражения дают формальный язык описания множеств строк и лежат в основе многих операций поиска и замены.
+    \item При работе с именами файлов следует учитывать пробелы и специальные символы; безопасными являются подходы с \texttt{-print0} и \texttt{xargs -0}.
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,1497 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{geometry}
+
+\geometry{margin=2cm}
+
+\lstdefinestyle{code}{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    literate=
+      {А}{{\CYRA}}1
+      {Б}{{\CYRB}}1
+      {В}{{\CYRV}}1
+      {Г}{{\CYRG}}1
+      {Д}{{\CYRD}}1
+      {Е}{{\CYRE}}1
+      {Ё}{{\CYRYO}}1
+      {Ж}{{\CYRZH}}1
+      {З}{{\CYRZ}}1
+      {И}{{\CYRI}}1
+      {Й}{{\CYRISHRT}}1
+      {К}{{\CYRK}}1
+      {Л}{{\CYRL}}1
+      {М}{{\CYRM}}1
+      {Н}{{\CYRN}}1
+      {О}{{\CYRO}}1
+      {П}{{\CYRP}}1
+      {Р}{{\CYRR}}1
+      {С}{{\CYRS}}1
+      {Т}{{\CYRT}}1
+      {У}{{\CYRU}}1
+      {Ф}{{\CYRF}}1
+      {Х}{{\CYRH}}1
+      {Ц}{{\CYRC}}1
+      {Ч}{{\CYRCH}}1
+      {Ш}{{\CYRSH}}1
+      {Щ}{{\CYRSHCH}}1
+      {Ъ}{{\CYRHRDSN}}1
+      {Ы}{{\CYRERY}}1
+      {Ь}{{\CYRSFTSN}}1
+      {Э}{{\CYREREV}}1
+      {Ю}{{\CYRYU}}1
+      {Я}{{\CYRYA}}1
+      {а}{{\cyra}}1
+      {б}{{\cyrb}}1
+      {в}{{\cyrv}}1
+      {г}{{\cyrg}}1
+      {д}{{\cyrd}}1
+      {е}{{\cyre}}1
+      {ё}{{\cyryo}}1
+      {ж}{{\cyrzh}}1
+      {з}{{\cyrz}}1
+      {и}{{\cyri}}1
+      {й}{{\cyrishrt}}1
+      {к}{{\cyrk}}1
+      {л}{{\cyrl}}1
+      {м}{{\cyrm}}1
+      {н}{{\cyrn}}1
+      {о}{{\cyro}}1
+      {п}{{\cyrp}}1
+      {р}{{\cyrr}}1
+      {с}{{\cyrs}}1
+      {т}{{\cyrt}}1
+      {у}{{\cyru}}1
+      {ф}{{\cyrf}}1
+      {х}{{\cyrh}}1
+      {ц}{{\cyrc}}1
+      {ч}{{\cyrch}}1
+      {ш}{{\cyrsh}}1
+      {щ}{{\cyrshch}}1
+      {ъ}{{\cyrhrdsn}}1
+      {ы}{{\cyrery}}1
+      {ь}{{\cyrsftsn}}1
+      {э}{{\cyrerev}}1
+      {ю}{{\cyryu}}1
+      {я}{{\cyrya}}1
+}
+
+\lstset{style=code}
+
+\title{Билет №56 \\ \small Конфигурационное управление. Системы управления версиями. Централизованное и распределённое управление версиями. Git Workflow, GitHub Workflow. Системы CI/CD. (СпБГУ)}
+\author{Сериков Владислав Александрович}
+\date{16 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Конфигурационное управление}
+
+\subsection{Общее определение}
+
+\textbf{Конфигурационное управление} --- это дисциплина управления составом, состоянием и изменениями сложной системы на протяжении её жизненного цикла.
+
+В разработке программного обеспечения под конфигурационным управлением обычно понимают совокупность процессов, инструментов и правил, которые позволяют:
+
+\begin{enumerate}
+    \item однозначно определить, из каких компонентов состоит программная система;
+    \item фиксировать состояния системы в контрольных точках;
+    \item управлять изменениями;
+    \item обеспечивать воспроизводимость сборок и поставок;
+    \item отслеживать авторство, причины и историю изменений;
+    \item восстанавливать предыдущие версии системы;
+    \item контролировать согласованность кода, документации, тестов, конфигураций и окружений.
+\end{enumerate}
+
+\subsection{Конфигурационная единица}
+
+\textbf{Конфигурационная единица} --- это элемент системы, который помещается под управление конфигурацией и изменения которого необходимо контролировать.
+
+Примеры конфигурационных единиц:
+
+\begin{itemize}
+    \item исходный код;
+    \item исполняемые файлы;
+    \item библиотеки;
+    \item файлы конфигурации;
+    \item схемы баз данных;
+    \item тестовые данные;
+    \item техническая документация;
+    \item Dockerfile, Helm-чарты, Terraform-манифесты;
+    \item спецификации API;
+    \item скрипты сборки и развёртывания.
+\end{itemize}
+
+\subsection{Версия, ревизия, релиз}
+
+\textbf{Версия} --- зафиксированное состояние некоторого объекта в определённый момент времени.
+
+\textbf{Ревизия} --- конкретное изменение или конкретное состояние объекта в истории системы управления версиями.
+
+\textbf{Релиз} --- версия программной системы, предназначенная для передачи пользователю, заказчику или эксплуатации.
+
+Например:
+
+\begin{lstlisting}
+v1.0.0  -- первый стабильный релиз;
+v1.1.0  -- добавлена новая функциональность;
+v1.1.1  -- исправлены ошибки без изменения функциональности.
+\end{lstlisting}
+
+Часто используется схема семантического версионирования:
+
+\[
+MAJOR.MINOR.PATCH
+\]
+
+где:
+
+\begin{itemize}
+    \item \texttt{MAJOR} увеличивается при несовместимых изменениях API;
+    \item \texttt{MINOR} увеличивается при добавлении новой совместимой функциональности;
+    \item \texttt{PATCH} увеличивается при исправлении ошибок.
+\end{itemize}
+
+\subsection{Базовая линия}
+
+\textbf{Базовая линия} --- формально зафиксированное и согласованное состояние системы или её части, которое служит основанием для дальнейшей разработки.
+
+Примеры базовых линий:
+
+\begin{itemize}
+    \item версия требований, утверждённая заказчиком;
+    \item стабильная версия архитектурной документации;
+    \item состояние исходного кода перед началом тестирования;
+    \item релиз-кандидат;
+    \item промышленный релиз.
+\end{itemize}
+
+Базовая линия важна тем, что после её утверждения изменения должны проходить контролируемую процедуру согласования.
+
+\subsection{Управление изменениями}
+
+\textbf{Управление изменениями} --- процесс регистрации, анализа, согласования, реализации и проверки изменений конфигурационных единиц.
+
+Типичный процесс управления изменением:
+
+\begin{enumerate}
+    \item Возникает потребность в изменении.
+    \item Создаётся запрос на изменение.
+    \item Запрос анализируется.
+    \item Оцениваются риски, стоимость и влияние на систему.
+    \item Принимается решение: принять, отклонить или отложить изменение.
+    \item Изменение реализуется.
+    \item Изменение тестируется.
+    \item Изменение включается в базовую линию или релиз.
+\end{enumerate}
+
+\subsection{Задачи конфигурационного управления}
+
+Основные задачи конфигурационного управления:
+
+\begin{enumerate}
+    \item \textbf{Идентификация конфигурации.}
+
+    Определение состава системы и конфигурационных единиц.
+
+    \item \textbf{Контроль изменений.}
+
+    Управление тем, какие изменения могут быть внесены, кем и на каком основании.
+
+    \item \textbf{Учёт состояния конфигурации.}
+
+    Хранение информации о версиях, изменениях, релизах, дефектах, запросах.
+
+    \item \textbf{Аудит конфигурации.}
+
+    Проверка соответствия фактического состояния системы заявленному.
+
+    \item \textbf{Управление сборками и релизами.}
+
+    Обеспечение воспроизводимого процесса сборки, тестирования и поставки.
+\end{enumerate}
+
+\subsection{Связь конфигурационного управления с DevOps}
+
+В современных процессах разработки конфигурационное управление тесно связано с DevOps-практиками:
+
+\begin{itemize}
+    \item инфраструктура описывается как код;
+    \item окружения создаются автоматически;
+    \item конфигурации хранятся в системах управления версиями;
+    \item сборка и поставка выполняются через CI/CD;
+    \item релизы фиксируются тегами;
+    \item состояние системы можно восстановить из репозитория.
+\end{itemize}
+
+\section{Системы управления версиями}
+
+\subsection{Назначение систем управления версиями}
+
+\textbf{Система управления версиями} --- это программная система, предназначенная для хранения истории изменений файлов, координации совместной работы и восстановления предыдущих состояний проекта.
+
+Системы управления версиями позволяют:
+
+\begin{itemize}
+    \item хранить историю изменений;
+    \item сравнивать версии файлов;
+    \item возвращаться к предыдущим состояниям;
+    \item параллельно работать над разными задачами;
+    \item объединять изменения нескольких разработчиков;
+    \item фиксировать авторство изменений;
+    \item создавать ветки разработки;
+    \item помечать релизы тегами.
+\end{itemize}
+
+\subsection{Основные понятия}
+
+\textbf{Репозиторий} --- хранилище проекта и его истории.
+
+\textbf{Рабочая копия} --- локальный набор файлов, с которым непосредственно работает разработчик.
+
+\textbf{Коммит} --- зафиксированное изменение состояния проекта.
+
+\textbf{Ветка} --- именованный указатель на некоторую линию разработки.
+
+\textbf{Слияние} --- операция объединения изменений из разных веток.
+
+\textbf{Конфликт} --- ситуация, когда система не может автоматически объединить изменения.
+
+\textbf{Тег} --- именованная метка на конкретный коммит, обычно используемая для обозначения релизов.
+
+\subsection{Локальные, централизованные и распределённые системы}
+
+Исторически можно выделить три типа систем управления версиями:
+
+\begin{enumerate}
+    \item локальные;
+    \item централизованные;
+    \item распределённые.
+\end{enumerate}
+
+\subsubsection{Локальные системы управления версиями}
+
+В локальной системе история изменений хранится на одной машине.
+
+Простейший пример неформального локального версионирования:
+
+\begin{lstlisting}
+project_final.zip
+project_final_2.zip
+project_final_real.zip
+project_final_real_fixed.zip
+\end{lstlisting}
+
+Недостатки такого подхода:
+
+\begin{itemize}
+    \item сложно понять, какая версия актуальна;
+    \item нет полноценной истории изменений;
+    \item высок риск потери данных;
+    \item неудобна совместная работа.
+\end{itemize}
+
+\subsubsection{Централизованные системы управления версиями}
+
+\textbf{Централизованная система управления версиями} хранит основной репозиторий на центральном сервере. Разработчики получают рабочие копии и отправляют изменения обратно на сервер.
+
+Примеры:
+
+\begin{itemize}
+    \item CVS;
+    \item Subversion;
+    \item Perforce;
+    \item Team Foundation Version Control.
+\end{itemize}
+
+Схема централизованной модели:
+
+\begin{center}
+\begin{tikzpicture}[node distance=2.5cm]
+    \node[draw, rectangle, rounded corners] (server) {Центральный репозиторий};
+    \node[draw, rectangle, rounded corners, below left of=server, xshift=-1.5cm] (dev1) {Разработчик 1};
+    \node[draw, rectangle, rounded corners, below of=server] (dev2) {Разработчик 2};
+    \node[draw, rectangle, rounded corners, below right of=server, xshift=1.5cm] (dev3) {Разработчик 3};
+
+    \draw[<->] (server) -- (dev1);
+    \draw[<->] (server) -- (dev2);
+    \draw[<->] (server) -- (dev3);
+\end{tikzpicture}
+\end{center}
+
+Преимущества централизованной модели:
+
+\begin{itemize}
+    \item простая модель доступа;
+    \item легко администрировать права;
+    \item существует единый источник истины;
+    \item удобно контролировать состояние проекта.
+\end{itemize}
+
+Недостатки:
+
+\begin{itemize}
+    \item зависимость от центрального сервера;
+    \item при недоступности сервера затруднена работа;
+    \item сервер является единой точкой отказа;
+    \item многие операции требуют сетевого соединения;
+    \item ветвление и слияние часто тяжелее, чем в распределённых системах.
+\end{itemize}
+
+\subsubsection{Распределённые системы управления версиями}
+
+\textbf{Распределённая система управления версиями} хранит полную копию репозитория и истории у каждого разработчика.
+
+Примеры:
+
+\begin{itemize}
+    \item Git;
+    \item Mercurial;
+    \item Bazaar;
+    \item Fossil.
+\end{itemize}
+
+Схема распределённой модели:
+
+\begin{center}
+\begin{tikzpicture}[node distance=3cm]
+    \node[draw, rectangle, rounded corners] (remote) {Удалённый репозиторий};
+    \node[draw, rectangle, rounded corners, below left of=remote, xshift=-2cm] (dev1) {Полный репозиторий 1};
+    \node[draw, rectangle, rounded corners, below of=remote] (dev2) {Полный репозиторий 2};
+    \node[draw, rectangle, rounded corners, below right of=remote, xshift=2cm] (dev3) {Полный репозиторий 3};
+
+    \draw[<->] (remote) -- (dev1);
+    \draw[<->] (remote) -- (dev2);
+    \draw[<->] (remote) -- (dev3);
+    \draw[<->, dashed] (dev1) -- (dev2);
+    \draw[<->, dashed] (dev2) -- (dev3);
+\end{tikzpicture}
+\end{center}
+
+Преимущества распределённой модели:
+
+\begin{itemize}
+    \item большинство операций выполняется локально;
+    \item можно работать без сети;
+    \item каждый клон является резервной копией проекта;
+    \item удобно создавать ветки;
+    \item проще организовать разные модели совместной работы;
+    \item выше гибкость при интеграции изменений.
+\end{itemize}
+
+Недостатки:
+
+\begin{itemize}
+    \item сложнее концептуальная модель;
+    \item необходимо понимать различие между локальным и удалённым состоянием;
+    \item требуется дисциплина при работе с ветками;
+    \item возможны сложные истории слияний.
+\end{itemize}
+
+\subsection{Сравнение централизованного и распределённого управления версиями}
+
+\begin{center}
+\begin{tabular}{|p{4cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Критерий} & \textbf{Централизованная модель} & \textbf{Распределённая модель} \\
+\hline
+Хранение истории & На центральном сервере & У каждого разработчика \\
+\hline
+Работа без сети & Ограничена & Возможна для большинства операций \\
+\hline
+Единая точка отказа & Центральный сервер & Обычно отсутствует \\
+\hline
+Скорость операций & Часто зависит от сети & Большинство операций локальны \\
+\hline
+Ветвление & Может быть дорогим или неудобным & Обычно лёгкое и быстрое \\
+\hline
+Администрирование & Проще централизованно контролировать & Гибче, но сложнее модель доступа \\
+\hline
+Примеры & SVN, CVS, Perforce & Git, Mercurial \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Git}
+
+\subsection{Общая характеристика Git}
+
+\textbf{Git} --- распределённая система управления версиями, ориентированная на скорость, надёжность, поддержку ветвления и распределённой совместной работы.
+
+Git хранит не просто последовательность различий между файлами, а набор снимков состояния проекта. Если файл не изменился, Git может ссылаться на уже существующее содержимое.
+
+\subsection{Основные области Git}
+
+В Git удобно выделять несколько областей:
+
+\begin{enumerate}
+    \item \textbf{Рабочая директория} --- файлы, с которыми работает пользователь.
+    \item \textbf{Индекс} --- промежуточная область подготовки коммита.
+    \item \textbf{Локальный репозиторий} --- база объектов и история коммитов.
+    \item \textbf{Удалённый репозиторий} --- репозиторий на сервере или другой машине.
+\end{enumerate}
+
+Схема движения изменений:
+
+\begin{center}
+\begin{tikzpicture}[node distance=3cm]
+    \node[draw, rectangle, rounded corners] (work) {Рабочая директория};
+    \node[draw, rectangle, rounded corners, right of=work] (index) {Индекс};
+    \node[draw, rectangle, rounded corners, right of=index] (local) {Локальный репозиторий};
+    \node[draw, rectangle, rounded corners, right of=local] (remote) {Удалённый репозиторий};
+
+    \draw[->] (work) -- node[above]{\texttt{git add}} (index);
+    \draw[->] (index) -- node[above]{\texttt{git commit}} (local);
+    \draw[->] (local) -- node[above]{\texttt{git push}} (remote);
+    \draw[->, bend right=25] (remote) to node[below]{\texttt{git pull/fetch}} (local);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Базовый цикл работы в Git}
+
+Алгоритм обычной работы с Git:
+
+\begin{enumerate}
+    \item Получить актуальное состояние проекта:
+\begin{lstlisting}
+git pull
+\end{lstlisting}
+
+    \item Изменить файлы в рабочей директории.
+
+    \item Посмотреть состояние:
+\begin{lstlisting}
+git status
+\end{lstlisting}
+
+    \item Добавить изменения в индекс:
+\begin{lstlisting}
+git add file.py
+\end{lstlisting}
+
+    \item Создать коммит:
+\begin{lstlisting}
+git commit -m "Add input validation"
+\end{lstlisting}
+
+    \item Отправить изменения в удалённый репозиторий:
+\begin{lstlisting}
+git push
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{Коммит}
+
+\textbf{Коммит} в Git содержит:
+
+\begin{itemize}
+    \item ссылку на снимок дерева файлов;
+    \item ссылку на одного или нескольких родителей;
+    \item автора;
+    \item дату;
+    \item сообщение;
+    \item хеш-идентификатор.
+\end{itemize}
+
+Если коммит имеет одного родителя, это обычный коммит. Если несколько родителей --- это коммит слияния.
+
+\subsection{Ветка}
+
+\textbf{Ветка} в Git --- это подвижный указатель на коммит.
+
+Пример:
+
+\begin{lstlisting}
+git branch feature-login
+git switch feature-login
+\end{lstlisting}
+
+или короче:
+
+\begin{lstlisting}
+git switch -c feature-login
+\end{lstlisting}
+
+Схема:
+
+\begin{center}
+\begin{tikzpicture}
+    \node[circle, draw] (A) at (0,0) {A};
+    \node[circle, draw] (B) at (2,0) {B};
+    \node[circle, draw] (C) at (4,0) {C};
+    \node[circle, draw] (D) at (6,1.2) {D};
+    \node[circle, draw] (E) at (6,-1.2) {E};
+
+    \draw[->] (A) -- (B);
+    \draw[->] (B) -- (C);
+    \draw[->] (C) -- (D);
+    \draw[->] (C) -- (E);
+
+    \node[right of=D, xshift=1cm] {feature};
+    \node[right of=E, xshift=1cm] {main};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Слияние веток}
+
+\textbf{Слияние} --- операция объединения изменений из одной ветки в другую.
+
+Пример:
+
+\begin{lstlisting}
+git switch main
+git merge feature-login
+\end{lstlisting}
+
+\subsubsection{Fast-forward merge}
+
+Если целевая ветка не содержит новых коммитов после момента расхождения, Git может просто передвинуть указатель ветки вперёд.
+
+До слияния:
+
+\[
+A \rightarrow B \rightarrow C \quad (\texttt{main})
+\]
+\[
+C \rightarrow D \rightarrow E \quad (\texttt{feature})
+\]
+
+После fast-forward:
+
+\[
+A \rightarrow B \rightarrow C \rightarrow D \rightarrow E \quad (\texttt{main})
+\]
+
+\subsubsection{Трёхстороннее слияние}
+
+Если обе ветки изменялись независимо, Git использует:
+
+\begin{itemize}
+    \item общего предка;
+    \item текущую версию;
+    \item сливаемую версию.
+\end{itemize}
+
+Алгоритм трёхстороннего слияния:
+
+\begin{enumerate}
+    \item Найти общего предка двух веток.
+    \item Сравнить изменения от предка до первой ветки.
+    \item Сравнить изменения от предка до второй ветки.
+    \item Объединить независимые изменения автоматически.
+    \item Если изменения затрагивают одни и те же строки несовместимым образом, зафиксировать конфликт.
+    \item После разрешения конфликтов создать коммит слияния.
+\end{enumerate}
+
+Схема:
+
+\begin{center}
+\begin{tikzpicture}
+    \node[circle, draw] (A) at (0,0) {A};
+    \node[circle, draw] (B) at (2,0) {B};
+    \node[circle, draw] (C) at (4,1.2) {C};
+    \node[circle, draw] (D) at (4,-1.2) {D};
+    \node[circle, draw] (M) at (6,0) {M};
+
+    \draw[->] (A) -- (B);
+    \draw[->] (B) -- (C);
+    \draw[->] (B) -- (D);
+    \draw[->] (C) -- (M);
+    \draw[->] (D) -- (M);
+
+    \node[below of=B, yshift=1cm] {общий предок};
+    \node[right of=M, xshift=0.8cm] {merge commit};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Конфликты слияния}
+
+Конфликт возникает, когда Git не может автоматически определить итоговую версию файла.
+
+Пример конфликта:
+
+\begin{lstlisting}
+<<<<<<< HEAD
+print("Hello from main")
+=======
+print("Hello from feature")
+>>>>>>> feature
+\end{lstlisting}
+
+Алгоритм разрешения конфликта:
+
+\begin{enumerate}
+    \item Открыть конфликтующий файл.
+    \item Найти конфликтные блоки.
+    \item Выбрать одну из версий или вручную объединить изменения.
+    \item Удалить служебные маркеры:
+\begin{lstlisting}
+<<<<<<<
+=======
+>>>>>>>
+\end{lstlisting}
+    \item Добавить исправленный файл в индекс:
+\begin{lstlisting}
+git add file.py
+\end{lstlisting}
+    \item Завершить слияние:
+\begin{lstlisting}
+git commit
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{Rebase}
+
+\textbf{Rebase} --- операция переноса коммитов одной ветки на новое основание.
+
+Пример:
+
+\begin{lstlisting}
+git switch feature
+git rebase main
+\end{lstlisting}
+
+До rebase:
+
+\[
+A \rightarrow B \rightarrow C \quad (\texttt{main})
+\]
+\[
+B \rightarrow D \rightarrow E \quad (\texttt{feature})
+\]
+
+После rebase:
+
+\[
+A \rightarrow B \rightarrow C \rightarrow D' \rightarrow E' \quad (\texttt{feature})
+\]
+
+Коммиты $D'$ и $E'$ являются новыми коммитами с теми же изменениями, но с другими родителями и другими хешами.
+
+Основное правило:
+
+\begin{quote}
+Не следует выполнять rebase опубликованных коммитов, если с ними уже работают другие разработчики.
+\end{quote}
+
+\subsection{Теги}
+
+\textbf{Тег} --- ссылка на конкретный коммит. Обычно теги используются для обозначения релизов.
+
+Пример:
+
+\begin{lstlisting}
+git tag v1.0.0
+git push origin v1.0.0
+\end{lstlisting}
+
+Аннотированный тег:
+
+\begin{lstlisting}
+git tag -a v1.0.0 -m "Release version 1.0.0"
+\end{lstlisting}
+
+\section{Git Workflow}
+
+\subsection{Понятие Git Workflow}
+
+\textbf{Git Workflow} --- это соглашение о том, как команда использует Git: какие ветки создаются, как именуются, как проходят ревью, как выполняется интеграция и выпуск релизов.
+
+Git сам по себе не навязывает единственный процесс. Поэтому разные команды применяют разные модели:
+
+\begin{itemize}
+    \item централизованный workflow;
+    \item feature branch workflow;
+    \item Git Flow;
+    \item GitHub Flow;
+    \item GitLab Flow;
+    \item trunk-based development.
+\end{itemize}
+
+\subsection{Централизованный workflow в Git}
+
+Несмотря на распределённую природу Git, его можно использовать в централизованном стиле.
+
+Основная идея:
+
+\begin{itemize}
+    \item есть одна главная ветка, например \texttt{main};
+    \item все разработчики клонируют один удалённый репозиторий;
+    \item изменения отправляются в центральный репозиторий;
+    \item перед отправкой нужно получить актуальное состояние.
+\end{itemize}
+
+Алгоритм:
+
+\begin{enumerate}
+    \item Клонировать репозиторий:
+\begin{lstlisting}
+git clone https://example.com/project.git
+\end{lstlisting}
+
+    \item Получить изменения:
+\begin{lstlisting}
+git pull origin main
+\end{lstlisting}
+
+    \item Внести изменения.
+
+    \item Зафиксировать изменения:
+\begin{lstlisting}
+git add .
+git commit -m "Fix typo"
+\end{lstlisting}
+
+    \item Отправить изменения:
+\begin{lstlisting}
+git push origin main
+\end{lstlisting}
+\end{enumerate}
+
+Преимущество --- простота. Недостаток --- высокая вероятность конфликтов и отсутствие изоляции задач.
+
+\subsection{Feature Branch Workflow}
+
+\textbf{Feature Branch Workflow} --- модель, при которой каждая задача разрабатывается в отдельной ветке.
+
+Алгоритм:
+
+\begin{enumerate}
+    \item Обновить основную ветку:
+\begin{lstlisting}
+git switch main
+git pull
+\end{lstlisting}
+
+    \item Создать ветку задачи:
+\begin{lstlisting}
+git switch -c feature/payment
+\end{lstlisting}
+
+    \item Выполнить разработку и создать коммиты:
+\begin{lstlisting}
+git add .
+git commit -m "Add payment form"
+\end{lstlisting}
+
+    \item Отправить ветку:
+\begin{lstlisting}
+git push -u origin feature/payment
+\end{lstlisting}
+
+    \item Создать запрос на слияние.
+    \item Провести ревью.
+    \item Выполнить автоматические проверки.
+    \item Слить ветку в \texttt{main}.
+    \item Удалить ветку.
+\end{enumerate}
+
+Преимущества:
+
+\begin{itemize}
+    \item изоляция задач;
+    \item удобное ревью;
+    \item можно запускать CI для каждой ветки;
+    \item история изменений становится понятнее.
+\end{itemize}
+
+\subsection{Git Flow}
+
+\textbf{Git Flow} --- модель ветвления, в которой используются несколько типов долгоживущих и короткоживущих веток.
+
+Основные ветки:
+
+\begin{itemize}
+    \item \texttt{main} --- стабильные релизы;
+    \item \texttt{develop} --- основная ветка разработки.
+\end{itemize}
+
+Вспомогательные ветки:
+
+\begin{itemize}
+    \item \texttt{feature/*} --- разработка новых возможностей;
+    \item \texttt{release/*} --- подготовка релиза;
+    \item \texttt{hotfix/*} --- срочные исправления в промышленной версии.
+\end{itemize}
+
+Схема Git Flow:
+
+\begin{center}
+\begin{tikzpicture}
+    \node[circle, draw] (M1) at (0,0) {};
+    \node[circle, draw] (M2) at (3,0) {};
+    \node[circle, draw] (M3) at (6,0) {};
+    \node[right] at (6.5,0) {\texttt{main}};
+
+    \node[circle, draw] (D1) at (0,-1.5) {};
+    \node[circle, draw] (D2) at (2,-1.5) {};
+    \node[circle, draw] (D3) at (4,-1.5) {};
+    \node[circle, draw] (D4) at (6,-1.5) {};
+    \node[right] at (6.5,-1.5) {\texttt{develop}};
+
+    \node[circle, draw] (F1) at (2,-3) {};
+    \node[circle, draw] (F2) at (4,-3) {};
+    \node[right] at (4.5,-3) {\texttt{feature}};
+
+    \draw[->] (M1) -- (M2);
+    \draw[->] (M2) -- (M3);
+
+    \draw[->] (D1) -- (D2);
+    \draw[->] (D2) -- (D3);
+    \draw[->] (D3) -- (D4);
+
+    \draw[->] (D2) -- (F1);
+    \draw[->] (F1) -- (F2);
+    \draw[->] (F2) -- (D3);
+
+    \draw[->] (D4) -- (M3);
+\end{tikzpicture}
+\end{center}
+
+Алгоритм разработки новой возможности:
+
+\begin{enumerate}
+    \item Создать ветку от \texttt{develop}:
+\begin{lstlisting}
+git switch develop
+git pull
+git switch -c feature/search
+\end{lstlisting}
+
+    \item Реализовать функциональность.
+    \item Слить ветку обратно в \texttt{develop}:
+\begin{lstlisting}
+git switch develop
+git merge feature/search
+\end{lstlisting}
+\end{enumerate}
+
+Алгоритм выпуска релиза:
+
+\begin{enumerate}
+    \item Создать ветку релиза:
+\begin{lstlisting}
+git switch develop
+git switch -c release/1.2.0
+\end{lstlisting}
+
+    \item Исправлять только ошибки и релизные проблемы.
+    \item Слить релиз в \texttt{main}.
+    \item Поставить тег:
+\begin{lstlisting}
+git tag -a v1.2.0 -m "Release 1.2.0"
+\end{lstlisting}
+
+    \item Слить релизную ветку обратно в \texttt{develop}.
+\end{enumerate}
+
+Алгоритм hotfix:
+
+\begin{enumerate}
+    \item Создать ветку от \texttt{main}:
+\begin{lstlisting}
+git switch main
+git switch -c hotfix/critical-bug
+\end{lstlisting}
+
+    \item Исправить ошибку.
+    \item Слить исправление в \texttt{main}.
+    \item Поставить новый тег.
+    \item Слить исправление в \texttt{develop}.
+\end{enumerate}
+
+Git Flow хорошо подходит для проектов с явно выраженными релизными циклами. Для проектов с частой поставкой он может быть избыточным.
+
+\section{GitHub Workflow}
+
+\subsection{GitHub как платформа совместной разработки}
+
+GitHub --- это платформа для размещения Git-репозиториев и организации совместной разработки.
+
+GitHub предоставляет:
+
+\begin{itemize}
+    \item удалённые Git-репозитории;
+    \item pull request;
+    \item code review;
+    \item issues;
+    \item project boards;
+    \item GitHub Actions;
+    \item protected branches;
+    \item releases;
+    \item packages;
+    \item wiki и документацию.
+\end{itemize}
+
+\subsection{GitHub Flow}
+
+\textbf{GitHub Flow} --- простой workflow, основанный на короткоживущих ветках, pull request и непрерывной интеграции.
+
+Основная идея:
+
+\begin{itemize}
+    \item ветка \texttt{main} всегда должна быть готова к развёртыванию;
+    \item любая новая работа выполняется в отдельной ветке;
+    \item изменения обсуждаются через pull request;
+    \item перед слиянием запускаются проверки;
+    \item после слияния изменения могут быть развёрнуты.
+\end{itemize}
+
+\subsection{Алгоритм GitHub Flow}
+
+\begin{enumerate}
+    \item Создать ветку от \texttt{main}:
+\begin{lstlisting}
+git switch main
+git pull
+git switch -c feature/user-profile
+\end{lstlisting}
+
+    \item Выполнить изменения и создать коммиты:
+\begin{lstlisting}
+git add .
+git commit -m "Add user profile page"
+\end{lstlisting}
+
+    \item Отправить ветку на GitHub:
+\begin{lstlisting}
+git push -u origin feature/user-profile
+\end{lstlisting}
+
+    \item Создать pull request.
+
+    \item Обсудить изменения и выполнить code review.
+
+    \item Дождаться успешного прохождения CI-проверок.
+
+    \item При необходимости внести исправления.
+
+    \item Слить pull request в \texttt{main}.
+
+    \item Удалить feature-ветку.
+
+    \item Развернуть изменения.
+\end{enumerate}
+
+\subsection{Pull request}
+
+\textbf{Pull request} --- запрос на включение изменений из одной ветки в другую, сопровождаемый обсуждением, проверками и ревью.
+
+Pull request обычно содержит:
+
+\begin{itemize}
+    \item описание задачи;
+    \item список изменённых файлов;
+    \item набор коммитов;
+    \item комментарии участников;
+    \item результаты автоматических проверок;
+    \item решение о принятии или отклонении изменений.
+\end{itemize}
+
+\subsection{Code review}
+
+\textbf{Code review} --- проверка изменений другими разработчиками.
+
+Цели code review:
+
+\begin{itemize}
+    \item обнаружить ошибки;
+    \item проверить читаемость и сопровождаемость кода;
+    \item обеспечить соответствие архитектуре;
+    \item распространить знания внутри команды;
+    \item обеспечить единый стиль кода;
+    \item предотвратить попадание небезопасного кода в основную ветку.
+\end{itemize}
+
+\subsection{Protected branches}
+
+\textbf{Protected branch} --- защищённая ветка, для которой задаются дополнительные правила.
+
+Например, для \texttt{main} можно потребовать:
+
+\begin{itemize}
+    \item запрет прямого \texttt{push};
+    \item обязательный pull request;
+    \item минимум одно одобрение ревьюера;
+    \item успешное прохождение CI;
+    \item актуальность ветки перед слиянием;
+    \item подписанные коммиты.
+\end{itemize}
+
+\section{CI/CD}
+
+\subsection{Общее понятие}
+
+\textbf{CI/CD} --- совокупность практик автоматизации интеграции, проверки, сборки и поставки программного обеспечения.
+
+Аббревиатура обычно расшифровывается как:
+
+\begin{itemize}
+    \item \textbf{CI} --- Continuous Integration, непрерывная интеграция;
+    \item \textbf{CD} --- Continuous Delivery, непрерывная доставка;
+    \item \textbf{CD} --- Continuous Deployment, непрерывное развёртывание.
+\end{itemize}
+
+\subsection{Continuous Integration}
+
+\textbf{Непрерывная интеграция} --- практика частого объединения изменений разработчиков в общую ветку с автоматической сборкой и тестированием.
+
+Основные идеи CI:
+
+\begin{itemize}
+    \item изменения интегрируются часто;
+    \item сборка выполняется автоматически;
+    \item тесты запускаются автоматически;
+    \item ошибки обнаруживаются как можно раньше;
+    \item основная ветка поддерживается в рабочем состоянии.
+\end{itemize}
+
+Типичный CI-процесс:
+
+\begin{enumerate}
+    \item Разработчик отправляет коммит или создаёт pull request.
+    \item CI-сервер получает событие.
+    \item Создаётся чистое окружение.
+    \item Загружается исходный код.
+    \item Устанавливаются зависимости.
+    \item Выполняется статический анализ.
+    \item Запускается сборка.
+    \item Запускаются тесты.
+    \item Формируется отчёт.
+    \item Результат передаётся в систему управления версиями.
+\end{enumerate}
+
+\subsection{Continuous Delivery}
+
+\textbf{Непрерывная доставка} --- практика, при которой каждое изменение, прошедшее автоматические проверки, может быть развёрнуто в эксплуатацию, но само развёртывание обычно запускается вручную.
+
+Иными словами:
+
+\[
+\text{Continuous Delivery} = \text{CI} + \text{автоматизированная подготовка релиза}
+\]
+
+При continuous delivery система всегда находится в состоянии, пригодном для выпуска.
+
+\subsection{Continuous Deployment}
+
+\textbf{Непрерывное развёртывание} --- практика, при которой каждое изменение, прошедшее все проверки, автоматически разворачивается в целевую среду.
+
+Иными словами:
+
+\[
+\text{Continuous Deployment} = \text{Continuous Delivery} + \text{автоматический production deploy}
+\]
+
+Различие:
+
+\begin{center}
+\begin{tabular}{|p{5cm}|p{8cm}|}
+\hline
+\textbf{Практика} & \textbf{Смысл} \\
+\hline
+Continuous Integration & Автоматически собрать и проверить изменения \\
+\hline
+Continuous Delivery & Автоматически подготовить поставку, но выпуск может быть ручным \\
+\hline
+Continuous Deployment & Автоматически развернуть изменения после успешных проверок \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Pipeline}
+
+\textbf{Pipeline} --- автоматизированная последовательность стадий, через которые проходит изменение от коммита до поставки.
+
+Пример pipeline:
+
+\[
+\text{commit} \rightarrow \text{lint} \rightarrow \text{test} \rightarrow \text{build} \rightarrow \text{package} \rightarrow \text{deploy}
+\]
+
+Схема:
+
+\begin{center}
+\begin{tikzpicture}[node distance=2.5cm]
+    \node[draw, rectangle, rounded corners] (commit) {Commit};
+    \node[draw, rectangle, rounded corners, right of=commit] (lint) {Lint};
+    \node[draw, rectangle, rounded corners, right of=lint] (test) {Test};
+    \node[draw, rectangle, rounded corners, right of=test] (build) {Build};
+    \node[draw, rectangle, rounded corners, below of=build] (deploy) {Deploy};
+
+    \draw[->] (commit) -- (lint);
+    \draw[->] (lint) -- (test);
+    \draw[->] (test) -- (build);
+    \draw[->] (build) -- (deploy);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Основные стадии CI/CD}
+
+\subsubsection{Checkout}
+
+Получение исходного кода из репозитория.
+
+\begin{lstlisting}
+git checkout main
+\end{lstlisting}
+
+\subsubsection{Install}
+
+Установка зависимостей.
+
+Например, для Python:
+
+\begin{lstlisting}
+pip install -r requirements.txt
+\end{lstlisting}
+
+Для Node.js:
+
+\begin{lstlisting}
+npm ci
+\end{lstlisting}
+
+\subsubsection{Lint}
+
+Проверка стиля и потенциальных ошибок.
+
+\begin{lstlisting}
+flake8 src tests
+\end{lstlisting}
+
+\subsubsection{Test}
+
+Запуск автоматических тестов.
+
+\begin{lstlisting}
+pytest
+\end{lstlisting}
+
+\subsubsection{Build}
+
+Сборка приложения или артефакта.
+
+\begin{lstlisting}
+docker build -t app:latest .
+\end{lstlisting}
+
+\subsubsection{Package}
+
+Упаковка результата.
+
+Примеры артефактов:
+
+\begin{itemize}
+    \item Docker-образ;
+    \item JAR-файл;
+    \item wheel-пакет;
+    \item архив;
+    \item бинарный исполняемый файл.
+\end{itemize}
+
+\subsubsection{Deploy}
+
+Развёртывание в среду:
+
+\begin{itemize}
+    \item development;
+    \item testing;
+    \item staging;
+    \item production.
+\end{itemize}
+
+\subsection{Минимальный пример GitHub Actions}
+
+GitHub Actions позволяет описывать workflows в YAML-файлах, расположенных в каталоге:
+
+\begin{lstlisting}
+.github/workflows/
+\end{lstlisting}
+
+Минимальный пример CI для Python-проекта:
+
+\begin{lstlisting}
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest
+\end{lstlisting}
+
+Пояснение:
+
+\begin{itemize}
+    \item \texttt{name} задаёт имя workflow;
+    \item \texttt{on} описывает события запуска;
+    \item \texttt{jobs} содержит задания;
+    \item \texttt{runs-on} задаёт окружение выполнения;
+    \item \texttt{steps} описывает последовательность шагов;
+    \item \texttt{uses} подключает готовое действие;
+    \item \texttt{run} выполняет shell-команду.
+\end{itemize}
+
+\subsection{Минимальный пример CI/CD pipeline}
+
+Пример workflow, который тестирует приложение и затем собирает Docker-образ:
+
+\begin{lstlisting}
+name: CI-CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tests
+        run: |
+          pip install -r requirements.txt
+          pytest
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t my-app:latest .
+\end{lstlisting}
+
+Здесь:
+
+\begin{itemize}
+    \item job \texttt{test} запускает тесты;
+    \item job \texttt{build} зависит от \texttt{test};
+    \item если тесты падают, сборка не выполняется.
+\end{itemize}
+
+\subsection{Алгоритм работы CI/CD-системы}
+
+\begin{enumerate}
+    \item Разработчик создаёт изменение в репозитории.
+    \item Система управления версиями генерирует событие.
+    \item CI/CD-система получает событие через webhook или внутренний механизм.
+    \item Запускается pipeline.
+    \item Pipeline создаёт изолированное окружение.
+    \item Исходный код загружается из репозитория.
+    \item Выполняются команды сборки и проверки.
+    \item При успехе создаются артефакты.
+    \item Артефакты сохраняются в хранилище.
+    \item При необходимости выполняется развёртывание.
+    \item Результат возвращается в pull request или commit status.
+\end{enumerate}
+
+\subsection{Популярные CI/CD-системы}
+
+Примеры систем:
+
+\begin{itemize}
+    \item GitHub Actions;
+    \item GitLab CI/CD;
+    \item Jenkins;
+    \item TeamCity;
+    \item CircleCI;
+    \item Travis CI;
+    \item Azure Pipelines;
+    \item Bitbucket Pipelines.
+\end{itemize}
+
+\subsection{Артефакты}
+
+\textbf{Артефакт} --- результат выполнения pipeline, который можно сохранить, передать или развернуть.
+
+Примеры:
+
+\begin{itemize}
+    \item исполняемый файл;
+    \item Docker-образ;
+    \item отчёт о тестах;
+    \item отчёт о покрытии;
+    \item архив собранного приложения;
+    \item скомпилированная документация.
+\end{itemize}
+
+\subsection{Окружения}
+
+Обычно выделяют несколько окружений:
+
+\begin{itemize}
+    \item \textbf{local} --- машина разработчика;
+    \item \textbf{development} --- среда разработки;
+    \item \textbf{testing} --- среда тестирования;
+    \item \textbf{staging} --- предпромышленная среда;
+    \item \textbf{production} --- промышленная среда.
+\end{itemize}
+
+Хорошая практика состоит в том, чтобы окружения были максимально похожи друг на друга.
+
+\subsection{Стратегии развёртывания}
+
+\subsubsection{Rolling deployment}
+
+\textbf{Rolling deployment} --- постепенная замена старых экземпляров приложения новыми.
+
+Преимущество: нет полной остановки сервиса.
+
+Недостаток: некоторое время одновременно существуют разные версии приложения.
+
+\subsubsection{Blue-green deployment}
+
+\textbf{Blue-green deployment} использует две среды:
+
+\begin{itemize}
+    \item blue --- текущая промышленная версия;
+    \item green --- новая версия.
+\end{itemize}
+
+Алгоритм:
+
+\begin{enumerate}
+    \item Развернуть новую версию в неактивной среде.
+    \item Проверить её.
+    \item Переключить трафик на новую среду.
+    \item При ошибке быстро вернуть трафик обратно.
+\end{enumerate}
+
+\subsubsection{Canary deployment}
+
+\textbf{Canary deployment} --- постепенное направление небольшой части пользователей на новую версию.
+
+Алгоритм:
+
+\begin{enumerate}
+    \item Развернуть новую версию для малой доли пользователей.
+    \item Собрать метрики и ошибки.
+    \item Если всё хорошо, увеличить долю трафика.
+    \item При проблемах откатить новую версию.
+\end{enumerate}
+
+\subsection{Преимущества CI/CD}
+
+CI/CD даёт следующие преимущества:
+
+\begin{itemize}
+    \item раннее обнаружение ошибок;
+    \item сокращение ручного труда;
+    \item воспроизводимость сборок;
+    \item ускорение поставки изменений;
+    \item повышение качества кода;
+    \item прозрачность процесса разработки;
+    \item уменьшение риска релизов;
+    \item возможность частых малых поставок.
+\end{itemize}
+
+\subsection{Типичные ошибки при внедрении CI/CD}
+
+\begin{itemize}
+    \item отсутствие автоматических тестов;
+    \item нестабильные тесты;
+    \item слишком долгий pipeline;
+    \item хранение секретов в репозитории;
+    \item отсутствие изолированных окружений;
+    \item ручные неповторяемые шаги;
+    \item отсутствие rollback-стратегии;
+    \item игнорирование failed build;
+    \item слишком долгоживущие ветки.
+\end{itemize}
+
+\section{Связь Git Workflow, GitHub Workflow и CI/CD}
+
+Современный процесс разработки обычно объединяет все рассмотренные элементы.
+
+Типичный цикл:
+
+\begin{enumerate}
+    \item Задача регистрируется в issue tracker.
+    \item Разработчик создаёт feature-ветку.
+    \item Изменения фиксируются коммитами.
+    \item Ветка отправляется в удалённый репозиторий.
+    \item Создаётся pull request.
+    \item Запускается CI.
+    \item Выполняется code review.
+    \item После успешных проверок изменения сливаются в \texttt{main}.
+    \item Запускается pipeline поставки.
+    \item Создаётся артефакт.
+    \item Артефакт разворачивается в нужную среду.
+    \item Релиз помечается тегом.
+\end{enumerate}
+
+Схема:
+
+\begin{center}
+\begin{tikzpicture}[node distance=2.8cm]
+    \node[draw, rectangle, rounded corners] (issue) {Issue};
+    \node[draw, rectangle, rounded corners, right of=issue] (branch) {Branch};
+    \node[draw, rectangle, rounded corners, right of=branch] (pr) {Pull Request};
+    \node[draw, rectangle, rounded corners, below of=pr] (ci) {CI};
+    \node[draw, rectangle, rounded corners, left of=ci] (review) {Review};
+    \node[draw, rectangle, rounded corners, left of=review] (merge) {Merge};
+    \node[draw, rectangle, rounded corners, below of=merge] (cd) {CD};
+    \node[draw, rectangle, rounded corners, right of=cd] (release) {Release};
+
+    \draw[->] (issue) -- (branch);
+    \draw[->] (branch) -- (pr);
+    \draw[->] (pr) -- (ci);
+    \draw[->] (ci) -- (review);
+    \draw[->] (review) -- (merge);
+    \draw[->] (merge) -- (cd);
+    \draw[->] (cd) -- (release);
+\end{tikzpicture}
+\end{center}
+
+\section{Краткие выводы}
+
+Конфигурационное управление обеспечивает контроль состава и состояния программной системы. Системы управления версиями являются одним из ключевых инструментов конфигурационного управления. Централизованные системы используют единый центральный репозиторий, а распределённые предоставляют каждому разработчику полную копию истории.
+
+Git является распределённой системой управления версиями, в которой ветки и слияния являются дешёвыми и удобными операциями. Git Workflow описывает правила работы команды с ветками, коммитами, ревью и релизами. GitHub Workflow дополняет Git механизмами pull request, code review, protected branches и автоматических проверок.
+
+CI/CD автоматизирует сборку, тестирование и поставку программного обеспечения. В связке с Git и GitHub CI/CD позволяет строить воспроизводимый, контролируемый и быстрый процесс разработки, в котором каждое изменение проходит проверку перед попаданием в основную ветку и релиз.
+
+\end{document}

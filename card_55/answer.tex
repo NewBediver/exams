@@ -1,0 +1,1660 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{array}
+\usepackage{enumitem}
+
+\geometry{margin=2cm}
+
+\lstdefinestyle{code}{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{teal},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    tabsize=2,
+    literate=
+      {А}{{\CYRA}}1
+      {Б}{{\CYRB}}1
+      {В}{{\CYRV}}1
+      {Г}{{\CYRG}}1
+      {Д}{{\CYRD}}1
+      {Е}{{\CYRE}}1
+      {Ё}{{\CYRYO}}1
+      {Ж}{{\CYRZH}}1
+      {З}{{\CYRZ}}1
+      {И}{{\CYRI}}1
+      {Й}{{\CYRISHRT}}1
+      {К}{{\CYRK}}1
+      {Л}{{\CYRL}}1
+      {М}{{\CYRM}}1
+      {Н}{{\CYRN}}1
+      {О}{{\CYRO}}1
+      {П}{{\CYRP}}1
+      {Р}{{\CYRR}}1
+      {С}{{\CYRS}}1
+      {Т}{{\CYRT}}1
+      {У}{{\CYRU}}1
+      {Ф}{{\CYRF}}1
+      {Х}{{\CYRH}}1
+      {Ц}{{\CYRC}}1
+      {Ч}{{\CYRCH}}1
+      {Ш}{{\CYRSH}}1
+      {Щ}{{\CYRSHCH}}1
+      {Ъ}{{\CYRHRDSN}}1
+      {Ы}{{\CYRERY}}1
+      {Ь}{{\CYRSFTSN}}1
+      {Э}{{\CYREREV}}1
+      {Ю}{{\CYRYU}}1
+      {Я}{{\CYRYA}}1
+      {а}{{\cyra}}1
+      {б}{{\cyrb}}1
+      {в}{{\cyrv}}1
+      {г}{{\cyrg}}1
+      {д}{{\cyrd}}1
+      {е}{{\cyre}}1
+      {ё}{{\cyryo}}1
+      {ж}{{\cyrzh}}1
+      {з}{{\cyrz}}1
+      {и}{{\cyri}}1
+      {й}{{\cyrishrt}}1
+      {к}{{\cyrk}}1
+      {л}{{\cyrl}}1
+      {м}{{\cyrm}}1
+      {н}{{\cyrn}}1
+      {о}{{\cyro}}1
+      {п}{{\cyrp}}1
+      {р}{{\cyrr}}1
+      {с}{{\cyrs}}1
+      {т}{{\cyrt}}1
+      {у}{{\cyru}}1
+      {ф}{{\cyrf}}1
+      {х}{{\cyrh}}1
+      {ц}{{\cyrc}}1
+      {ч}{{\cyrch}}1
+      {ш}{{\cyrsh}}1
+      {щ}{{\cyrshch}}1
+      {ъ}{{\cyrhrdsn}}1
+      {ы}{{\cyrery}}1
+      {ь}{{\cyrsftsn}}1
+      {э}{{\cyrerev}}1
+      {ю}{{\cyryu}}1
+      {я}{{\cyrya}}1
+}
+
+\lstset{style=code}
+
+\title{Билет №55 \\ \small Системы сборки ПО и управления модулями. Универсальные системы (Make) и ориентированные на конкретные языки (CMake, Cargo, Maven и т.д.) (СпБГУ)}
+\author{Сериков Владислав Александрович}
+\date{16 мая 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Общие понятия}
+
+\subsection{Проблема сборки программного обеспечения}
+
+Сборка программного обеспечения --- это процесс получения исполняемых файлов, библиотек, пакетов или иных артефактов из исходных текстов, ресурсов и зависимостей проекта.
+
+Типичный процесс сборки включает:
+\begin{enumerate}
+    \item предварительную обработку исходных файлов;
+    \item компиляцию;
+    \item генерацию кода;
+    \item линковку;
+    \item запуск тестов;
+    \item упаковку;
+    \item установку;
+    \item публикацию артефактов.
+\end{enumerate}
+
+Например, для программы на C процесс может иметь вид:
+\[
+\texttt{main.c} \longrightarrow \texttt{main.o} \longrightarrow \texttt{app}
+\]
+
+Здесь:
+\begin{itemize}
+    \item \texttt{main.c} --- исходный файл;
+    \item \texttt{main.o} --- объектный файл;
+    \item \texttt{app} --- исполняемый файл.
+\end{itemize}
+
+Если проект состоит из большого числа файлов, ручной запуск команд компиляции становится неудобным и ненадёжным. Поэтому используются системы сборки.
+
+\subsection{Система сборки}
+
+\textbf{Система сборки} --- это программный инструмент, который автоматизирует процесс преобразования исходных файлов проекта в целевые артефакты.
+
+Основные задачи системы сборки:
+\begin{enumerate}
+    \item описание зависимостей между файлами и целями;
+    \item определение порядка выполнения команд;
+    \item инкрементальная пересборка только изменившихся частей проекта;
+    \item поддержка разных конфигураций сборки;
+    \item интеграция с компиляторами, линковщиками, тестовыми фреймворками;
+    \item генерация и установка артефактов.
+\end{enumerate}
+
+\subsection{Модуль и зависимость}
+
+\textbf{Модуль} --- логически обособленная часть программы, которая имеет собственный интерфейс и может быть использована другими частями программы.
+
+В разных языках модулем могут быть:
+\begin{itemize}
+    \item файл исходного кода;
+    \item пакет;
+    \item библиотека;
+    \item crate в Rust;
+    \item artifact в Maven;
+    \item npm-пакет в JavaScript;
+    \item Python-пакет.
+\end{itemize}
+
+\textbf{Зависимость} --- отношение, при котором один модуль, файл или артефакт требует наличия другого для корректной сборки или выполнения.
+
+Пример зависимости:
+\[
+A \rightarrow B
+\]
+означает, что модуль $A$ зависит от модуля $B$.
+
+\subsection{Граф зависимостей}
+
+Многие системы сборки представляют проект в виде ориентированного графа зависимостей.
+
+\textbf{Граф зависимостей} --- это ориентированный граф
+\[
+G = (V, E),
+\]
+где:
+\begin{itemize}
+    \item $V$ --- множество целей, файлов или модулей;
+    \item $E$ --- множество ориентированных рёбер зависимости.
+\end{itemize}
+
+Если существует ребро
+\[
+u \rightarrow v,
+\]
+то цель $u$ зависит от цели $v$, то есть перед сборкой $u$ необходимо убедиться, что $v$ уже собрана или актуальна.
+
+Пример:
+\[
+\texttt{app} \rightarrow \texttt{main.o}, \quad
+\texttt{app} \rightarrow \texttt{util.o}, \quad
+\texttt{main.o} \rightarrow \texttt{main.c}
+\]
+
+Графически:
+
+\[
+\begin{array}{c}
+\texttt{main.c} \quad \texttt{util.c} \\
+\downarrow \quad \downarrow \\
+\texttt{main.o} \quad \texttt{util.o} \\
+\quad \searrow \quad \swarrow \\
+\texttt{app}
+\end{array}
+\]
+
+\section{Основные свойства систем сборки}
+
+\subsection{Инкрементальность}
+
+\textbf{Инкрементальная сборка} --- это сборка, при которой повторно выполняются только те действия, результаты которых могли устареть после изменения входных данных.
+
+Например, если изменился только файл \texttt{main.c}, то нет необходимости заново компилировать \texttt{util.c}. Достаточно пересобрать:
+\[
+\texttt{main.c} \rightarrow \texttt{main.o} \rightarrow \texttt{app}
+\]
+
+\subsection{Воспроизводимость}
+
+\textbf{Воспроизводимая сборка} --- это такая сборка, которая при одинаковых исходных данных, зависимостях, параметрах и окружении даёт одинаковый результат.
+
+Воспроизводимость важна для:
+\begin{itemize}
+    \item отладки;
+    \item безопасности;
+    \item непрерывной интеграции;
+    \item распространения пакетов;
+    \item проверки, что бинарный артефакт действительно соответствует исходному коду.
+\end{itemize}
+
+Факторы, нарушающие воспроизводимость:
+\begin{enumerate}
+    \item незафиксированные версии зависимостей;
+    \item использование текущего времени в артефактах;
+    \item зависимость от локальных путей;
+    \item недетерминированный порядок обхода файлов;
+    \item различия в версиях компиляторов;
+    \item сетевые обращения во время сборки.
+\end{enumerate}
+
+\subsection{Параллельность}
+
+Если две цели не зависят друг от друга, их можно собирать параллельно.
+
+Пусть есть зависимости:
+\[
+\texttt{app} \rightarrow \texttt{a.o}, \quad
+\texttt{app} \rightarrow \texttt{b.o}
+\]
+
+Если \texttt{a.o} и \texttt{b.o} не зависят друг от друга, то они могут быть собраны одновременно.
+
+Это позволяет ускорить сборку на многоядерных процессорах.
+
+\subsection{Кэширование}
+
+\textbf{Кэширование сборки} --- это сохранение результатов ранее выполненных действий для повторного использования.
+
+Идея:
+\[
+\text{ключ} = H(\text{исходные файлы}, \text{команды}, \text{параметры}, \text{зависимости})
+\]
+
+Если ключ уже есть в кэше, действие можно не выполнять заново.
+
+\section{Алгоритмическая основа систем сборки}
+
+\subsection{Топологическая сортировка}
+
+Для определения порядка сборки используется топологическая сортировка графа зависимостей.
+
+\textbf{Топологическая сортировка} ориентированного графа --- это такой линейный порядок его вершин, что для каждого ребра
+\[
+u \rightarrow v
+\]
+вершина $v$ располагается раньше вершины $u$, если $u$ зависит от $v$.
+
+\subsubsection{Алгоритм топологической сортировки на основе входящих степеней}
+
+Пусть дан ориентированный ациклический граф зависимостей $G=(V,E)$.
+
+\textbf{Шаги алгоритма:}
+\begin{enumerate}
+    \item Для каждой вершины вычислить количество входящих рёбер.
+    \item Поместить в очередь все вершины с нулевой входящей степенью.
+    \item Пока очередь не пуста:
+    \begin{enumerate}
+        \item извлечь вершину $v$;
+        \item добавить $v$ в результат;
+        \item для каждого ребра $v \rightarrow u$ уменьшить входящую степень $u$ на единицу;
+        \item если входящая степень $u$ стала нулевой, добавить $u$ в очередь.
+    \end{enumerate}
+    \item Если в результате оказалось меньше вершин, чем в графе, значит, в графе есть цикл.
+\end{enumerate}
+
+\subsubsection{Пример}
+
+Пусть:
+\[
+A \rightarrow B, \quad A \rightarrow C, \quad B \rightarrow D, \quad C \rightarrow D.
+\]
+
+Это означает, что $A$ зависит от $B$ и $C$, а $B$ и $C$ зависят от $D$.
+
+Правильный порядок сборки:
+\[
+D, B, C, A
+\]
+или
+\[
+D, C, B, A.
+\]
+
+\subsubsection{Минимальная реализация на псевдокоде}
+
+\begin{lstlisting}
+topological_sort(graph):
+    indeg = map from vertex to 0
+
+    for v in graph.vertices:
+        for u in graph[v]:
+            indeg[u] += 1
+
+    queue = all vertices with indeg[v] == 0
+    result = []
+
+    while queue is not empty:
+        v = queue.pop()
+        result.append(v)
+
+        for u in graph[v]:
+            indeg[u] -= 1
+            if indeg[u] == 0:
+                queue.push(u)
+
+    if len(result) != len(graph.vertices):
+        error "cycle detected"
+
+    return result
+\end{lstlisting}
+
+\subsection{Обнаружение устаревших целей}
+
+Классические системы сборки, например Make, часто используют временные метки файлов.
+
+Цель считается устаревшей, если:
+\[
+mtime(\text{target}) < \max_i mtime(\text{dependency}_i),
+\]
+где $mtime(x)$ --- время последнего изменения файла $x$.
+
+Иначе говоря, если хотя бы одна зависимость новее цели, цель нужно пересобрать.
+
+\subsubsection{Алгоритм инкрементальной пересборки по временным меткам}
+
+Пусть дана цель $T$.
+
+\textbf{Шаги:}
+\begin{enumerate}
+    \item Если $T$ не существует, пометить её как требующую сборки.
+    \item Рекурсивно проверить все зависимости $D_1,\ldots,D_n$.
+    \item Если хотя бы одна зависимость была пересобрана, проверить необходимость сборки $T$.
+    \item Если
+    \[
+    mtime(T) < \max_i mtime(D_i),
+    \]
+    выполнить команду сборки $T$.
+    \item Иначе считать $T$ актуальной.
+\end{enumerate}
+
+\subsubsection{Пример}
+
+Пусть:
+\[
+mtime(\texttt{main.c}) = 10:00,
+\]
+\[
+mtime(\texttt{main.o}) = 09:55.
+\]
+
+Так как исходный файл новее объектного:
+\[
+10:00 > 09:55,
+\]
+то \texttt{main.o} нужно пересобрать.
+
+\subsection{Циклические зависимости}
+
+Циклическая зависимость возникает, если:
+\[
+A \rightarrow B \rightarrow C \rightarrow A.
+\]
+
+В таком случае невозможно выбрать корректный порядок сборки: каждая цель требует предварительной сборки другой.
+
+Большинство систем сборки либо запрещают циклы, либо требуют явно разрывать их с помощью специальных механизмов.
+
+\section{Make}
+
+\subsection{Назначение Make}
+
+\textbf{Make} --- универсальная система сборки, основанная на правилах, целях, зависимостях и командах.
+
+Make особенно часто используется для проектов на C и C++, но не привязан к конкретному языку программирования. С его помощью можно автоматизировать любые действия, которые выражаются командами оболочки.
+
+\subsection{Makefile}
+
+Описание сборки помещается в файл \texttt{Makefile}.
+
+Общая форма правила:
+
+\begin{lstlisting}
+target: dependencies
+	command
+\end{lstlisting}
+
+Важно: команда в классическом Makefile должна начинаться с символа табуляции.
+
+\subsection{Цели}
+
+\textbf{Цель} --- это объект, который нужно построить. Обычно целью является файл, например объектный файл или исполняемый файл.
+
+Пример:
+
+\begin{lstlisting}
+app: main.o util.o
+	gcc main.o util.o -o app
+\end{lstlisting}
+
+Здесь:
+\begin{itemize}
+    \item \texttt{app} --- цель;
+    \item \texttt{main.o} и \texttt{util.o} --- зависимости;
+    \item \texttt{gcc main.o util.o -o app} --- команда сборки.
+\end{itemize}
+
+\subsection{Минимальный пример Makefile}
+
+Пусть есть файлы:
+\begin{itemize}
+    \item \texttt{main.c};
+    \item \texttt{util.c};
+    \item \texttt{util.h}.
+\end{itemize}
+
+\begin{lstlisting}
+CC = gcc
+CFLAGS = -Wall -O2
+
+app: main.o util.o
+	$(CC) main.o util.o -o app
+
+main.o: main.c util.h
+	$(CC) $(CFLAGS) -c main.c
+
+util.o: util.c util.h
+	$(CC) $(CFLAGS) -c util.c
+
+clean:
+	rm -f *.o app
+\end{lstlisting}
+
+Сборка:
+\begin{lstlisting}
+make
+\end{lstlisting}
+
+Очистка:
+\begin{lstlisting}
+make clean
+\end{lstlisting}
+
+\subsection{Фиктивные цели}
+
+Некоторые цели не соответствуют файлам. Например, \texttt{clean} обычно не создаёт файл с именем \texttt{clean}. Такие цели называют фиктивными.
+
+Их объявляют с помощью \texttt{.PHONY}:
+
+\begin{lstlisting}
+.PHONY: clean
+
+clean:
+	rm -f *.o app
+\end{lstlisting}
+
+Если не указать \texttt{.PHONY}, то наличие файла \texttt{clean} в каталоге может помешать выполнению команды.
+
+\subsection{Переменные в Make}
+
+Make поддерживает переменные:
+
+\begin{lstlisting}
+CC = gcc
+CFLAGS = -Wall -O2
+\end{lstlisting}
+
+Использование:
+
+\begin{lstlisting}
+$(CC) $(CFLAGS) -c main.c
+\end{lstlisting}
+
+Это позволяет централизованно менять параметры сборки.
+
+\subsection{Автоматические переменные}
+
+В Make есть автоматические переменные:
+
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Переменная & Значение \\
+\hline
+\texttt{\$@} & имя цели \\
+\hline
+\texttt{\$<} & первая зависимость \\
+\hline
+\texttt{\$\string^} & все зависимости \\
+\hline
+\end{tabular}
+\end{center}
+
+Пример:
+
+\begin{lstlisting}
+app: main.o util.o
+	gcc $^ -o $@
+\end{lstlisting}
+
+Эквивалентно:
+
+\begin{lstlisting}
+gcc main.o util.o -o app
+\end{lstlisting}
+
+\subsection{Шаблонные правила}
+
+Шаблонное правило:
+
+\begin{lstlisting}
+%.o: %.c
+	gcc -Wall -O2 -c $< -o $@
+\end{lstlisting}
+
+Это означает, что любой файл \texttt{name.o} может быть построен из \texttt{name.c}.
+
+Полный пример:
+
+\begin{lstlisting}
+CC = gcc
+CFLAGS = -Wall -O2
+OBJS = main.o util.o
+
+app: $(OBJS)
+	$(CC) $(OBJS) -o app
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+.PHONY: clean
+clean:
+	rm -f $(OBJS) app
+\end{lstlisting}
+
+\subsection{Параллельная сборка}
+
+Make поддерживает параллельное выполнение независимых правил:
+
+\begin{lstlisting}
+make -j4
+\end{lstlisting}
+
+Здесь \texttt{-j4} означает использование до четырёх параллельных задач.
+
+\subsection{Преимущества Make}
+
+\begin{enumerate}
+    \item Универсальность.
+    \item Простая модель: цели, зависимости, команды.
+    \item Широкая распространённость.
+    \item Хорошая поддержка инкрементальной сборки.
+    \item Возможность использовать любые команды оболочки.
+\end{enumerate}
+
+\subsection{Недостатки Make}
+
+\begin{enumerate}
+    \item Слабая переносимость между платформами.
+    \item Сложность сопровождения больших Makefile.
+    \item Зависимость от командной оболочки.
+    \item Ограниченная встроенная поддержка модулей и внешних библиотек.
+    \item Неудобство описания сложных конфигураций.
+\end{enumerate}
+
+\section{CMake}
+
+\subsection{Назначение CMake}
+
+\textbf{CMake} --- это кроссплатформенная система конфигурации и генерации сборочных файлов. CMake не всегда непосредственно выполняет сборку, а часто генерирует файлы для других систем: Make, Ninja, Visual Studio, Xcode и других.
+
+Типичный процесс:
+
+\[
+\texttt{CMakeLists.txt}
+\longrightarrow
+\text{файлы конкретной системы сборки}
+\longrightarrow
+\text{артефакты}
+\]
+
+Например:
+
+\[
+\texttt{CMakeLists.txt}
+\longrightarrow
+\texttt{Makefile}
+\longrightarrow
+\texttt{app}
+\]
+
+\subsection{Основные понятия CMake}
+
+Основными сущностями CMake являются:
+\begin{itemize}
+    \item проект;
+    \item цель;
+    \item исполняемый файл;
+    \item библиотека;
+    \item свойства цели;
+    \item зависимости между целями;
+    \item конфигурация сборки.
+\end{itemize}
+
+\subsection{Минимальный пример CMake}
+
+Файл \texttt{CMakeLists.txt}:
+
+\begin{lstlisting}
+cmake_minimum_required(VERSION 3.20)
+
+project(Example C)
+
+add_executable(app main.c util.c)
+\end{lstlisting}
+
+Сборка:
+
+\begin{lstlisting}
+cmake -S . -B build
+cmake --build build
+\end{lstlisting}
+
+Здесь:
+\begin{itemize}
+    \item \texttt{-S .} указывает каталог с исходниками;
+    \item \texttt{-B build} указывает каталог сборки;
+    \item \texttt{cmake --build build} запускает сборку сгенерированной системой.
+\end{itemize}
+
+\subsection{Out-of-source build}
+
+Хорошей практикой является сборка вне каталога исходного кода:
+
+\begin{lstlisting}
+project/
+  CMakeLists.txt
+  main.c
+  util.c
+  build/
+\end{lstlisting}
+
+Преимущества:
+\begin{enumerate}
+    \item исходный каталог не засоряется временными файлами;
+    \item можно иметь несколько конфигураций сборки;
+    \item проще удалить результаты сборки.
+\end{enumerate}
+
+\subsection{Цели в CMake}
+
+CMake ориентирован на цели.
+
+Пример библиотеки и исполняемого файла:
+
+\begin{lstlisting}
+cmake_minimum_required(VERSION 3.20)
+
+project(Example C)
+
+add_library(util util.c)
+add_executable(app main.c)
+
+target_link_libraries(app PRIVATE util)
+\end{lstlisting}
+
+Здесь:
+\begin{itemize}
+    \item \texttt{util} --- библиотека;
+    \item \texttt{app} --- исполняемый файл;
+    \item \texttt{app} зависит от \texttt{util}.
+\end{itemize}
+
+\subsection{Области видимости зависимостей}
+
+Команда \texttt{target\_link\_libraries} использует ключевые слова:
+\begin{itemize}
+    \item \texttt{PRIVATE};
+    \item \texttt{PUBLIC};
+    \item \texttt{INTERFACE}.
+\end{itemize}
+
+Их смысл:
+
+\begin{center}
+\begin{tabular}{|c|p{10cm}|}
+\hline
+Ключевое слово & Смысл \\
+\hline
+\texttt{PRIVATE} & Зависимость нужна только для сборки данной цели \\
+\hline
+\texttt{PUBLIC} & Зависимость нужна данной цели и её пользователям \\
+\hline
+\texttt{INTERFACE} & Зависимость нужна только пользователям цели \\
+\hline
+\end{tabular}
+\end{center}
+
+Пример:
+
+\begin{lstlisting}
+add_library(mathlib mathlib.c)
+target_include_directories(mathlib PUBLIC include)
+
+add_executable(app main.c)
+target_link_libraries(app PRIVATE mathlib)
+\end{lstlisting}
+
+Если \texttt{mathlib} публикует заголовочные файлы, то они становятся доступны целям, которые с ней связываются.
+
+\subsection{Поиск внешних библиотек}
+
+CMake предоставляет команду \texttt{find\_package}:
+
+\begin{lstlisting}
+find_package(OpenSSL REQUIRED)
+
+add_executable(app main.c)
+target_link_libraries(app PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+\end{lstlisting}
+
+Современный CMake предпочитает импортированные цели вида:
+\[
+\texttt{Package::Target}.
+\]
+
+\subsection{Преимущества CMake}
+
+\begin{enumerate}
+    \item Кроссплатформенность.
+    \item Поддержка разных генераторов.
+    \item Удобная модель целей.
+    \item Хорошая интеграция с C и C++.
+    \item Поддержка тестирования, установки, упаковки.
+    \item Возможность экспорта библиотек для использования другими проектами.
+\end{enumerate}
+
+\subsection{Недостатки CMake}
+
+\begin{enumerate}
+    \item Сложный язык конфигурации.
+    \item Исторически накопившееся множество стилей написания.
+    \item Не является полноценным менеджером пакетов.
+    \item Ошибки конфигурации могут проявляться только на этапе генерации или сборки.
+\end{enumerate}
+
+\section{Ninja}
+
+\subsection{Назначение Ninja}
+
+\textbf{Ninja} --- минималистичная система сборки, ориентированная на скорость.
+
+В отличие от Make, Ninja обычно не пишут вручную. Чаще его файлы генерируются более высокоуровневыми инструментами, например CMake или Meson.
+
+\subsection{Пример файла build.ninja}
+
+\begin{lstlisting}
+rule cc
+  command = gcc -c $in -o $out
+
+rule link
+  command = gcc $in -o $out
+
+build main.o: cc main.c
+build util.o: cc util.c
+build app: link main.o util.o
+\end{lstlisting}
+
+Сборка:
+
+\begin{lstlisting}
+ninja
+\end{lstlisting}
+
+\subsection{Преимущества Ninja}
+
+\begin{enumerate}
+    \item высокая скорость запуска;
+    \item эффективная инкрементальная сборка;
+    \item простая внутренняя модель;
+    \item удобство как backend для других систем.
+\end{enumerate}
+
+\subsection{Недостатки Ninja}
+
+\begin{enumerate}
+    \item неудобен для ручного написания сложных проектов;
+    \item не является менеджером пакетов;
+    \item практически не решает задачи конфигурации проекта.
+\end{enumerate}
+
+\section{Cargo}
+
+\subsection{Назначение Cargo}
+
+\textbf{Cargo} --- стандартная система сборки и менеджер пакетов для языка Rust.
+
+Cargo выполняет несколько ролей:
+\begin{enumerate}
+    \item создаёт структуру проекта;
+    \item собирает проект;
+    \item запускает тесты;
+    \item управляет зависимостями;
+    \item генерирует документацию;
+    \item публикует пакеты;
+    \item поддерживает lock-файл для воспроизводимости.
+\end{enumerate}
+
+\subsection{Crate и package}
+
+В экосистеме Rust важны два понятия:
+\begin{itemize}
+    \item \textbf{crate} --- единица компиляции Rust;
+    \item \textbf{package} --- пакет, содержащий один или несколько crate.
+\end{itemize}
+
+Пакет описывается файлом:
+\[
+\texttt{Cargo.toml}.
+\]
+
+\subsection{Создание проекта}
+
+\begin{lstlisting}
+cargo new hello
+cd hello
+cargo run
+\end{lstlisting}
+
+Структура:
+
+\begin{lstlisting}
+hello/
+  Cargo.toml
+  src/
+    main.rs
+\end{lstlisting}
+
+\subsection{Пример Cargo.toml}
+
+\begin{lstlisting}
+[package]
+name = "hello"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = "1.0"
+\end{lstlisting}
+
+\subsection{Основные команды Cargo}
+
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Команда & Назначение \\
+\hline
+\texttt{cargo build} & собрать проект \\
+\hline
+\texttt{cargo run} & собрать и запустить \\
+\hline
+\texttt{cargo test} & запустить тесты \\
+\hline
+\texttt{cargo check} & проверить проект без полной генерации бинарного кода \\
+\hline
+\texttt{cargo doc} & сгенерировать документацию \\
+\hline
+\texttt{cargo publish} & опубликовать пакет \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Cargo.lock}
+
+Файл \texttt{Cargo.lock} фиксирует точные версии зависимостей, выбранные решателем зависимостей.
+
+Назначение:
+\begin{itemize}
+    \item обеспечить воспроизводимость сборки;
+    \item зафиксировать транзитивные зависимости;
+    \item предотвратить неожиданные обновления.
+\end{itemize}
+
+Для исполняемых приложений \texttt{Cargo.lock} обычно коммитят в систему контроля версий. Для библиотек подход зависит от политики проекта.
+
+\subsection{Преимущества Cargo}
+
+\begin{enumerate}
+    \item тесная интеграция с языком Rust;
+    \item единый стандарт структуры проекта;
+    \item встроенный менеджер зависимостей;
+    \item удобная работа с тестами и документацией;
+    \item lock-файл для воспроизводимости;
+    \item простые команды.
+\end{enumerate}
+
+\subsection{Недостатки Cargo}
+
+\begin{enumerate}
+    \item ориентирован почти исключительно на Rust;
+    \item сложные сценарии интеграции с C/C++ требуют дополнительных build script;
+    \item не заменяет системный пакетный менеджер.
+\end{enumerate}
+
+\section{Maven}
+
+\subsection{Назначение Maven}
+
+\textbf{Apache Maven} --- система сборки и управления зависимостями, прежде всего для проектов на Java и JVM-языках.
+
+Maven использует декларативный подход: разработчик описывает проект в файле \texttt{pom.xml}, а Maven выполняет сборку согласно стандартному жизненному циклу.
+
+\subsection{POM}
+
+\textbf{POM} --- Project Object Model, модель проекта Maven.
+
+Файл \texttt{pom.xml} содержит:
+\begin{itemize}
+    \item координаты проекта;
+    \item зависимости;
+    \item плагины;
+    \item настройки сборки;
+    \item информацию о репозиториях;
+    \item метаданные проекта.
+\end{itemize}
+
+Минимальный пример:
+
+\begin{lstlisting}[language=XML]
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>demo</artifactId>
+    <version>1.0.0</version>
+
+</project>
+\end{lstlisting}
+
+\subsection{Координаты артефакта}
+
+Артефакт Maven идентифицируется координатами:
+\[
+(\texttt{groupId}, \texttt{artifactId}, \texttt{version})
+\]
+
+Например:
+
+\begin{lstlisting}[language=XML]
+<groupId>org.apache.commons</groupId>
+<artifactId>commons-lang3</artifactId>
+<version>3.14.0</version>
+\end{lstlisting}
+
+\subsection{Стандартная структура проекта Maven}
+
+\begin{lstlisting}
+project/
+  pom.xml
+  src/
+    main/
+      java/
+      resources/
+    test/
+      java/
+      resources/
+\end{lstlisting}
+
+Принцип Maven:
+\[
+\text{convention over configuration}
+\]
+то есть соглашения важнее явной конфигурации.
+
+\subsection{Жизненный цикл Maven}
+
+Maven определяет фазы жизненного цикла сборки.
+
+Основные фазы:
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Фаза & Назначение \\
+\hline
+\texttt{validate} & проверить корректность проекта \\
+\hline
+\texttt{compile} & скомпилировать исходный код \\
+\hline
+\texttt{test} & запустить тесты \\
+\hline
+\texttt{package} & упаковать результат, например в JAR \\
+\hline
+\texttt{verify} & выполнить дополнительные проверки \\
+\hline
+\texttt{install} & установить артефакт в локальный репозиторий \\
+\hline
+\texttt{deploy} & опубликовать артефакт в удалённый репозиторий \\
+\hline
+\end{tabular}
+\end{center}
+
+Команда:
+
+\begin{lstlisting}
+mvn package
+\end{lstlisting}
+
+выполняет не только фазу \texttt{package}, но и предшествующие фазы:
+\[
+\texttt{validate} \rightarrow \texttt{compile} \rightarrow \texttt{test} \rightarrow \texttt{package}.
+\]
+
+\subsection{Зависимости в Maven}
+
+Пример зависимости:
+
+\begin{lstlisting}[language=XML]
+<dependencies>
+    <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>3.14.0</version>
+    </dependency>
+</dependencies>
+\end{lstlisting}
+
+Maven загружает зависимости из репозиториев, например из Maven Central, и помещает их в локальный кэш.
+
+\subsection{Области видимости зависимостей}
+
+Maven поддерживает scopes:
+
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Scope & Смысл \\
+\hline
+\texttt{compile} & зависимость нужна для компиляции и выполнения \\
+\hline
+\texttt{provided} & нужна для компиляции, но будет предоставлена окружением \\
+\hline
+\texttt{runtime} & нужна только во время выполнения \\
+\hline
+\texttt{test} & нужна только для тестов \\
+\hline
+\texttt{system} & указывается явно локальный путь к JAR \\
+\hline
+\texttt{import} & используется для импорта dependency management в BOM \\
+\hline
+\end{tabular}
+\end{center}
+
+Пример тестовой зависимости:
+
+\begin{lstlisting}[language=XML]
+<dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter</artifactId>
+    <version>5.10.0</version>
+    <scope>test</scope>
+</dependency>
+\end{lstlisting}
+
+\subsection{Транзитивные зависимости}
+
+Если проект $A$ зависит от $B$, а $B$ зависит от $C$, то $A$ косвенно зависит от $C$:
+\[
+A \rightarrow B \rightarrow C.
+\]
+
+Maven автоматически учитывает такие транзитивные зависимости.
+
+\subsection{Разрешение конфликтов версий}
+
+Если одна и та же библиотека встречается в графе зависимостей в разных версиях, Maven выбирает версию по правилам разрешения конфликтов.
+
+Одно из основных правил:
+\begin{quote}
+при конфликте выбирается версия, находящаяся ближе к корню графа зависимостей.
+\end{quote}
+
+Пример:
+
+\[
+A \rightarrow B \rightarrow D:2.0
+\]
+\[
+A \rightarrow E \rightarrow F \rightarrow D:1.0
+\]
+
+Версия \texttt{D:2.0} ближе к $A$, поэтому она будет выбрана.
+
+\subsection{Преимущества Maven}
+
+\begin{enumerate}
+    \item стандартная структура проекта;
+    \item развитая модель зависимостей;
+    \item большое количество плагинов;
+    \item интеграция с Maven Central;
+    \item поддержка жизненного цикла сборки;
+    \item удобен для Java-проектов.
+\end{enumerate}
+
+\subsection{Недостатки Maven}
+
+\begin{enumerate}
+    \item XML-конфигурация может быть громоздкой;
+    \item сложная модель транзитивных зависимостей;
+    \item ограниченная гибкость по сравнению с более программируемыми системами;
+    \item возможны неожиданные конфликты версий.
+\end{enumerate}
+
+\section{Gradle}
+
+\subsection{Назначение Gradle}
+
+\textbf{Gradle} --- система сборки, широко применяемая в Java, Kotlin, Android и других JVM-проектах.
+
+Gradle сочетает:
+\begin{itemize}
+    \item декларативное описание зависимостей;
+    \item программируемые build-скрипты;
+    \item поддержку многомодульных проектов;
+    \item инкрементальную сборку;
+    \item кэширование;
+    \item плагины.
+\end{itemize}
+
+\subsection{Пример build.gradle.kts}
+
+\begin{lstlisting}
+plugins {
+    application
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.apache.commons:commons-lang3:3.14.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+}
+
+application {
+    mainClass.set("org.example.Main")
+}
+\end{lstlisting}
+
+\subsection{Конфигурации зависимостей}
+
+Типичные конфигурации:
+\begin{center}
+\begin{tabular}{|c|p{9cm}|}
+\hline
+Конфигурация & Смысл \\
+\hline
+\texttt{implementation} & зависимость нужна для реализации, но не экспортируется пользователям \\
+\hline
+\texttt{api} & зависимость является частью публичного API \\
+\hline
+\texttt{compileOnly} & нужна только при компиляции \\
+\hline
+\texttt{runtimeOnly} & нужна только во время выполнения \\
+\hline
+\texttt{testImplementation} & нужна для тестов \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Преимущества Gradle}
+
+\begin{enumerate}
+    \item высокая гибкость;
+    \item удобство для многомодульных проектов;
+    \item хорошая поддержка Android;
+    \item инкрементальность и кэширование;
+    \item Kotlin DSL и Groovy DSL.
+\end{enumerate}
+
+\subsection{Недостатки Gradle}
+
+\begin{enumerate}
+    \item сложность модели;
+    \item возможная недетерминированность при неаккуратных скриптах;
+    \item порог входа выше, чем у Maven;
+    \item долгий этап конфигурации в больших проектах без оптимизаций.
+\end{enumerate}
+
+\section{npm как система управления пакетами и сценариями сборки}
+
+\subsection{Назначение npm}
+
+\textbf{npm} --- пакетный менеджер для экосистемы Node.js. Он используется для:
+\begin{itemize}
+    \item установки зависимостей;
+    \item публикации пакетов;
+    \item запуска сценариев;
+    \item управления версиями зависимостей.
+\end{itemize}
+
+Хотя npm не является системой сборки в строгом смысле, он часто управляет запуском сборочных инструментов: TypeScript, webpack, Vite, Rollup, ESLint и других.
+
+\subsection{package.json}
+
+Файл \texttt{package.json} описывает проект.
+
+Пример:
+
+\begin{lstlisting}
+{
+  "name": "demo",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0"
+  }
+}
+\end{lstlisting}
+
+\subsection{Сценарии npm}
+
+Сценарии запускаются командой:
+
+\begin{lstlisting}
+npm run build
+\end{lstlisting}
+
+Если в \texttt{package.json} определено:
+
+\begin{lstlisting}
+"scripts": {
+  "build": "tsc"
+}
+\end{lstlisting}
+
+то команда \texttt{npm run build} выполнит \texttt{tsc}.
+
+\subsection{package-lock.json}
+
+Файл \texttt{package-lock.json} фиксирует конкретные версии установленных зависимостей и помогает воспроизводить установку.
+
+\subsection{Преимущества npm}
+
+\begin{enumerate}
+    \item огромная экосистема пакетов;
+    \item простое описание зависимостей;
+    \item удобные сценарии;
+    \item lock-файл;
+    \item интеграция с Node.js.
+\end{enumerate}
+
+\subsection{Недостатки npm}
+
+\begin{enumerate}
+    \item большое число транзитивных зависимостей;
+    \item возможны проблемы безопасности цепочек поставки;
+    \item сборка часто зависит от внешних инструментов;
+    \item семантические диапазоны версий могут приводить к неожиданным обновлениям.
+\end{enumerate}
+
+\section{Сравнение универсальных и языко-ориентированных систем}
+
+\subsection{Универсальные системы}
+
+К универсальным системам относятся:
+\begin{itemize}
+    \item Make;
+    \item Ninja;
+    \item SCons;
+    \item Bazel;
+    \item Buck.
+\end{itemize}
+
+Их особенности:
+\begin{enumerate}
+    \item не привязаны к одному языку;
+    \item описывают общие зависимости и команды;
+    \item могут использоваться для произвольных задач;
+    \item требуют явного описания многих деталей.
+\end{enumerate}
+
+\subsection{Языко-ориентированные системы}
+
+К языко-ориентированным относятся:
+\begin{itemize}
+    \item Cargo для Rust;
+    \item Maven и Gradle для Java/JVM;
+    \item npm/yarn/pnpm для JavaScript;
+    \item pip/poetry для Python;
+    \item Go modules для Go.
+\end{itemize}
+
+Их особенности:
+\begin{enumerate}
+    \item знают стандартную структуру проекта;
+    \item интегрированы с компилятором или интерпретатором;
+    \item управляют зависимостями;
+    \item поддерживают публикацию пакетов;
+    \item обычно проще для типовых проектов на своём языке.
+\end{enumerate}
+
+\subsection{Сравнительная таблица}
+
+\begin{center}
+\begin{tabular}{|p{3cm}|p{4cm}|p{4cm}|p{4cm}|}
+\hline
+Система & Основная область & Управление зависимостями & Особенности \\
+\hline
+Make & универсальная сборка & почти отсутствует & простая модель целей и команд \\
+\hline
+CMake & C/C++, кроссплатформенная сборка & частично, через find\_package и FetchContent & генератор систем сборки \\
+\hline
+Ninja & быстрый backend сборки & отсутствует & обычно генерируется другими инструментами \\
+\hline
+Cargo & Rust & встроенное & единый стандарт для Rust-проектов \\
+\hline
+Maven & Java/JVM & встроенное, транзитивное & POM, жизненный цикл, репозитории \\
+\hline
+Gradle & JVM, Android, многомодульные проекты & встроенное & гибкие скрипты, плагины, кэширование \\
+\hline
+npm & JavaScript/Node.js & встроенное & package.json, scripts, lock-файл \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Управление модулями и зависимостями}
+
+\subsection{Основные задачи менеджера зависимостей}
+
+Менеджер зависимостей решает следующие задачи:
+\begin{enumerate}
+    \item загрузка внешних библиотек;
+    \item разрешение транзитивных зависимостей;
+    \item выбор совместимых версий;
+    \item кэширование пакетов;
+    \item проверка целостности;
+    \item публикация пакетов;
+    \item поддержка lock-файлов.
+\end{enumerate}
+
+\subsection{Семантическое версионирование}
+
+Часто используется схема:
+\[
+MAJOR.MINOR.PATCH.
+\]
+
+Например:
+\[
+2.5.1.
+\]
+
+Смысл:
+\begin{itemize}
+    \item \texttt{MAJOR} меняется при несовместимых изменениях API;
+    \item \texttt{MINOR} меняется при добавлении совместимой функциональности;
+    \item \texttt{PATCH} меняется при исправлении ошибок без изменения API.
+\end{itemize}
+
+\subsection{Диапазоны версий}
+
+Менеджеры пакетов часто позволяют указывать не точную версию, а диапазон.
+
+Примеры:
+\begin{itemize}
+    \item \texttt{1.2.3} --- точная версия;
+    \item \texttt{\^{}1.2.3} --- совместимые обновления в пределах major-версии;
+    \item \texttt{\~{}1.2.3} --- обычно обновления patch-уровня;
+    \item \texttt{>=1.2.0 <2.0.0} --- явный диапазон.
+\end{itemize}
+
+\subsection{Lock-файлы}
+
+\textbf{Lock-файл} --- файл, фиксирующий точные версии всех зависимостей, включая транзитивные.
+
+Примеры:
+\begin{itemize}
+    \item \texttt{Cargo.lock};
+    \item \texttt{package-lock.json};
+    \item \texttt{yarn.lock};
+    \item \texttt{pnpm-lock.yaml};
+    \item \texttt{gradle.lockfile}.
+\end{itemize}
+
+Lock-файл повышает воспроизводимость сборки.
+
+\section{Алгоритм разрешения зависимостей}
+
+\subsection{Общая постановка}
+
+Пусть имеется множество пакетов. Каждый пакет может иметь несколько версий. Каждая версия задаёт ограничения на версии других пакетов.
+
+Требуется выбрать по одной версии каждого необходимого пакета так, чтобы все ограничения были выполнены.
+
+Формально:
+\[
+P = \{p_1, p_2, \ldots, p_n\}
+\]
+--- множество пакетов.
+
+Для каждого пакета $p_i$ есть множество доступных версий:
+\[
+V_i = \{v_{i1}, v_{i2}, \ldots, v_{ik}\}.
+\]
+
+Нужно найти отображение:
+\[
+f: P \rightarrow \bigcup_i V_i,
+\]
+такое что:
+\[
+f(p_i) \in V_i
+\]
+и все ограничения зависимостей выполнены.
+
+\subsection{Упрощённый алгоритм разрешения зависимостей с backtracking}
+
+\textbf{Шаги:}
+\begin{enumerate}
+    \item Начать с корневых зависимостей проекта.
+    \item Выбрать пакет, для которого ещё не выбрана версия.
+    \item Найти все версии, удовлетворяющие текущим ограничениям.
+    \item Выбрать одну версию.
+    \item Добавить её зависимости в множество ограничений.
+    \item Если возник конфликт, откатиться к предыдущему выбору.
+    \item Повторять, пока все версии не будут выбраны.
+\end{enumerate}
+
+\subsection{Псевдокод}
+
+\begin{lstlisting}
+resolve(requirements):
+    solution = {}
+
+    if search(requirements, solution):
+        return solution
+    else:
+        error "no compatible versions"
+
+search(requirements, solution):
+    if all requirements satisfied:
+        return true
+
+    pkg = choose_unresolved_package(requirements, solution)
+
+    for version in candidate_versions(pkg, requirements):
+        solution[pkg] = version
+        new_requirements = requirements + dependencies(pkg, version)
+
+        if consistent(new_requirements, solution):
+            if search(new_requirements, solution):
+                return true
+
+        remove solution[pkg]
+
+    return false
+\end{lstlisting}
+
+\subsection{Иллюстрация}
+
+Пусть проект зависит от:
+\[
+A: [1.0, 2.0), \quad B: [1.0, 2.0).
+\]
+
+Доступные версии:
+\[
+A = \{1.0, 1.1\}, \quad B = \{1.0, 1.1\}.
+\]
+
+Дополнительно:
+\[
+A:1.1 \rightarrow C: [2.0,3.0),
+\]
+\[
+B:1.1 \rightarrow C: [1.0,2.0).
+\]
+
+Если выбрать:
+\[
+A=1.1,\quad B=1.1,
+\]
+то возникает конфликт:
+\[
+C \in [2.0,3.0) \cap [1.0,2.0) = \varnothing.
+\]
+
+Алгоритм должен откатиться и попробовать другую версию, например:
+\[
+A=1.0,\quad B=1.1.
+\]
+
+\section{Теоретические замечания}
+
+\subsection{Теорема о топологической сортировке}
+
+\textbf{Теорема.}
+Ориентированный граф имеет топологическую сортировку тогда и только тогда, когда он является ациклическим.
+
+\subsubsection{Доказательство}
+
+Докажем необходимость.
+
+Пусть ориентированный граф $G$ имеет топологическую сортировку. Предположим противное: в $G$ есть ориентированный цикл:
+\[
+v_1 \rightarrow v_2 \rightarrow \cdots \rightarrow v_k \rightarrow v_1.
+\]
+
+По определению топологической сортировки для каждого ребра вершина-источник должна стоять раньше вершины, в которую ведёт ребро. Тогда:
+\[
+v_1 \text{ стоит раньше } v_2,
+\]
+\[
+v_2 \text{ стоит раньше } v_3,
+\]
+\[
+\cdots
+\]
+\[
+v_k \text{ стоит раньше } v_1.
+\]
+
+Из первых $k-1$ неравенств следует, что:
+\[
+v_1 \text{ стоит раньше } v_k.
+\]
+
+Но из ребра
+\[
+v_k \rightarrow v_1
+\]
+следует, что:
+\[
+v_k \text{ стоит раньше } v_1.
+\]
+
+Получаем противоречие. Следовательно, циклов быть не может.
+
+Докажем достаточность.
+
+Пусть $G$ --- ориентированный ациклический граф. Покажем, что в нём существует вершина с нулевой входящей степенью.
+
+Предположим противное: у каждой вершины есть хотя бы одно входящее ребро. Возьмём произвольную вершину $v_0$. Так как у неё есть входящее ребро, существует вершина $v_1$ такая, что:
+\[
+v_1 \rightarrow v_0.
+\]
+У вершины $v_1$ тоже есть входящее ребро, значит существует $v_2$:
+\[
+v_2 \rightarrow v_1.
+\]
+
+Продолжая этот процесс, получим бесконечную последовательность вершин:
+\[
+v_0, v_1, v_2, \ldots
+\]
+
+Но граф конечен, значит некоторая вершина повторится. Это образует ориентированный цикл, что противоречит ацикличности. Следовательно, существует вершина с нулевой входящей степенью.
+
+Удалим эту вершину из графа вместе с исходящими рёбрами. Оставшийся граф также ацикличен. Повторяя рассуждение, можно последовательно удалять вершины с нулевой входящей степенью.
+
+Порядок удаления вершин образует топологическую сортировку.
+
+Теорема доказана.
+
+\subsection{Следствие для систем сборки}
+
+Если граф зависимостей целей ацикличен, то существует корректный порядок сборки. Если в графе есть цикл, то корректный порядок сборки невозможен без дополнительных соглашений или изменения структуры зависимостей.
+
+\section{Практические рекомендации}
+
+\subsection{Для небольших C/C++ проектов}
+
+Можно использовать Make, если:
+\begin{itemize}
+    \item проект небольшой;
+    \item целевая платформа Unix-подобная;
+    \item зависимости просты;
+    \item требуется минимальная инфраструктура.
+\end{itemize}
+
+\subsection{Для переносимых C/C++ проектов}
+
+Лучше использовать CMake, если:
+\begin{itemize}
+    \item проект должен собираться на Linux, macOS и Windows;
+    \item нужны разные генераторы;
+    \item есть библиотеки и исполняемые файлы;
+    \item требуется установка, тестирование, экспорт целей.
+\end{itemize}
+
+\subsection{Для Rust}
+
+Обычно следует использовать Cargo, поскольку он является стандартным инструментом экосистемы Rust.
+
+\subsection{Для Java}
+
+Для классических Java-проектов часто используют Maven. Для Android, Kotlin и сложных многомодульных проектов часто выбирают Gradle.
+
+\subsection{Для JavaScript и TypeScript}
+
+npm, yarn или pnpm используются для управления пакетами, а непосредственную сборку выполняют специализированные инструменты: TypeScript compiler, webpack, Vite, Rollup и другие.
+
+\section{Заключение}
+
+Системы сборки и управления модулями решают фундаментальную задачу автоматизации получения артефактов из исходных файлов и зависимостей. Их основой является граф зависимостей, по которому определяется порядок сборки и необходимость пересборки.
+
+Универсальные системы, такие как Make и Ninja, предоставляют низкоуровневую модель целей и команд. CMake занимает промежуточное положение: он описывает проект на более высоком уровне и генерирует файлы для конкретной системы сборки. Языко-ориентированные инструменты, такие как Cargo, Maven, Gradle и npm, тесно интегрированы со своими экосистемами и дополнительно решают задачу управления пакетами и версиями.
+
+Выбор инструмента зависит от языка, размера проекта, требований к переносимости, воспроизводимости, скорости сборки и удобства сопровождения.
+
+\end{document}
