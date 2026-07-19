@@ -1,0 +1,3363 @@
+\documentclass[12pt,a4paper]{article}
+
+% ----------------------------------------------------------------
+% Язык и шрифты: вариант для pdfLaTeX
+% ----------------------------------------------------------------
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+
+\usepackage{cmap}
+\usepackage{lmodern}
+
+% ----------------------------------------------------------------
+% Математика и оформление
+% ----------------------------------------------------------------
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage[expansion=false]{microtype}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,calc}
+
+\geometry{left=2cm,right=2cm,top=2cm,bottom=2cm}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!45!black,
+    urlcolor=blue!55!black,
+    citecolor=blue!45!black
+}
+\allowdisplaybreaks
+\setlength{\parindent}{1.25cm}
+\setlength{\parskip}{0.15em}
+
+% ----------------------------------------------------------------
+% Теоремы и определения
+% ----------------------------------------------------------------
+\newtheorem{theorem}{Теорема}[section]
+\newtheorem{lemma}[theorem]{Лемма}
+\newtheorem{proposition}[theorem]{Утверждение}
+\newtheorem{corollary}[theorem]{Следствие}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Определение}
+\newtheorem{example}[theorem]{Пример}
+\newtheorem{remark}[theorem]{Замечание}
+
+\renewcommand{\proofname}{Доказательство}
+
+% ----------------------------------------------------------------
+% Обозначения
+% ----------------------------------------------------------------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\N}{\mathcal{N}}
+\newcommand{\KL}{\operatorname{KL}}
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\given}{\,\middle|\,}
+\newcommand{\dd}{\mathop{}\!\mathrm{d}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\1}{\mathbf{1}}
+
+% ----------------------------------------------------------------
+% Окружение для алгоритмов
+% ----------------------------------------------------------------
+\newenvironment{algorithmbox}[1]
+{
+    \begin{center}
+    \begin{minipage}{0.95\textwidth}
+    \hrule
+    \medskip
+    \textbf{Алгоритм: #1}
+    \begin{enumerate}[leftmargin=*,label=\arabic*.]
+}
+{
+    \end{enumerate}
+    \medskip
+    \hrule
+    \end{minipage}
+    \end{center}
+}
+
+\title{Билет №99 \\ \small Трансформеры. Диффузионные модели. (ИТМО)}
+\author{Сериков Владислав Александрович}
+\date{19 июля 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+% ================================================================
+\section{Основные обозначения и постановка задач}
+% ================================================================
+
+Вектор обозначается строчной полужирной буквой, например
+$\bm{x}\in\R^d$, а матрица --- прописной полужирной буквой
+$\bm{X}\in\R^{n\times d}$. Индекс строки обычно соответствует позиции
+объекта в последовательности, а индекс столбца --- признаку.
+
+Для распределения с плотностью $p$ математическое ожидание обозначается
+через $\E_p$. Если распределение очевидно из контекста, нижний индекс
+опускается.
+
+Дивергенция Кульбака--Лейблера между плотностями $q$ и $p$ определяется
+как
+\[
+    \KL(q\|p)
+    =
+    \E_{\bm{x}\sim q}
+    \left[
+        \log\frac{q(\bm{x})}{p(\bm{x})}
+    \right].
+\]
+Она неотрицательна и равна нулю тогда и только тогда, когда
+$q=p$ почти всюду.
+
+Рассматриваются две разные, но часто совместно используемые идеи:
+\begin{enumerate}
+    \item \textbf{трансформер} --- архитектура нейронной сети, основанная
+    на механизме внимания;
+    \item \textbf{диффузионная модель} --- вероятностная генеративная
+    модель, обучающая обратное преобразование шума в данные.
+\end{enumerate}
+
+Трансформер может использоваться как самостоятельная авторегрессионная
+модель, как кодировщик признаков или как нейросеть, предсказывающая шум
+внутри диффузионной модели.
+
+% ================================================================
+\section{Трансформеры}
+% ================================================================
+
+\subsection{Последовательности и представления токенов}
+
+Пусть дана последовательность дискретных токенов
+\[
+    (w_1,w_2,\ldots,w_n),
+    \qquad
+    w_i\in\{1,\ldots,|\mathcal{V}|\},
+\]
+где $\mathcal{V}$ --- словарь.
+
+Каждому токену ставится в соответствие векторное представление
+\[
+    \bm{e}_i=\bm{E}[w_i]\in\R^{d_{\text{model}}},
+\]
+где
+\[
+    \bm{E}\in\R^{|\mathcal{V}|\times d_{\text{model}}}
+\]
+--- обучаемая матрица эмбеддингов.
+
+После объединения строк получается матрица
+\[
+    \bm{X}
+    =
+    \begin{bmatrix}
+        \bm{e}_1^\top\\
+        \vdots\\
+        \bm{e}_n^\top
+    \end{bmatrix}
+    \in\R^{n\times d_{\text{model}}}.
+\]
+
+Токенизация может выполняться по словам, символам или подсловам.
+Подсловная токенизация позволяет представлять редкие и ранее не
+встречавшиеся слова через более короткие элементы.
+
+\subsection{Механизм внимания}
+
+\subsubsection{Запросы, ключи и значения}
+
+\begin{definition}
+Пусть
+\[
+    \bm{X}_Q\in\R^{n_q\times d_{\text{model}}},
+    \qquad
+    \bm{X}_{KV}\in\R^{n_k\times d_{\text{model}}}.
+\]
+Матрицы запросов, ключей и значений определяются как
+\[
+    \bm{Q}=\bm{X}_Q\bm{W}^Q,\qquad
+    \bm{K}=\bm{X}_{KV}\bm{W}^K,\qquad
+    \bm{V}=\bm{X}_{KV}\bm{W}^V,
+\]
+где
+\[
+    \bm{W}^Q,\bm{W}^K\in\R^{d_{\text{model}}\times d_k},
+    \qquad
+    \bm{W}^V\in\R^{d_{\text{model}}\times d_v}.
+\]
+Масштабированным скалярным вниманием называется отображение
+\[
+    \operatorname{Attention}(\bm{Q},\bm{K},\bm{V})
+    =
+    \softmax\left(
+        \frac{\bm{Q}\bm{K}^{\top}}{\sqrt{d_k}}+\bm{M}
+    \right)\bm{V}.
+\]
+Здесь softmax применяется независимо к каждой строке, а
+$\bm{M}$ --- аддитивная маска.
+\end{definition}
+
+Для матрицы $\bm{S}\in\R^{n_q\times n_k}$ построчный softmax имеет вид
+\[
+    [\softmax(\bm{S})]_{ij}
+    =
+    \frac{\exp(S_{ij})}
+         {\sum_{\ell=1}^{n_k}\exp(S_{i\ell})}.
+\]
+
+Элемент
+\[
+    S_{ij}=\frac{\langle \bm{q}_i,\bm{k}_j\rangle}{\sqrt{d_k}}
+\]
+характеризует степень соответствия запроса в позиции $i$ ключу в
+позиции $j$. После нормировки веса используются для вычисления
+взвешенной суммы значений:
+\[
+    \bm{o}_i=\sum_{j=1}^{n_k}A_{ij}\bm{v}_j,
+    \qquad
+    \bm{A}=\softmax(\bm{S}+\bm{M}).
+\]
+
+\subsubsection{Зачем нужен множитель \(1/\sqrt{d_k}\)}
+
+Пусть компоненты $\bm{q}$ и $\bm{k}$ независимы, имеют нулевое среднее
+и единичную дисперсию. Тогда
+\[
+    \bm{q}^{\top}\bm{k}
+    =
+    \sum_{\ell=1}^{d_k}q_\ell k_\ell.
+\]
+При сделанных предположениях
+\[
+    \Var(q_\ell k_\ell)=1,
+\]
+поэтому
+\[
+    \Var(\bm{q}^{\top}\bm{k})=d_k.
+\]
+Следовательно, типичный масштаб скалярного произведения растёт как
+$\sqrt{d_k}$. Деление на $\sqrt{d_k}$ стабилизирует дисперсию логитов
+внимания. Без масштабирования softmax при больших $d_k$ может попадать
+в область насыщения, где его градиенты малы.
+
+\subsubsection{Маски внимания}
+
+Аддитивная маска определяется как
+\[
+    M_{ij}
+    =
+    \begin{cases}
+        0, & \text{если внимание из позиции \(i\) в позицию \(j\)
+        разрешено},\\
+        -\infty, & \text{если оно запрещено}.
+    \end{cases}
+\]
+После softmax запрещённые элементы получают нулевой вес.
+
+Основные виды масок:
+\begin{enumerate}
+    \item \textbf{padding mask}: запрещает обращение к позициям
+    искусственного заполнения;
+    \item \textbf{causal mask}: запрещает позиции $i$ использовать
+    будущие токены $j>i$:
+    \[
+        M_{ij}
+        =
+        \begin{cases}
+            0, & j\leq i,\\
+            -\infty, & j>i.
+        \end{cases}
+    \]
+    \item \textbf{структурные маски}: задают локальное, блочное или
+    разреженное внимание.
+\end{enumerate}
+
+\subsubsection{Геометрическое свойство внимания}
+
+\begin{proposition}[Выход внимания как выпуклая комбинация]
+Пусть все немаскированные логиты конечны. Тогда каждая строка выхода
+\[
+    \bm{O}
+    =
+    \softmax\left(
+        \frac{\bm{Q}\bm{K}^{\top}}{\sqrt{d_k}}+\bm{M}
+    \right)\bm{V}
+\]
+является выпуклой комбинацией строк матрицы $\bm{V}$, доступных данной
+позиции.
+\end{proposition}
+
+\begin{proof}
+Обозначим матрицу весов через
+\[
+    \bm{A}
+    =
+    \softmax\left(
+        \frac{\bm{Q}\bm{K}^{\top}}{\sqrt{d_k}}+\bm{M}
+    \right).
+\]
+Для каждого разрешённого элемента
+\[
+    A_{ij}
+    =
+    \frac{\exp(S_{ij})}
+         {\sum_{\ell:\,M_{i\ell}=0}\exp(S_{i\ell})}>0.
+\]
+Для запрещённых элементов после применения предельного значения
+$\exp(-\infty)=0$ имеем $A_{ij}=0$.
+
+По определению softmax сумма элементов каждой строки равна единице:
+\[
+    \sum_{j=1}^{n_k}A_{ij}=1.
+\]
+Строка выхода равна
+\[
+    \bm{o}_i=\sum_{j=1}^{n_k}A_{ij}\bm{v}_j.
+\]
+Таким образом, коэффициенты $A_{ij}$ неотрицательны и в сумме дают
+единицу. Это и означает, что $\bm{o}_i$ является выпуклой комбинацией
+доступных строк $\bm{V}$.
+\end{proof}
+
+\subsubsection{Минимальный численный пример}
+
+Пусть
+\[
+    \bm{X}
+    =
+    \begin{bmatrix}
+        1&0\\
+        0&1
+    \end{bmatrix},
+    \qquad
+    \bm{W}^Q=\bm{W}^K=\bm{W}^V=\bm{I}_2.
+\]
+Тогда
+\[
+    \bm{Q}=\bm{K}=\bm{V}=\bm{X},
+    \qquad
+    \frac{\bm{Q}\bm{K}^{\top}}{\sqrt{2}}
+    =
+    \begin{bmatrix}
+        1/\sqrt{2}&0\\
+        0&1/\sqrt{2}
+    \end{bmatrix}.
+\]
+Обозначим
+\[
+    a
+    =
+    \frac{e^{1/\sqrt{2}}}
+         {e^{1/\sqrt{2}}+1}
+    \approx 0.6698.
+\]
+Тогда
+\[
+    \bm{A}
+    \approx
+    \begin{bmatrix}
+        0.6698&0.3302\\
+        0.3302&0.6698
+    \end{bmatrix},
+\]
+и
+\[
+    \bm{O}=\bm{A}\bm{V}
+    \approx
+    \begin{bmatrix}
+        0.6698&0.3302\\
+        0.3302&0.6698
+    \end{bmatrix}.
+\]
+
+С причинной маской
+\[
+    \bm{M}
+    =
+    \begin{bmatrix}
+        0&-\infty\\
+        0&0
+    \end{bmatrix}
+\]
+получаем
+\[
+    \bm{A}_{\text{causal}}
+    \approx
+    \begin{bmatrix}
+        1&0\\
+        0.3302&0.6698
+    \end{bmatrix}.
+\]
+Первая позиция не использует вторую, поскольку она является будущей.
+
+\subsection{Self-attention и cross-attention}
+
+\begin{definition}
+В \textbf{self-attention} запросы, ключи и значения строятся из одной
+и той же последовательности:
+\[
+    \bm{X}_Q=\bm{X}_{KV}=\bm{X}.
+\]
+\end{definition}
+
+Self-attention позволяет каждой позиции агрегировать информацию из
+остальных позиций той же последовательности.
+
+\begin{definition}
+В \textbf{cross-attention} запросы строятся из одной
+последовательности, а ключи и значения --- из другой:
+\[
+    \bm{Q}=\bm{X}_{\text{target}}\bm{W}^Q,
+    \qquad
+    \bm{K}=\bm{X}_{\text{source}}\bm{W}^K,
+    \qquad
+    \bm{V}=\bm{X}_{\text{source}}\bm{W}^V.
+\]
+\end{definition}
+
+Например, в машинном переводе запросы декодера обращаются к выходам
+кодировщика, содержащим представление исходного предложения.
+
+\subsection{Многоголовое внимание}
+
+Одна голова внимания использует один набор проекций и одну матрицу
+сходства. Многоголовое внимание вычисляет несколько механизмов
+внимания параллельно:
+\[
+    \operatorname{head}_r
+    =
+    \operatorname{Attention}
+    \left(
+        \bm{X}_Q\bm{W}_r^Q,\,
+        \bm{X}_{KV}\bm{W}_r^K,\,
+        \bm{X}_{KV}\bm{W}_r^V
+    \right),
+\]
+\[
+    \operatorname{MHA}(\bm{X}_Q,\bm{X}_{KV})
+    =
+    \operatorname{Concat}
+    (\operatorname{head}_1,\ldots,\operatorname{head}_h)\bm{W}^O.
+\]
+Обычно выбирают
+\[
+    d_k=d_v=\frac{d_{\text{model}}}{h}.
+\]
+Тогда конкатенация голов снова имеет размерность
+$d_{\text{model}}$.
+
+Разные головы могут специализироваться на различных типах
+зависимостей: локальных, синтаксических, позиционных или семантических.
+Такая интерпретация не гарантируется формально, но часто наблюдается
+эмпирически.
+
+\subsection{Позиционная информация}
+
+\subsubsection{Необходимость позиционного кодирования}
+
+Без позиционной информации self-attention не различает порядок
+элементов в последовательности.
+
+\begin{theorem}[Перестановочная эквивариантность self-attention]
+Пусть
+\[
+    \operatorname{SA}(\bm{X})
+    =
+    \softmax\left(
+        \frac{\bm{X}\bm{W}^Q
+        (\bm{X}\bm{W}^K)^{\top}}{\sqrt{d_k}}
+    \right)
+    \bm{X}\bm{W}^V
+\]
+--- self-attention без позиционных признаков и без маски. Для любой
+перестановочной матрицы $\bm{P}\in\R^{n\times n}$ выполняется
+\[
+    \operatorname{SA}(\bm{P}\bm{X})
+    =
+    \bm{P}\operatorname{SA}(\bm{X}).
+\]
+Иными словами, перестановка входных позиций приводит только к такой
+же перестановке выходов.
+\end{theorem}
+
+\begin{proof}
+Положим
+\[
+    \bm{Q}=\bm{X}\bm{W}^Q,\qquad
+    \bm{K}=\bm{X}\bm{W}^K,\qquad
+    \bm{V}=\bm{X}\bm{W}^V.
+\]
+После перестановки строк входа:
+\[
+    \bm{Q}'=\bm{P}\bm{Q},\qquad
+    \bm{K}'=\bm{P}\bm{K},\qquad
+    \bm{V}'=\bm{P}\bm{V}.
+\]
+Матрица логитов преобразуется следующим образом:
+\[
+    \bm{Q}'(\bm{K}')^\top
+    =
+    \bm{P}\bm{Q}\bm{K}^\top\bm{P}^\top.
+\]
+
+Докажем вспомогательное равенство
+\[
+    \softmax(\bm{P}\bm{S}\bm{P}^\top)
+    =
+    \bm{P}\softmax(\bm{S})\bm{P}^\top.
+\]
+Пусть перестановка, задаваемая $\bm{P}$, обозначена через $\pi$.
+Элемент левой части имеет вид
+\[
+    \frac{
+        \exp(S_{\pi(i),\pi(j)})
+    }{
+        \sum_{k=1}^{n}\exp(S_{\pi(i),\pi(k)})
+    }.
+\]
+Поскольку $\pi$ является биекцией, множество индексов
+$\{\pi(k):k=1,\ldots,n\}$ совпадает с $\{1,\ldots,n\}$. Поэтому
+знаменатель равен
+\[
+    \sum_{\ell=1}^{n}\exp(S_{\pi(i),\ell}),
+\]
+а весь элемент совпадает с элементом
+$(i,j)$ матрицы
+$\bm{P}\softmax(\bm{S})\bm{P}^\top$.
+
+Следовательно,
+\begin{align*}
+    \operatorname{SA}(\bm{P}\bm{X})
+    &=
+    \softmax\left(
+        \bm{P}
+        \frac{\bm{Q}\bm{K}^\top}{\sqrt{d_k}}
+        \bm{P}^\top
+    \right)\bm{P}\bm{V}\\
+    &=
+    \bm{P}
+    \softmax\left(
+        \frac{\bm{Q}\bm{K}^\top}{\sqrt{d_k}}
+    \right)
+    \bm{P}^\top\bm{P}\bm{V}\\
+    &=
+    \bm{P}
+    \softmax\left(
+        \frac{\bm{Q}\bm{K}^\top}{\sqrt{d_k}}
+    \right)\bm{V}\\
+    &=
+    \bm{P}\operatorname{SA}(\bm{X}).
+\end{align*}
+Теорема доказана.
+\end{proof}
+
+Позиционные признаки нарушают эту симметрию, позволяя сети различать,
+например, последовательности
+\[
+    (A,B,C)
+    \quad\text{и}\quad
+    (C,B,A).
+\]
+
+\subsubsection{Синусоидальное позиционное кодирование}
+
+Для позиции $p$ и индекса признака $i$ можно определить
+\[
+    \operatorname{PE}(p,2i)
+    =
+    \sin\left(
+        \frac{p}{10000^{2i/d_{\text{model}}}}
+    \right),
+\]
+\[
+    \operatorname{PE}(p,2i+1)
+    =
+    \cos\left(
+        \frac{p}{10000^{2i/d_{\text{model}}}}
+    \right).
+\]
+Вход блока равен
+\[
+    \bm{x}_p=\bm{e}_{w_p}+\operatorname{PE}(p).
+\]
+
+Разные пары координат соответствуют разным частотам. Это позволяет
+представлять как локальные, так и длинные позиционные зависимости.
+
+\subsubsection{Обучаемые позиционные эмбеддинги}
+
+Для каждой позиции задаётся обучаемый вектор
+\[
+    \bm{p}_i\in\R^{d_{\text{model}}},
+    \qquad
+    \bm{x}_i=\bm{e}_{w_i}+\bm{p}_i.
+\]
+Недостаток такого подхода заключается в том, что позиции за пределами
+максимальной длины обучения не имеют непосредственно обученных
+представлений.
+
+\subsubsection{Относительные и вращательные позиции}
+
+Относительные методы кодируют не только абсолютные индексы, но и
+расстояние $i-j$ между позициями.
+
+В RoPE пары координат запросов и ключей поворачиваются на угол,
+зависящий от позиции. Для позиции $m$:
+\[
+    \bm{q}_m'=\bm{R}_m\bm{q}_m,
+    \qquad
+    \bm{k}_n'=\bm{R}_n\bm{k}_n,
+\]
+где $\bm{R}_m$ --- блочно-диагональная ортогональная матрица вращений.
+
+Тогда
+\[
+    (\bm{q}_m')^\top\bm{k}_n'
+    =
+    \bm{q}_m^\top\bm{R}_m^\top\bm{R}_n\bm{k}_n
+    =
+    \bm{q}_m^\top\bm{R}_{n-m}\bm{k}_n.
+\]
+Таким образом, скалярное произведение явно зависит от относительного
+смещения $n-m$.
+
+\subsection{Нормализация, остаточные связи и FFN}
+
+\subsubsection{Layer Normalization}
+
+Для вектора $\bm{x}\in\R^d$ определим
+\[
+    \mu(\bm{x})=\frac{1}{d}\sum_{j=1}^{d}x_j,
+\]
+\[
+    \sigma^2(\bm{x})
+    =
+    \frac{1}{d}\sum_{j=1}^{d}(x_j-\mu(\bm{x}))^2.
+\]
+Тогда
+\[
+    \operatorname{LN}(\bm{x})
+    =
+    \bm{\gamma}\odot
+    \frac{\bm{x}-\mu(\bm{x})\bm{1}}
+         {\sqrt{\sigma^2(\bm{x})+\epsilon}}
+    +
+    \bm{\beta},
+\]
+где $\bm{\gamma}$ и $\bm{\beta}$ --- обучаемые параметры.
+
+Нормализация выполняется отдельно для каждого токена по его признакам,
+поэтому не зависит от размера мини-пакета.
+
+\subsubsection{Позиционно-независимая полносвязная сеть}
+
+После внимания к каждой позиции независимо применяется одна и та же
+сеть:
+\[
+    \operatorname{FFN}(\bm{x})
+    =
+    \phi(\bm{x}\bm{W}_1+\bm{b}_1)\bm{W}_2+\bm{b}_2,
+\]
+где
+\[
+    \bm{W}_1\in\R^{d_{\text{model}}\times d_{\text{ff}}},
+    \qquad
+    \bm{W}_2\in\R^{d_{\text{ff}}\times d_{\text{model}}},
+\]
+а $\phi$ --- нелинейность, например ReLU, GELU или SwiGLU-подобная
+функция.
+
+Внимание смешивает информацию между позициями, а FFN выполняет
+нелинейное преобразование признаков внутри каждой позиции.
+
+\subsubsection{Pre-LN и Post-LN}
+
+В варианте Post-LN подслой вычисляется как
+\[
+    \bm{Y}
+    =
+    \operatorname{LN}
+    \bigl(
+        \bm{X}+\operatorname{Sublayer}(\bm{X})
+    \bigr).
+\]
+
+В варианте Pre-LN:
+\[
+    \bm{Y}
+    =
+    \bm{X}
+    +
+    \operatorname{Sublayer}
+    \bigl(
+        \operatorname{LN}(\bm{X})
+    \bigr).
+\]
+
+Для Pre-LN блок кодировщика можно записать так:
+\[
+    \bm{U}
+    =
+    \bm{X}
+    +
+    \operatorname{MHA}
+    \bigl(
+        \operatorname{LN}(\bm{X}),
+        \operatorname{LN}(\bm{X})
+    \bigr),
+\]
+\[
+    \bm{Y}
+    =
+    \bm{U}
+    +
+    \operatorname{FFN}
+    \bigl(
+        \operatorname{LN}(\bm{U})
+    \bigr).
+\]
+На практике также используются dropout и другие виды регуляризации.
+
+\subsection{Архитектуры трансформеров}
+
+\subsubsection{Кодировщик}
+
+Кодировщик состоит из повторяющихся блоков
+\[
+    \text{self-attention}
+    \longrightarrow
+    \text{FFN}.
+\]
+Self-attention обычно является двунаправленным: каждая позиция может
+обращаться ко всем непустым позициям.
+
+Кодировщик применим к:
+\begin{itemize}
+    \item классификации текста;
+    \item извлечению признаков;
+    \item разметке последовательностей;
+    \item поиску и построению эмбеддингов;
+    \item обработке изображений, аудио и других модальностей.
+\end{itemize}
+
+\subsubsection{Декодировщик}
+
+Авторегрессионный декодировщик содержит причинное self-attention:
+\[
+    p_\theta(w_{1:n})
+    =
+    \prod_{t=1}^{n}
+    p_\theta(w_t\mid w_{<t}).
+\]
+Маска гарантирует, что представление позиции $t$ не зависит от токенов
+$w_{t+1},\ldots,w_n$.
+
+\subsubsection{Кодировщик--декодировщик}
+
+Классическая архитектура преобразования последовательностей состоит
+из:
+\begin{enumerate}
+    \item кодировщика исходной последовательности;
+    \item причинного self-attention в декодировщике;
+    \item cross-attention декодировщика к выходам кодировщика;
+    \item позиционной FFN.
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    box/.style={
+        draw,
+        rounded corners,
+        minimum width=4.2cm,
+        minimum height=0.8cm,
+        align=center,
+        fill=blue!6
+    },
+    arrow/.style={-{Latex[length=2.5mm]},thick},
+    node distance=0.65cm and 1.5cm
+]
+\node[box] (src) {Исходные токены};
+\node[box,below=of src] (srcemb) {Эмбеддинги и позиции};
+\node[box,below=of srcemb] (enc) {Блоки кодировщика\\Self-attention + FFN};
+
+\node[box,right=of src] (tgt) {Сдвинутые целевые токены};
+\node[box,below=of tgt] (tgtemb) {Эмбеддинги и позиции};
+\node[box,below=of tgtemb] (decself) {Причинное self-attention};
+\node[box,below=of decself] (cross) {Cross-attention};
+\node[box,below=of cross] (ffn) {FFN};
+\node[box,below=of ffn] (out) {Логиты следующего токена};
+
+\draw[arrow] (src)--(srcemb);
+\draw[arrow] (srcemb)--(enc);
+\draw[arrow] (tgt)--(tgtemb);
+\draw[arrow] (tgtemb)--(decself);
+\draw[arrow] (decself)--(cross);
+\draw[arrow] (cross)--(ffn);
+\draw[arrow] (ffn)--(out);
+\draw[arrow] (enc.east)--(cross.west);
+\end{tikzpicture}
+\caption{Схема трансформера типа кодировщик--декодировщик.}
+\end{figure}
+
+\subsection{Функции потерь}
+
+\subsubsection{Авторегрессионное моделирование}
+
+Для последовательности $\bm{w}=(w_1,\ldots,w_n)$ минимизируется
+отрицательное логарифмическое правдоподобие
+\[
+    \mathcal{L}_{\text{AR}}(\theta)
+    =
+    -\sum_{t=1}^{n}
+    \log p_\theta(w_t\mid w_{<t}).
+\]
+При наличии контекста $\bm{c}$:
+\[
+    \mathcal{L}_{\text{cond}}(\theta)
+    =
+    -\sum_{t=1}^{n}
+    \log p_\theta(w_t\mid w_{<t},\bm{c}).
+\]
+
+Во время обучения все истинные предыдущие токены доступны одновременно.
+Такой режим называется \textbf{teacher forcing}. Причинная маска
+сохраняет корректную факторизацию вероятности.
+
+\subsubsection{Маскированное моделирование}
+
+Выбирается множество позиций $\mathcal{M}$, часть токенов скрывается,
+после чего минимизируется
+\[
+    \mathcal{L}_{\text{MLM}}(\theta)
+    =
+    -\sum_{i\in\mathcal{M}}
+    \log p_\theta
+    \left(
+        w_i\mid \bm{w}_{\setminus\mathcal{M}}
+    \right).
+\]
+Такая цель естественна для двунаправленных кодировщиков, поскольку
+скрытый токен может восстанавливаться по левому и правому контексту.
+
+\subsubsection{Выходное распределение}
+
+Для скрытого состояния $\bm{h}_t$ вычисляются логиты
+\[
+    \bm{z}_t=\bm{h}_t\bm{W}_{\text{out}}+\bm{b}_{\text{out}}.
+\]
+Вероятность токена $j$:
+\[
+    p_\theta(w_t=j\mid w_{<t})
+    =
+    \frac{\exp(z_{t,j})}
+         {\sum_{k=1}^{|\mathcal{V}|}\exp(z_{t,k})}.
+\]
+
+Нередко входная матрица эмбеддингов и выходная матрица связываются:
+\[
+    \bm{W}_{\text{out}}=\bm{E}^{\top}.
+\]
+
+\subsection{Алгоритмы работы трансформера}
+
+\begin{algorithmbox}{Прямой проход блока Pre-LN Transformer}
+    \item На вход поступает
+    $\bm{X}\in\R^{n\times d_{\text{model}}}$.
+    \item Вычисляется нормализованный вход
+    \[
+        \bm{X}_{\text{norm}}=\operatorname{LN}(\bm{X}).
+    \]
+    \item Для каждой головы строятся запросы, ключи и значения.
+    \item Вычисляются логиты
+    \[
+        \bm{S}_r
+        =
+        \frac{\bm{Q}_r\bm{K}_r^\top}{\sqrt{d_k}}+\bm{M}.
+    \]
+    \item К логитам применяется softmax, после чего значения
+    агрегируются:
+    \[
+        \bm{H}_r=\softmax(\bm{S}_r)\bm{V}_r.
+    \]
+    \item Выходы голов конкатенируются и проецируются:
+    \[
+        \bm{H}
+        =
+        \operatorname{Concat}(\bm{H}_1,\ldots,\bm{H}_h)\bm{W}^O.
+    \]
+    \item Добавляется остаточная связь:
+    \[
+        \bm{U}=\bm{X}+\bm{H}.
+    \]
+    \item Выполняется второй подслой:
+    \[
+        \bm{Y}
+        =
+        \bm{U}
+        +
+        \operatorname{FFN}
+        \bigl(
+            \operatorname{LN}(\bm{U})
+        \bigr).
+    \]
+    \item Матрица $\bm{Y}$ передаётся следующему блоку.
+\end{algorithmbox}
+
+\begin{algorithmbox}{Авторегрессионная генерация}
+    \item Токенизировать контекст
+    $(w_1,\ldots,w_m)$.
+    \item Выполнить прямой проход и получить логиты следующего токена.
+    \item Преобразовать логиты в распределение с температурой
+    $\tau>0$:
+    \[
+        p_j
+        =
+        \frac{\exp(z_j/\tau)}
+             {\sum_k\exp(z_k/\tau)}.
+    \]
+    \item Выбрать следующий токен:
+    \begin{itemize}
+        \item максимум вероятности;
+        \item случайная выборка;
+        \item top-$k$;
+        \item nucleus sampling по минимальному множеству токенов с
+        суммарной вероятностью не меньше заданного порога.
+    \end{itemize}
+    \item Добавить выбранный токен к контексту.
+    \item Повторять шаги 2--5 до появления токена конца или достижения
+    максимальной длины.
+\end{algorithmbox}
+
+\paragraph{Минимальная иллюстрация.}
+Пусть после контекста ``нейронная сеть'' модель выдаёт вероятности
+\[
+    p(\text{обучается})=0.55,\quad
+    p(\text{состоит})=0.25,\quad
+    p(\text{работает})=0.20.
+\]
+Жадный алгоритм выберет ``обучается''. При случайном декодировании
+возможны все три продолжения с указанными вероятностями.
+
+\subsection{KV-кэш при генерации}
+
+В причинном self-attention ключи и значения уже обработанных токенов
+не меняются. Поэтому для каждого слоя можно сохранять
+\[
+    \bm{K}_{1:t-1},\qquad \bm{V}_{1:t-1}.
+\]
+Для нового токена вычисляются только
+\[
+    \bm{q}_t,\qquad \bm{k}_t,\qquad \bm{v}_t,
+\]
+после чего
+\[
+    \bm{K}_{1:t}
+    =
+    \operatorname{Concat}(\bm{K}_{1:t-1},\bm{k}_t),
+\]
+\[
+    \bm{V}_{1:t}
+    =
+    \operatorname{Concat}(\bm{V}_{1:t-1},\bm{v}_t).
+\]
+
+KV-кэш уменьшает количество повторных вычислений, но требует памяти,
+линейно растущей с длиной контекста, числом слоёв и размерностью
+ключей и значений.
+
+\subsection{Вычислительная сложность}
+
+Для последовательности длины $n$:
+\begin{itemize}
+    \item построение матрицы $\bm{Q}\bm{K}^{\top}$ требует порядка
+    $O(n^2d_k)$ операций;
+    \item хранение полной матрицы внимания требует $O(n^2)$ памяти
+    на голову;
+    \item линейные проекции требуют порядка $O(nd_{\text{model}}^2)$;
+    \item FFN требует порядка
+    $O(nd_{\text{model}}d_{\text{ff}})$.
+\end{itemize}
+
+Основное ограничение стандартного внимания для длинных
+последовательностей --- квадратичный рост матрицы внимания.
+
+Возможные способы уменьшения затрат:
+\begin{itemize}
+    \item локальное внимание;
+    \item блочное и разреженное внимание;
+    \item низкоранговые аппроксимации;
+    \item линейное внимание;
+    \item объединение близких токенов;
+    \item обработка последовательности по сегментам.
+\end{itemize}
+
+\subsection{Основные достоинства и ограничения}
+
+\paragraph{Достоинства.}
+\begin{itemize}
+    \item Параллельная обработка всех позиций при обучении.
+    \item Короткий путь передачи информации между удалёнными
+    позициями.
+    \item Универсальность относительно модальности данных.
+    \item Возможность масштабирования глубины, ширины, числа голов и
+    объёма данных.
+    \item Естественная поддержка условной генерации через
+    cross-attention.
+\end{itemize}
+
+\paragraph{Ограничения.}
+\begin{itemize}
+    \item Квадратичная сложность полного внимания.
+    \item Последовательная авторегрессионная генерация.
+    \item Большой объём памяти для параметров, активаций и KV-кэша.
+    \item Зависимость от токенизации и обучающего распределения.
+    \item Отсутствие гарантии фактической достоверности генерируемого
+    текста.
+\end{itemize}
+
+% ================================================================
+\section{Диффузионные модели}
+% ================================================================
+
+\subsection{Общая идея}
+
+Пусть наблюдаемые данные имеют неизвестное распределение
+\[
+    \bm{x}_0\sim q_{\text{data}}(\bm{x}_0).
+\]
+Прямая диффузия постепенно разрушает структуру данных, добавляя шум:
+\[
+    \bm{x}_0
+    \longrightarrow
+    \bm{x}_1
+    \longrightarrow
+    \cdots
+    \longrightarrow
+    \bm{x}_T.
+\]
+При достаточно большом $T$ распределение $\bm{x}_T$ становится близким
+к простому априорному распределению, обычно $\N(\bm{0},\bm{I})$.
+
+Затем обучается обратный процесс:
+\[
+    \bm{x}_T
+    \longrightarrow
+    \bm{x}_{T-1}
+    \longrightarrow
+    \cdots
+    \longrightarrow
+    \bm{x}_0,
+\]
+который удаляет шум и восстанавливает структуру данных.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    state/.style={
+        draw,
+        circle,
+        minimum size=1.25cm,
+        fill=blue!6
+    },
+    fwd/.style={-{Latex[length=2.5mm]},thick},
+    rev/.style={-{Latex[length=2.5mm]},thick,dashed,red!65!black},
+    node distance=1.7cm
+]
+\node[state] (x0) {$\bm{x}_0$};
+\node[state,right=of x0] (x1) {$\bm{x}_1$};
+\node[state,right=of x1] (x2) {$\bm{x}_2$};
+\node[right=of x2] (dots) {$\cdots$};
+\node[state,right=of dots] (xt) {$\bm{x}_T$};
+
+\draw[fwd,bend left=14] (x0) to node[above] {$q$} (x1);
+\draw[fwd,bend left=14] (x1) to node[above] {$q$} (x2);
+\draw[fwd,bend left=14] (x2) to (dots);
+\draw[fwd,bend left=14] (dots) to (xt);
+
+\draw[rev,bend left=14] (xt) to node[below] {$p_\theta$} (dots);
+\draw[rev,bend left=14] (dots) to (x2);
+\draw[rev,bend left=14] (x2) to node[below] {$p_\theta$} (x1);
+\draw[rev,bend left=14] (x1) to node[below] {$p_\theta$} (x0);
+\end{tikzpicture}
+\caption{Прямой процесс добавляет шум, обратный процесс удаляет его.}
+\end{figure}
+
+\subsection{Прямой процесс DDPM}
+
+Выбирается расписание шума
+\[
+    0<\beta_1<\beta_2<\cdots<\beta_T<1.
+\]
+Обозначим
+\[
+    \alpha_t=1-\beta_t,
+    \qquad
+    \overline{\alpha}_t
+    =
+    \prod_{s=1}^{t}\alpha_s,
+    \qquad
+    \overline{\alpha}_0=1.
+\]
+
+Прямой марковский процесс задаётся распределениями
+\[
+    q(\bm{x}_{1:T}\mid\bm{x}_0)
+    =
+    \prod_{t=1}^{T}
+    q(\bm{x}_t\mid\bm{x}_{t-1}),
+\]
+где
+\[
+    q(\bm{x}_t\mid\bm{x}_{t-1})
+    =
+    \N\left(
+        \bm{x}_t;
+        \sqrt{\alpha_t}\bm{x}_{t-1},
+        \beta_t\bm{I}
+    \right).
+\]
+Эквивалентная репараметризация:
+\[
+    \bm{x}_t
+    =
+    \sqrt{\alpha_t}\bm{x}_{t-1}
+    +
+    \sqrt{\beta_t}\bm{z}_t,
+    \qquad
+    \bm{z}_t\sim\N(\bm{0},\bm{I}).
+\]
+
+\subsection{Закрытая формула зашумления}
+
+\begin{theorem}[Распределение \(\bm{x}_t\) при известном \(\bm{x}_0\)]
+Для прямого процесса
+\[
+    q(\bm{x}_t\mid\bm{x}_{t-1})
+    =
+    \N\left(
+        \sqrt{\alpha_t}\bm{x}_{t-1},
+        \beta_t\bm{I}
+    \right)
+\]
+выполняется
+\[
+    q(\bm{x}_t\mid\bm{x}_0)
+    =
+    \N\left(
+        \sqrt{\overline{\alpha}_t}\bm{x}_0,
+        (1-\overline{\alpha}_t)\bm{I}
+    \right).
+\]
+Следовательно,
+\[
+    \bm{x}_t
+    =
+    \sqrt{\overline{\alpha}_t}\bm{x}_0
+    +
+    \sqrt{1-\overline{\alpha}_t}\bm{\eps},
+    \qquad
+    \bm{\eps}\sim\N(\bm{0},\bm{I}).
+\]
+\end{theorem}
+
+\begin{proof}
+Докажем утверждение по индукции.
+
+Для $t=1$:
+\[
+    \bm{x}_1
+    =
+    \sqrt{\alpha_1}\bm{x}_0
+    +
+    \sqrt{\beta_1}\bm{z}_1.
+\]
+Поскольку
+\[
+    \overline{\alpha}_1=\alpha_1,
+    \qquad
+    1-\overline{\alpha}_1
+    =
+    1-\alpha_1
+    =
+    \beta_1,
+\]
+получаем требуемую формулу.
+
+Предположим, что для $t-1$:
+\[
+    \bm{x}_{t-1}
+    =
+    \sqrt{\overline{\alpha}_{t-1}}\bm{x}_0
+    +
+    \sqrt{1-\overline{\alpha}_{t-1}}\bm{\eps}_{t-1},
+\]
+где
+\[
+    \bm{\eps}_{t-1}\sim\N(\bm{0},\bm{I}).
+\]
+Тогда
+\begin{align*}
+    \bm{x}_t
+    &=
+    \sqrt{\alpha_t}\bm{x}_{t-1}
+    +
+    \sqrt{\beta_t}\bm{z}_t\\
+    &=
+    \sqrt{\alpha_t\overline{\alpha}_{t-1}}\bm{x}_0
+    +
+    \sqrt{\alpha_t(1-\overline{\alpha}_{t-1})}
+    \bm{\eps}_{t-1}
+    +
+    \sqrt{\beta_t}\bm{z}_t\\
+    &=
+    \sqrt{\overline{\alpha}_t}\bm{x}_0
+    +
+    \bm{\eta}_t,
+\end{align*}
+где
+\[
+    \bm{\eta}_t
+    =
+    \sqrt{\alpha_t(1-\overline{\alpha}_{t-1})}
+    \bm{\eps}_{t-1}
+    +
+    \sqrt{\beta_t}\bm{z}_t.
+\]
+Векторы $\bm{\eps}_{t-1}$ и $\bm{z}_t$ независимы и имеют стандартное
+нормальное распределение. Поэтому $\bm{\eta}_t$ также имеет нормальное
+распределение с нулевым средним и ковариацией
+\begin{align*}
+    \Cov(\bm{\eta}_t)
+    &=
+    \left[
+        \alpha_t(1-\overline{\alpha}_{t-1})
+        +
+        \beta_t
+    \right]\bm{I}\\
+    &=
+    \left[
+        \alpha_t
+        -
+        \alpha_t\overline{\alpha}_{t-1}
+        +
+        1-\alpha_t
+    \right]\bm{I}\\
+    &=
+    (1-\overline{\alpha}_t)\bm{I}.
+\end{align*}
+Следовательно,
+\[
+    \bm{\eta}_t
+    \overset{d}{=}
+    \sqrt{1-\overline{\alpha}_t}\bm{\eps},
+    \qquad
+    \bm{\eps}\sim\N(\bm{0},\bm{I}).
+\]
+Индукционный переход доказан.
+\end{proof}
+
+Важное следствие: для обучения не требуется последовательно
+выполнять $t$ шагов зашумления. Любой уровень шума можно получить
+непосредственно:
+\[
+    \bm{x}_t
+    =
+    \sqrt{\overline{\alpha}_t}\bm{x}_0
+    +
+    \sqrt{1-\overline{\alpha}_t}\bm{\eps}.
+\]
+
+Если $\overline{\alpha}_T\approx 0$, то
+\[
+    q(\bm{x}_T\mid\bm{x}_0)
+    \approx
+    \N(\bm{0},\bm{I}).
+\]
+
+\subsection{Апостериорное распределение прямого процесса}
+
+Для обучения обратного перехода требуется распределение
+\[
+    q(\bm{x}_{t-1}\mid\bm{x}_t,\bm{x}_0).
+\]
+
+\begin{theorem}[Точный апостериорный переход]
+Для $t\geq 2$ выполняется
+\[
+    q(\bm{x}_{t-1}\mid\bm{x}_t,\bm{x}_0)
+    =
+    \N\left(
+        \bm{x}_{t-1};
+        \widetilde{\bm{\mu}}_t(\bm{x}_t,\bm{x}_0),
+        \widetilde{\beta}_t\bm{I}
+    \right),
+\]
+где
+\[
+    \widetilde{\beta}_t
+    =
+    \frac{1-\overline{\alpha}_{t-1}}
+         {1-\overline{\alpha}_t}
+    \beta_t
+\]
+и
+\[
+    \widetilde{\bm{\mu}}_t(\bm{x}_t,\bm{x}_0)
+    =
+    \frac{
+        \sqrt{\overline{\alpha}_{t-1}}\beta_t
+    }{
+        1-\overline{\alpha}_t
+    }\bm{x}_0
+    +
+    \frac{
+        \sqrt{\alpha_t}
+        (1-\overline{\alpha}_{t-1})
+    }{
+        1-\overline{\alpha}_t
+    }\bm{x}_t.
+\]
+\end{theorem}
+
+\begin{proof}
+По формуле Байеса и марковскому свойству
+\[
+    q(\bm{x}_{t-1}\mid\bm{x}_t,\bm{x}_0)
+    \propto
+    q(\bm{x}_t\mid\bm{x}_{t-1})
+    q(\bm{x}_{t-1}\mid\bm{x}_0).
+\]
+Из определения прямого процесса:
+\[
+    q(\bm{x}_t\mid\bm{x}_{t-1})
+    \propto
+    \exp\left(
+        -
+        \frac{
+            \|\bm{x}_t-\sqrt{\alpha_t}\bm{x}_{t-1}\|^2
+        }{
+            2\beta_t
+        }
+    \right).
+\]
+По предыдущей теореме:
+\[
+    q(\bm{x}_{t-1}\mid\bm{x}_0)
+    \propto
+    \exp\left(
+        -
+        \frac{
+            \|\bm{x}_{t-1}
+            -\sqrt{\overline{\alpha}_{t-1}}\bm{x}_0\|^2
+        }{
+            2(1-\overline{\alpha}_{t-1})
+        }
+    \right).
+\]
+
+Логарифм произведения с точностью до константы равен
+\begin{align*}
+    &-
+    \frac{1}{2\beta_t}
+    \|\bm{x}_t-\sqrt{\alpha_t}\bm{x}_{t-1}\|^2\\
+    &\quad
+    -
+    \frac{1}{2(1-\overline{\alpha}_{t-1})}
+    \|\bm{x}_{t-1}
+    -\sqrt{\overline{\alpha}_{t-1}}\bm{x}_0\|^2.
+\end{align*}
+
+Коэффициент при
+$\bm{x}_{t-1}^{\top}\bm{x}_{t-1}$ равен
+\[
+    \frac{\alpha_t}{\beta_t}
+    +
+    \frac{1}{1-\overline{\alpha}_{t-1}}.
+\]
+Приведём к общему знаменателю:
+\begin{align*}
+    \frac{\alpha_t}{\beta_t}
+    +
+    \frac{1}{1-\overline{\alpha}_{t-1}}
+    &=
+    \frac{
+        \alpha_t(1-\overline{\alpha}_{t-1})+\beta_t
+    }{
+        \beta_t(1-\overline{\alpha}_{t-1})
+    }\\
+    &=
+    \frac{
+        1-\alpha_t\overline{\alpha}_{t-1}
+    }{
+        \beta_t(1-\overline{\alpha}_{t-1})
+    }\\
+    &=
+    \frac{
+        1-\overline{\alpha}_t
+    }{
+        \beta_t(1-\overline{\alpha}_{t-1})
+    }.
+\end{align*}
+Следовательно, ковариация равна обратной величине:
+\[
+    \widetilde{\beta}_t\bm{I}
+    =
+    \frac{
+        \beta_t(1-\overline{\alpha}_{t-1})
+    }{
+        1-\overline{\alpha}_t
+    }\bm{I}.
+\]
+
+Линейная по $\bm{x}_{t-1}$ часть имеет коэффициент
+\[
+    \frac{\sqrt{\alpha_t}}{\beta_t}\bm{x}_t
+    +
+    \frac{
+        \sqrt{\overline{\alpha}_{t-1}}
+    }{
+        1-\overline{\alpha}_{t-1}
+    }\bm{x}_0.
+\]
+Умножая его на ковариацию, получаем среднее:
+\begin{align*}
+    \widetilde{\bm{\mu}}_t
+    &=
+    \widetilde{\beta}_t
+    \left[
+        \frac{\sqrt{\alpha_t}}{\beta_t}\bm{x}_t
+        +
+        \frac{
+            \sqrt{\overline{\alpha}_{t-1}}
+        }{
+            1-\overline{\alpha}_{t-1}
+        }\bm{x}_0
+    \right]\\
+    &=
+    \frac{
+        \sqrt{\alpha_t}
+        (1-\overline{\alpha}_{t-1})
+    }{
+        1-\overline{\alpha}_t
+    }\bm{x}_t
+    +
+    \frac{
+        \sqrt{\overline{\alpha}_{t-1}}\beta_t
+    }{
+        1-\overline{\alpha}_t
+    }\bm{x}_0.
+\end{align*}
+Это доказывает требуемую формулу.
+\end{proof}
+
+\subsection{Обратный генеративный процесс}
+
+Генеративная модель задаётся как
+\[
+    p_\theta(\bm{x}_{0:T})
+    =
+    p(\bm{x}_T)
+    \prod_{t=1}^{T}
+    p_\theta(\bm{x}_{t-1}\mid\bm{x}_t),
+\]
+где
+\[
+    p(\bm{x}_T)=\N(\bm{0},\bm{I}),
+\]
+\[
+    p_\theta(\bm{x}_{t-1}\mid\bm{x}_t)
+    =
+    \N\left(
+        \bm{x}_{t-1};
+        \bm{\mu}_\theta(\bm{x}_t,t),
+        \bm{\Sigma}_\theta(\bm{x}_t,t)
+    \right).
+\]
+
+Обратное распределение неизвестно, поскольку оно зависит от
+распределения реальных данных. Его параметры аппроксимируются
+нейронной сетью.
+
+\subsection{Вариационная нижняя граница}
+
+\begin{theorem}[Вариационная верхняя оценка отрицательного
+логарифмического правдоподобия]
+Для любого прямого распределения
+$q(\bm{x}_{1:T}\mid\bm{x}_0)$ выполняется
+\[
+    -\log p_\theta(\bm{x}_0)
+    \leq
+    \E_q
+    \left[
+        \log
+        \frac{
+            q(\bm{x}_{1:T}\mid\bm{x}_0)
+        }{
+            p_\theta(\bm{x}_{0:T})
+        }
+    \right].
+\]
+Кроме того, правая часть раскладывается как
+\begin{align*}
+    \mathcal{L}_{\mathrm{VLB}}
+    &=
+    \KL\left(
+        q(\bm{x}_T\mid\bm{x}_0)
+        \,\|\,p(\bm{x}_T)
+    \right)\\
+    &\quad+
+    \sum_{t=2}^{T}
+    \E_{q(\bm{x}_t\mid\bm{x}_0)}
+    \left[
+        \KL\left(
+            q(\bm{x}_{t-1}\mid\bm{x}_t,\bm{x}_0)
+            \,\|\,
+            p_\theta(\bm{x}_{t-1}\mid\bm{x}_t)
+        \right)
+    \right]\\
+    &\quad-
+    \E_{q(\bm{x}_1\mid\bm{x}_0)}
+    \left[
+        \log p_\theta(\bm{x}_0\mid\bm{x}_1)
+    \right].
+\end{align*}
+\end{theorem}
+
+\begin{proof}
+Запишем маргинальное правдоподобие:
+\[
+    p_\theta(\bm{x}_0)
+    =
+    \int
+    p_\theta(\bm{x}_{0:T})
+    \dd\bm{x}_{1:T}.
+\]
+Умножим и разделим подынтегральное выражение на
+$q(\bm{x}_{1:T}\mid\bm{x}_0)$:
+\[
+    p_\theta(\bm{x}_0)
+    =
+    \int
+    q(\bm{x}_{1:T}\mid\bm{x}_0)
+    \frac{
+        p_\theta(\bm{x}_{0:T})
+    }{
+        q(\bm{x}_{1:T}\mid\bm{x}_0)
+    }
+    \dd\bm{x}_{1:T}.
+\]
+Следовательно,
+\[
+    p_\theta(\bm{x}_0)
+    =
+    \E_q
+    \left[
+        \frac{
+            p_\theta(\bm{x}_{0:T})
+        }{
+            q(\bm{x}_{1:T}\mid\bm{x}_0)
+        }
+    \right].
+\]
+По неравенству Йенсена для вогнутой функции $\log$:
+\[
+    \log p_\theta(\bm{x}_0)
+    \geq
+    \E_q
+    \left[
+        \log
+        \frac{
+            p_\theta(\bm{x}_{0:T})
+        }{
+            q(\bm{x}_{1:T}\mid\bm{x}_0)
+        }
+    \right].
+\]
+После умножения на $-1$:
+\[
+    -\log p_\theta(\bm{x}_0)
+    \leq
+    \E_q
+    \left[
+        \log
+        \frac{
+            q(\bm{x}_{1:T}\mid\bm{x}_0)
+        }{
+            p_\theta(\bm{x}_{0:T})
+        }
+    \right].
+\]
+
+Теперь воспользуемся обратной факторизацией прямого процесса:
+\[
+    q(\bm{x}_{1:T}\mid\bm{x}_0)
+    =
+    q(\bm{x}_T\mid\bm{x}_0)
+    \prod_{t=2}^{T}
+    q(\bm{x}_{t-1}\mid\bm{x}_t,\bm{x}_0).
+\]
+Генеративный процесс факторизуется как
+\[
+    p_\theta(\bm{x}_{0:T})
+    =
+    p(\bm{x}_T)
+    p_\theta(\bm{x}_0\mid\bm{x}_1)
+    \prod_{t=2}^{T}
+    p_\theta(\bm{x}_{t-1}\mid\bm{x}_t).
+\]
+Поэтому
+\begin{align*}
+    \log
+    \frac{
+        q(\bm{x}_{1:T}\mid\bm{x}_0)
+    }{
+        p_\theta(\bm{x}_{0:T})
+    }
+    &=
+    \log
+    \frac{
+        q(\bm{x}_T\mid\bm{x}_0)
+    }{
+        p(\bm{x}_T)
+    }\\
+    &\quad+
+    \sum_{t=2}^{T}
+    \log
+    \frac{
+        q(\bm{x}_{t-1}\mid\bm{x}_t,\bm{x}_0)
+    }{
+        p_\theta(\bm{x}_{t-1}\mid\bm{x}_t)
+    }\\
+    &\quad-
+    \log p_\theta(\bm{x}_0\mid\bm{x}_1).
+\end{align*}
+Взятие математического ожидания от первого отношения даёт
+соответствующую KL-дивергенцию. Условное ожидание каждого слагаемого
+суммы по $\bm{x}_{t-1}$ также даёт KL-дивергенцию. Последнее
+слагаемое является ошибкой реконструкции. Получаем требуемое
+разложение.
+\end{proof}
+
+Первое слагаемое не содержит обучаемых параметров, если расписание
+шума фиксировано. Основное обучение связано с приближением точных
+обратных переходов.
+
+\subsection{Параметризации нейронной сети}
+
+\subsubsection{Предсказание исходного объекта}
+
+Сеть может предсказывать
+\[
+    \widehat{\bm{x}}_{0,\theta}
+    =
+    \bm{x}_\theta(\bm{x}_t,t).
+\]
+
+\subsubsection{Предсказание шума}
+
+Из формулы зашумления
+\[
+    \bm{x}_t
+    =
+    \sqrt{\overline{\alpha}_t}\bm{x}_0
+    +
+    \sqrt{1-\overline{\alpha}_t}\bm{\eps}
+\]
+следует
+\[
+    \bm{x}_0
+    =
+    \frac{
+        \bm{x}_t
+        -
+        \sqrt{1-\overline{\alpha}_t}\bm{\eps}
+    }{
+        \sqrt{\overline{\alpha}_t}
+    }.
+\]
+Если сеть предсказывает шум
+$\bm{\eps}_\theta(\bm{x}_t,t)$, то
+\[
+    \widehat{\bm{x}}_{0,\theta}
+    =
+    \frac{
+        \bm{x}_t
+        -
+        \sqrt{1-\overline{\alpha}_t}
+        \bm{\eps}_\theta(\bm{x}_t,t)
+    }{
+        \sqrt{\overline{\alpha}_t}
+    }.
+\]
+
+Среднее обратного процесса удобно параметризовать как
+\[
+    \bm{\mu}_\theta(\bm{x}_t,t)
+    =
+    \frac{1}{\sqrt{\alpha_t}}
+    \left(
+        \bm{x}_t
+        -
+        \frac{\beta_t}
+             {\sqrt{1-\overline{\alpha}_t}}
+        \bm{\eps}_\theta(\bm{x}_t,t)
+    \right).
+\]
+
+\subsubsection{\(v\)-параметризация}
+
+Положим
+\[
+    a_t=\sqrt{\overline{\alpha}_t},
+    \qquad
+    b_t=\sqrt{1-\overline{\alpha}_t}.
+\]
+Тогда
+\[
+    \bm{x}_t=a_t\bm{x}_0+b_t\bm{\eps}.
+\]
+Определим
+\[
+    \bm{v}_t=a_t\bm{\eps}-b_t\bm{x}_0.
+\]
+Поскольку $a_t^2+b_t^2=1$, обратное преобразование имеет вид
+\[
+    \bm{x}_0=a_t\bm{x}_t-b_t\bm{v}_t,
+\]
+\[
+    \bm{\eps}=b_t\bm{x}_t+a_t\bm{v}_t.
+\]
+Сеть может обучаться предсказывать $\bm{v}_t$ вместо
+$\bm{x}_0$ или $\bm{\eps}$.
+
+\subsection{Связь вариационной цели с MSE шума}
+
+\begin{theorem}[Квадратичная ошибка предсказания шума]
+Пусть
+\[
+    p_\theta(\bm{x}_{t-1}\mid\bm{x}_t)
+    =
+    \N(
+        \bm{\mu}_\theta(\bm{x}_t,t),
+        \sigma_t^2\bm{I}
+    ),
+\]
+где $\sigma_t^2$ не зависит от $\theta$, и
+\[
+    \bm{\mu}_\theta(\bm{x}_t,t)
+    =
+    \frac{1}{\sqrt{\alpha_t}}
+    \left(
+        \bm{x}_t
+        -
+        \frac{\beta_t}
+             {\sqrt{1-\overline{\alpha}_t}}
+        \bm{\eps}_\theta(\bm{x}_t,t)
+    \right).
+\]
+Тогда зависящая от $\theta$ часть
+\[
+    \KL\left(
+        q(\bm{x}_{t-1}\mid\bm{x}_t,\bm{x}_0)
+        \,\|\,
+        p_\theta(\bm{x}_{t-1}\mid\bm{x}_t)
+    \right)
+\]
+равна
+\[
+    \frac{
+        \beta_t^2
+    }{
+        2\sigma_t^2\alpha_t
+        (1-\overline{\alpha}_t)
+    }
+    \left\|
+        \bm{\eps}
+        -
+        \bm{\eps}_\theta(\bm{x}_t,t)
+    \right\|^2
+\]
+с точностью до слагаемого, не зависящего от $\theta$.
+\end{theorem}
+
+\begin{proof}
+Точное среднее апостериорного перехода можно переписать через шум.
+Так как
+\[
+    \bm{x}_t
+    =
+    \sqrt{\overline{\alpha}_t}\bm{x}_0
+    +
+    \sqrt{1-\overline{\alpha}_t}\bm{\eps},
+\]
+имеем
+\[
+    \bm{x}_0
+    =
+    \frac{
+        \bm{x}_t
+        -
+        \sqrt{1-\overline{\alpha}_t}\bm{\eps}
+    }{
+        \sqrt{\overline{\alpha}_t}
+    }.
+\]
+Подстановка в формулу для
+$\widetilde{\bm{\mu}}_t(\bm{x}_t,\bm{x}_0)$ и упрощение дают
+\[
+    \widetilde{\bm{\mu}}_t
+    =
+    \frac{1}{\sqrt{\alpha_t}}
+    \left(
+        \bm{x}_t
+        -
+        \frac{\beta_t}
+             {\sqrt{1-\overline{\alpha}_t}}
+        \bm{\eps}
+    \right).
+\]
+
+Для двух нормальных распределений
+\[
+    q=\N(\bm{\mu}_q,\bm{\Sigma}_q),
+    \qquad
+    p=\N(\bm{\mu}_p,\bm{\Sigma}_p)
+\]
+KL-дивергенция содержит зависящее от средних слагаемое
+\[
+    \frac{1}{2}
+    (\bm{\mu}_p-\bm{\mu}_q)^\top
+    \bm{\Sigma}_p^{-1}
+    (\bm{\mu}_p-\bm{\mu}_q).
+\]
+В рассматриваемом случае
+\[
+    \bm{\Sigma}_p=\sigma_t^2\bm{I},
+    \qquad
+    \bm{\Sigma}_p^{-1}
+    =
+    \frac{1}{\sigma_t^2}\bm{I}.
+\]
+Поэтому зависящая от $\theta$ часть равна
+\[
+    \frac{1}{2\sigma_t^2}
+    \|\bm{\mu}_\theta-\widetilde{\bm{\mu}}_t\|^2.
+\]
+
+Разность средних:
+\begin{align*}
+    \bm{\mu}_\theta-\widetilde{\bm{\mu}}_t
+    &=
+    \frac{1}{\sqrt{\alpha_t}}
+    \left(
+        -
+        \frac{\beta_t}
+             {\sqrt{1-\overline{\alpha}_t}}
+        \bm{\eps}_\theta
+        +
+        \frac{\beta_t}
+             {\sqrt{1-\overline{\alpha}_t}}
+        \bm{\eps}
+    \right)\\
+    &=
+    \frac{\beta_t}
+         {\sqrt{\alpha_t}
+          \sqrt{1-\overline{\alpha}_t}}
+    (\bm{\eps}-\bm{\eps}_\theta).
+\end{align*}
+Следовательно,
+\[
+    \frac{1}{2\sigma_t^2}
+    \|\bm{\mu}_\theta-\widetilde{\bm{\mu}}_t\|^2
+    =
+    \frac{
+        \beta_t^2
+    }{
+        2\sigma_t^2\alpha_t
+        (1-\overline{\alpha}_t)
+    }
+    \|\bm{\eps}-\bm{\eps}_\theta\|^2.
+\]
+Оставшиеся члены KL-дивергенции зависят от ковариаций, но не от
+$\theta$ при фиксированной $\sigma_t^2$.
+\end{proof}
+
+На практике часто используется упрощённая невзвешенная функция потерь
+\[
+    \mathcal{L}_{\text{simple}}(\theta)
+    =
+    \E_{
+        \bm{x}_0,\,
+        t,\,
+        \bm{\eps}
+    }
+    \left[
+        \left\|
+            \bm{\eps}
+            -
+            \bm{\eps}_\theta(\bm{x}_t,t)
+        \right\|_2^2
+    \right],
+\]
+где
+\[
+    \bm{x}_t
+    =
+    \sqrt{\overline{\alpha}_t}\bm{x}_0
+    +
+    \sqrt{1-\overline{\alpha}_t}\bm{\eps}.
+\]
+
+\subsection{Алгоритм обучения DDPM}
+
+\begin{algorithmbox}{Обучение модели предсказания шума}
+    \item Выбрать объект
+    \[
+        \bm{x}_0\sim q_{\text{data}}.
+    \]
+    \item Выбрать момент времени, например
+    \[
+        t\sim\operatorname{Uniform}\{1,\ldots,T\}.
+    \]
+    \item Сгенерировать шум
+    \[
+        \bm{\eps}\sim\N(\bm{0},\bm{I}).
+    \]
+    \item Получить зашумлённый объект напрямую:
+    \[
+        \bm{x}_t
+        =
+        \sqrt{\overline{\alpha}_t}\bm{x}_0
+        +
+        \sqrt{1-\overline{\alpha}_t}\bm{\eps}.
+    \]
+    \item Передать $\bm{x}_t$ и эмбеддинг времени $t$ в нейронную сеть:
+    \[
+        \widehat{\bm{\eps}}
+        =
+        \bm{\eps}_\theta(\bm{x}_t,t).
+    \]
+    \item Вычислить ошибку
+    \[
+        \mathcal{L}
+        =
+        \|\bm{\eps}-\widehat{\bm{\eps}}\|^2.
+    \]
+    \item Обновить параметры $\theta$ методом стохастического
+    градиентного спуска.
+\end{algorithmbox}
+
+Для одного обучающего примера вычисляется только один случайный уровень
+шума. Поэтому стоимость шага обучения не пропорциональна $T$.
+
+\subsection{Алгоритм генерации DDPM}
+
+\begin{algorithmbox}{Стохастическая генерация DDPM}
+    \item Сгенерировать начальный шум
+    \[
+        \bm{x}_T\sim\N(\bm{0},\bm{I}).
+    \]
+    \item Для $t=T,T-1,\ldots,1$ выполнить следующие шаги.
+    \item Предсказать шум:
+    \[
+        \widehat{\bm{\eps}}
+        =
+        \bm{\eps}_\theta(\bm{x}_t,t).
+    \]
+    \item Вычислить среднее обратного перехода:
+    \[
+        \bm{\mu}_\theta
+        =
+        \frac{1}{\sqrt{\alpha_t}}
+        \left(
+            \bm{x}_t
+            -
+            \frac{\beta_t}
+                 {\sqrt{1-\overline{\alpha}_t}}
+            \widehat{\bm{\eps}}
+        \right).
+    \]
+    \item Если $t>1$, сгенерировать
+    \[
+        \bm{z}\sim\N(\bm{0},\bm{I}),
+    \]
+    иначе положить $\bm{z}=\bm{0}$.
+    \item Выполнить переход
+    \[
+        \bm{x}_{t-1}
+        =
+        \bm{\mu}_\theta
+        +
+        \sigma_t\bm{z}.
+    \]
+    Частый выбор:
+    \[
+        \sigma_t^2=\widetilde{\beta}_t.
+    \]
+    \item Вернуть итоговый объект $\bm{x}_0$.
+\end{algorithmbox}
+
+Обучение допускает параллельную обработку объектов мини-пакета, но
+стандартная генерация последовательна по времени: следующий шаг
+зависит от результата предыдущего.
+
+\subsection{Минимальный одномерный пример}
+
+Пусть
+\[
+    x_0=2,\qquad
+    \beta_1=0.1,\qquad
+    \beta_2=0.2.
+\]
+Тогда
+\[
+    \alpha_1=0.9,\qquad
+    \alpha_2=0.8,
+\]
+\[
+    \overline{\alpha}_1=0.9,\qquad
+    \overline{\alpha}_2=0.72.
+\]
+
+Возьмём шум $\eps=-0.5$. Прямое зашумление до момента $t=2$:
+\begin{align*}
+    x_2
+    &=
+    \sqrt{0.72}\cdot 2
+    +
+    \sqrt{0.28}\cdot(-0.5)\\
+    &\approx
+    1.6971-0.2646\\
+    &\approx 1.4325.
+\end{align*}
+
+Пусть нейронная сеть предсказала
+\[
+    \eps_\theta(x_2,2)=-0.45.
+\]
+Среднее обратного перехода:
+\begin{align*}
+    \mu_\theta
+    &=
+    \frac{1}{\sqrt{0.8}}
+    \left(
+        1.4325
+        -
+        \frac{0.2}{\sqrt{0.28}}(-0.45)
+    \right)\\
+    &\approx
+    1.7918.
+\end{align*}
+Дисперсия точного апостериорного перехода:
+\[
+    \widetilde{\beta}_2
+    =
+    \frac{1-0.9}{1-0.72}\cdot 0.2
+    \approx 0.07143.
+\]
+Следовательно,
+\[
+    x_1
+    =
+    1.7918+\sqrt{0.07143}\,z,
+    \qquad
+    z\sim\N(0,1).
+\]
+Если рассматривать только среднее и взять $z=0$, получится
+$x_1\approx1.7918$.
+
+\subsection{Score-функция и denoising score matching}
+
+\begin{definition}
+Score-функцией плотности $p(\bm{x})$ называется градиент логарифма
+плотности по данным:
+\[
+    \bm{s}_p(\bm{x})
+    =
+    \nabla_{\bm{x}}\log p(\bm{x}).
+\]
+\end{definition}
+
+Для условного нормального распределения
+\[
+    q(\bm{x}_t\mid\bm{x}_0)
+    =
+    \N\left(
+        \sqrt{\overline{\alpha}_t}\bm{x}_0,
+        (1-\overline{\alpha}_t)\bm{I}
+    \right)
+\]
+условная score-функция равна
+\[
+    \nabla_{\bm{x}_t}
+    \log q(\bm{x}_t\mid\bm{x}_0)
+    =
+    -
+    \frac{
+        \bm{x}_t-\sqrt{\overline{\alpha}_t}\bm{x}_0
+    }{
+        1-\overline{\alpha}_t
+    }.
+\]
+Поскольку
+\[
+    \bm{x}_t-\sqrt{\overline{\alpha}_t}\bm{x}_0
+    =
+    \sqrt{1-\overline{\alpha}_t}\bm{\eps},
+\]
+получаем
+\[
+    \nabla_{\bm{x}_t}
+    \log q(\bm{x}_t\mid\bm{x}_0)
+    =
+    -
+    \frac{\bm{\eps}}
+         {\sqrt{1-\overline{\alpha}_t}}.
+\]
+Следовательно, модель шума задаёт модель score-функции:
+\[
+    \bm{s}_\theta(\bm{x}_t,t)
+    =
+    -
+    \frac{
+        \bm{\eps}_\theta(\bm{x}_t,t)
+    }{
+        \sqrt{1-\overline{\alpha}_t}
+    }.
+\]
+
+\begin{theorem}[Эквивалентность условного и маргинального
+denoising score matching]
+Пусть случайная величина $\bm{X}$ имеет плотность $p(\bm{x})$, а
+$\bm{Y}$ при условии $\bm{X}=\bm{x}$ имеет дифференцируемую плотность
+$q(\bm{y}\mid\bm{x})$. Пусть
+\[
+    p_Y(\bm{y})
+    =
+    \int p(\bm{x})q(\bm{y}\mid\bm{x})\dd\bm{x}
+\]
+--- маргинальная плотность зашумлённых данных. При условиях,
+позволяющих менять местами дифференцирование и интегрирование,
+для любой измеримой векторной функции $\bm{s}(\bm{y})$ с конечными
+вторыми моментами выполняется
+\begin{align*}
+    &\E
+    \left[
+        \left\|
+            \bm{s}(\bm{Y})
+            -
+            \nabla_{\bm{y}}
+            \log q(\bm{Y}\mid\bm{X})
+        \right\|^2
+    \right]\\
+    &\qquad=
+    \E
+    \left[
+        \left\|
+            \bm{s}(\bm{Y})
+            -
+            \nabla_{\bm{y}}\log p_Y(\bm{Y})
+        \right\|^2
+    \right]
+    +C,
+\end{align*}
+где $C$ не зависит от $\bm{s}$. Следовательно, обе функции потерь
+имеют один и тот же оптимизатор:
+\[
+    \bm{s}^{*}(\bm{y})
+    =
+    \nabla_{\bm{y}}\log p_Y(\bm{y}).
+\]
+\end{theorem}
+
+\begin{proof}
+Сначала вычислим условное ожидание условной score-функции. Имеем
+\[
+    \nabla_{\bm{y}}p_Y(\bm{y})
+    =
+    \nabla_{\bm{y}}
+    \int
+    p(\bm{x})q(\bm{y}\mid\bm{x})
+    \dd\bm{x}.
+\]
+При сделанных предположениях:
+\[
+    \nabla_{\bm{y}}p_Y(\bm{y})
+    =
+    \int
+    p(\bm{x})
+    \nabla_{\bm{y}}q(\bm{y}\mid\bm{x})
+    \dd\bm{x}.
+\]
+Используя тождество
+\[
+    \nabla_{\bm{y}}q(\bm{y}\mid\bm{x})
+    =
+    q(\bm{y}\mid\bm{x})
+    \nabla_{\bm{y}}\log q(\bm{y}\mid\bm{x}),
+\]
+получаем
+\begin{align*}
+    \nabla_{\bm{y}}p_Y(\bm{y})
+    &=
+    \int
+    p(\bm{x})q(\bm{y}\mid\bm{x})
+    \nabla_{\bm{y}}\log q(\bm{y}\mid\bm{x})
+    \dd\bm{x}\\
+    &=
+    p_Y(\bm{y})
+    \E\left[
+        \nabla_{\bm{y}}\log q(\bm{Y}\mid\bm{X})
+        \given
+        \bm{Y}=\bm{y}
+    \right].
+\end{align*}
+После деления на $p_Y(\bm{y})$:
+\[
+    \E\left[
+        \nabla_{\bm{y}}\log q(\bm{Y}\mid\bm{X})
+        \given
+        \bm{Y}=\bm{y}
+    \right]
+    =
+    \nabla_{\bm{y}}\log p_Y(\bm{y}).
+\]
+
+Обозначим
+\[
+    \bm{Z}
+    =
+    \nabla_{\bm{y}}\log q(\bm{Y}\mid\bm{X}),
+\]
+\[
+    \bm{m}(\bm{Y})
+    =
+    \E[\bm{Z}\mid\bm{Y}]
+    =
+    \nabla_{\bm{y}}\log p_Y(\bm{Y}).
+\]
+Разложим ошибку:
+\[
+    \bm{s}(\bm{Y})-\bm{Z}
+    =
+    \bigl(\bm{s}(\bm{Y})-\bm{m}(\bm{Y})\bigr)
+    +
+    \bigl(\bm{m}(\bm{Y})-\bm{Z}\bigr).
+\]
+Квадрат нормы равен
+\begin{align*}
+    \|\bm{s}-\bm{Z}\|^2
+    &=
+    \|\bm{s}-\bm{m}\|^2
+    +
+    \|\bm{m}-\bm{Z}\|^2\\
+    &\quad+
+    2(\bm{s}-\bm{m})^\top(\bm{m}-\bm{Z}).
+\end{align*}
+Условное ожидание перекрёстного слагаемого при фиксированном $\bm{Y}$
+равно нулю:
+\begin{align*}
+    &\E\left[
+        (\bm{s}-\bm{m})^\top(\bm{m}-\bm{Z})
+        \given \bm{Y}
+    \right]\\
+    &\quad=
+    (\bm{s}(\bm{Y})-\bm{m}(\bm{Y}))^\top
+    \left(
+        \bm{m}(\bm{Y})
+        -
+        \E[\bm{Z}\mid\bm{Y}]
+    \right)
+    =0.
+\end{align*}
+Поэтому
+\begin{align*}
+    \E\|\bm{s}(\bm{Y})-\bm{Z}\|^2
+    &=
+    \E\|\bm{s}(\bm{Y})-\bm{m}(\bm{Y})\|^2\\
+    &\quad+
+    \E\|\bm{m}(\bm{Y})-\bm{Z}\|^2.
+\end{align*}
+Второе слагаемое не зависит от $\bm{s}$ и является константой $C$.
+Подставляя
+\[
+    \bm{m}(\bm{Y})
+    =
+    \nabla_{\bm{y}}\log p_Y(\bm{Y}),
+\]
+получаем утверждение теоремы.
+\end{proof}
+
+Таким образом, предсказание искусственно добавленного шума обучает
+градиент логарифма маргинальной плотности зашумлённых данных.
+
+\subsection{Непрерывное время и стохастические дифференциальные
+уравнения}
+
+Дискретную диффузию можно обобщить на стохастическое
+дифференциальное уравнение:
+\[
+    \dd\bm{X}_t
+    =
+    \bm{f}(\bm{X}_t,t)\dd t
+    +
+    g(t)\dd\bm{W}_t,
+\]
+где $\bm{W}_t$ --- винеровский процесс.
+
+Плотность $p_t(\bm{x})$ удовлетворяет уравнению Фоккера--Планка:
+\[
+    \frac{\partial p_t}{\partial t}
+    =
+    -
+    \nabla\cdot(\bm{f}p_t)
+    +
+    \frac{1}{2}g(t)^2\Delta p_t.
+\]
+
+\begin{theorem}[Обратное по времени SDE]
+Пусть процесс $\bm{X}_t$, $t\in[0,T]$, удовлетворяет
+\[
+    \dd\bm{X}_t
+    =
+    \bm{f}(\bm{X}_t,t)\dd t
+    +
+    g(t)\dd\bm{W}_t,
+\]
+где $g(t)>0$ не зависит от $\bm{x}$. Предположим, что плотности
+$p_t(\bm{x})$ положительны, достаточно гладкие, а соответствующие
+стохастические уравнения имеют единственное распределение решения.
+
+Для обратного времени $s=T-t$ процесс
+\[
+    \bm{Y}_s=\bm{X}_{T-s}
+\]
+имеет SDE
+\[
+    \dd\bm{Y}_s
+    =
+    \left[
+        -\bm{f}(\bm{Y}_s,T-s)
+        +
+        g(T-s)^2
+        \nabla_{\bm{y}}\log p_{T-s}(\bm{Y}_s)
+    \right]\dd s
+    +
+    g(T-s)\dd\overline{\bm{W}}_s.
+\]
+Эквивалентно, если записывать уравнение в переменной $t$, движущейся
+от $T$ к $0$:
+\[
+    \dd\bm{X}_t
+    =
+    \left[
+        \bm{f}(\bm{X}_t,t)
+        -
+        g(t)^2\nabla_{\bm{x}}\log p_t(\bm{X}_t)
+    \right]\dd t
+    +
+    g(t)\dd\overline{\bm{W}}_t,
+\]
+где интегрирование выполняется назад по времени.
+\end{theorem}
+
+\begin{proof}
+Обозначим плотность обратного процесса через
+\[
+    q_s(\bm{y})=p_{T-s}(\bm{y}).
+\]
+Тогда
+\[
+    \frac{\partial q_s}{\partial s}
+    =
+    -
+    \left.
+    \frac{\partial p_t}{\partial t}
+    \right|_{t=T-s}.
+\]
+Из уравнения Фоккера--Планка:
+\[
+    \frac{\partial q_s}{\partial s}
+    =
+    \nabla\cdot
+    \bigl(
+        \bm{f}(\bm{y},T-s)q_s(\bm{y})
+    \bigr)
+    -
+    \frac{1}{2}g(T-s)^2\Delta q_s(\bm{y}).
+\]
+
+Рассмотрим SDE с обратным дрейфом
+\[
+    \bm{b}_{\mathrm{rev}}(\bm{y},s)
+    =
+    -\bm{f}(\bm{y},T-s)
+    +
+    g(T-s)^2\nabla_{\bm{y}}\log q_s(\bm{y}).
+\]
+Его уравнение Фоккера--Планка:
+\[
+    \frac{\partial q_s}{\partial s}
+    =
+    -
+    \nabla\cdot(\bm{b}_{\mathrm{rev}}q_s)
+    +
+    \frac{1}{2}g(T-s)^2\Delta q_s.
+\]
+Подставим дрейф:
+\begin{align*}
+    -
+    \nabla\cdot(\bm{b}_{\mathrm{rev}}q_s)
+    &=
+    -
+    \nabla\cdot
+    \left(
+        -\bm{f}q_s
+        +
+        g^2q_s\nabla\log q_s
+    \right)\\
+    &=
+    \nabla\cdot(\bm{f}q_s)
+    -
+    g^2\nabla\cdot(q_s\nabla\log q_s).
+\end{align*}
+Но
+\[
+    q_s\nabla\log q_s=\nabla q_s,
+\]
+поэтому
+\[
+    \nabla\cdot(q_s\nabla\log q_s)=\Delta q_s.
+\]
+Следовательно,
+\begin{align*}
+    \frac{\partial q_s}{\partial s}
+    &=
+    \nabla\cdot(\bm{f}q_s)
+    -
+    g^2\Delta q_s
+    +
+    \frac{1}{2}g^2\Delta q_s\\
+    &=
+    \nabla\cdot(\bm{f}q_s)
+    -
+    \frac{1}{2}g^2\Delta q_s.
+\end{align*}
+Это в точности уравнение эволюции плотности
+$p_{T-s}$. При предположении единственности распределения решения
+указанный SDE задаёт обратный по времени процесс.
+\end{proof}
+
+Для генерации необходимо аппроксимировать неизвестную score-функцию:
+\[
+    \nabla_{\bm{x}}\log p_t(\bm{x})
+    \approx
+    \bm{s}_\theta(\bm{x},t).
+\]
+
+\subsection{Probability flow ODE}
+
+\begin{theorem}[Детерминированное уравнение с теми же маргиналами]
+В условиях предыдущей теоремы обыкновенное дифференциальное уравнение
+\[
+    \frac{\dd\bm{X}_t}{\dd t}
+    =
+    \bm{f}(\bm{X}_t,t)
+    -
+    \frac{1}{2}g(t)^2
+    \nabla_{\bm{x}}\log p_t(\bm{X}_t)
+\]
+имеет те же маргинальные плотности $p_t$, что и прямое SDE
+\[
+    \dd\bm{X}_t
+    =
+    \bm{f}(\bm{X}_t,t)\dd t
+    +
+    g(t)\dd\bm{W}_t.
+\]
+\end{theorem}
+
+\begin{proof}
+Плотность детерминированного потока с полем скоростей
+\[
+    \bm{v}(\bm{x},t)
+    =
+    \bm{f}(\bm{x},t)
+    -
+    \frac{1}{2}g(t)^2\nabla\log p_t(\bm{x})
+\]
+удовлетворяет уравнению непрерывности
+\[
+    \frac{\partial p_t}{\partial t}
+    =
+    -\nabla\cdot(\bm{v}p_t).
+\]
+Подставим $\bm{v}$:
+\begin{align*}
+    -\nabla\cdot(\bm{v}p_t)
+    &=
+    -\nabla\cdot(\bm{f}p_t)
+    +
+    \frac{1}{2}g(t)^2
+    \nabla\cdot
+    \left(
+        p_t\nabla\log p_t
+    \right)\\
+    &=
+    -\nabla\cdot(\bm{f}p_t)
+    +
+    \frac{1}{2}g(t)^2
+    \nabla\cdot(\nabla p_t)\\
+    &=
+    -\nabla\cdot(\bm{f}p_t)
+    +
+    \frac{1}{2}g(t)^2\Delta p_t.
+\end{align*}
+Получено то же уравнение Фоккера--Планка, что и для исходного SDE.
+При одинаковом начальном распределении и единственности решения
+плотности совпадают в каждый момент времени.
+\end{proof}
+
+Probability flow ODE позволяет выполнять детерминированную генерацию и
+связывает диффузионные модели с непрерывными нормализующими потоками.
+
+\subsection{DDPM как дискретизация VP-SDE}
+
+Рассмотрим variance-preserving SDE:
+\[
+    \dd\bm{X}_t
+    =
+    -\frac{1}{2}\beta(t)\bm{X}_t\dd t
+    +
+    \sqrt{\beta(t)}\dd\bm{W}_t.
+\]
+Его условное распределение имеет вид
+\[
+    \bm{X}_t
+    =
+    \exp\left(
+        -\frac{1}{2}\int_0^t\beta(s)\dd s
+    \right)\bm{X}_0
+    +
+    \sqrt{
+        1-
+        \exp\left(
+            -\int_0^t\beta(s)\dd s
+        \right)
+    }\bm{\eps}.
+\]
+Это непрерывный аналог формулы
+\[
+    \bm{x}_t
+    =
+    \sqrt{\overline{\alpha}_t}\bm{x}_0
+    +
+    \sqrt{1-\overline{\alpha}_t}\bm{\eps}.
+\]
+
+\subsection{DDIM}
+
+DDPM использует стохастические обратные переходы. DDIM задаёт семейство
+процессов, совместимых с той же обученной моделью, но допускающих
+детерминированную генерацию.
+
+Пусть
+\[
+    T=\tau_N>\tau_{N-1}>\cdots>\tau_1>\tau_0=0
+\]
+--- выбранная подпоследовательность временных шагов. Для перехода
+$t=\tau_i$ в $s=\tau_{i-1}$ вычисляется
+\[
+    \widehat{\bm{x}}_0
+    =
+    \frac{
+        \bm{x}_t
+        -
+        \sqrt{1-\overline{\alpha}_t}
+        \bm{\eps}_\theta(\bm{x}_t,t)
+    }{
+        \sqrt{\overline{\alpha}_t}
+    }.
+\]
+Параметр стохастичности:
+\[
+    \sigma_{t\rightarrow s}
+    =
+    \eta
+    \sqrt{
+        \frac{1-\overline{\alpha}_s}
+             {1-\overline{\alpha}_t}
+        \left(
+            1-\frac{\overline{\alpha}_t}
+                    {\overline{\alpha}_s}
+        \right)
+    }.
+\]
+Переход:
+\begin{align*}
+    \bm{x}_s
+    &=
+    \sqrt{\overline{\alpha}_s}
+    \widehat{\bm{x}}_0\\
+    &\quad+
+    \sqrt{
+        1-\overline{\alpha}_s
+        -
+        \sigma_{t\rightarrow s}^2
+    }
+    \bm{\eps}_\theta(\bm{x}_t,t)
+    +
+    \sigma_{t\rightarrow s}\bm{z}.
+\end{align*}
+
+При $\eta=0$ процесс детерминирован:
+\[
+    \bm{x}_s
+    =
+    \sqrt{\overline{\alpha}_s}
+    \widehat{\bm{x}}_0
+    +
+    \sqrt{1-\overline{\alpha}_s}
+    \bm{\eps}_\theta(\bm{x}_t,t).
+\]
+
+\begin{algorithmbox}{Ускоренная генерация DDIM}
+    \item Выбрать небольшое число временных точек
+    \[
+        T=\tau_N>\cdots>\tau_0=0.
+    \]
+    \item Сгенерировать
+    \[
+        \bm{x}_{\tau_N}\sim\N(\bm{0},\bm{I}).
+    \]
+    \item Для $i=N,\ldots,1$ положить
+    $t=\tau_i$, $s=\tau_{i-1}$.
+    \item Предсказать шум
+    \[
+        \widehat{\bm{\eps}}
+        =
+        \bm{\eps}_\theta(\bm{x}_t,t).
+    \]
+    \item Оценить чистый объект
+    \[
+        \widehat{\bm{x}}_0
+        =
+        \frac{
+            \bm{x}_t
+            -
+            \sqrt{1-\overline{\alpha}_t}\widehat{\bm{\eps}}
+        }{
+            \sqrt{\overline{\alpha}_t}
+        }.
+    \]
+    \item Вычислить $\sigma_{t\rightarrow s}$ и получить $\bm{x}_s$
+    по формуле DDIM.
+    \item Вернуть $\bm{x}_0$.
+\end{algorithmbox}
+
+Уменьшение числа временных точек ускоряет генерацию, но слишком
+крупный шаг может увеличить ошибку численного решения.
+
+\subsection{Архитектура денойзера}
+
+\subsubsection{U-Net}
+
+Для изображений часто применяется U-Net:
+\begin{enumerate}
+    \item сжимающая часть уменьшает пространственное разрешение и
+    увеличивает число каналов;
+    \item центральные блоки обрабатывают признаки низкого разрешения;
+    \item расширяющая часть восстанавливает разрешение;
+    \item skip connections передают детальные признаки между
+    симметричными уровнями.
+\end{enumerate}
+
+Типичный диффузионный U-Net содержит:
+\begin{itemize}
+    \item остаточные свёрточные блоки;
+    \item нормализацию;
+    \item эмбеддинг времени;
+    \item self-attention на части разрешений;
+    \item cross-attention для условной генерации.
+\end{itemize}
+
+\subsubsection{Эмбеддинг времени}
+
+Момент $t$ преобразуется в вектор, например синусоидальным
+кодированием:
+\[
+    e_{2i}(t)
+    =
+    \sin(\omega_i t),
+    \qquad
+    e_{2i+1}(t)
+    =
+    \cos(\omega_i t).
+\]
+После небольшой MLP этот вектор добавляется или подмешивается в
+промежуточные блоки сети. Без времени одна и та же сеть не могла бы
+различать слабый и сильный уровни шума.
+
+\subsubsection{Diffusion Transformer}
+
+Вместо U-Net можно использовать трансформер:
+\begin{enumerate}
+    \item изображение или латентное представление разбивается на
+    патчи;
+    \item каждый патч преобразуется в токен;
+    \item к токенам добавляются позиционные признаки;
+    \item время и условие передаются через дополнительные токены,
+    адаптивную нормализацию или cross-attention;
+    \item трансформер предсказывает шум, score-функцию или
+    $\bm{v}$-параметризацию для всех патчей.
+\end{enumerate}
+
+Таким образом, понятия ``трансформер'' и ``диффузионная модель'' не
+конкурируют: трансформер может быть внутренней архитектурой
+диффузионного денойзера.
+
+\subsection{Условная генерация}
+
+Пусть $\bm{c}$ --- условие: класс, текст, изображение, маска,
+аудиосигнал или другой объект. Тогда сеть имеет вид
+\[
+    \bm{\eps}_\theta(\bm{x}_t,t,\bm{c}).
+\]
+
+Для текстового условия часто используется отдельный трансформерный
+кодировщик:
+\[
+    \bm{C}
+    =
+    \operatorname{TextEncoder}(\bm{c}).
+\]
+В денойзере выполняется cross-attention:
+\[
+    \bm{Q}=\bm{X}_{\text{image}}\bm{W}^Q,
+    \qquad
+    \bm{K}=\bm{C}\bm{W}^K,
+    \qquad
+    \bm{V}=\bm{C}\bm{W}^V.
+\]
+
+\subsection{Classifier guidance}
+
+По формуле Байеса:
+\[
+    p_t(\bm{x}\mid y)
+    \propto
+    p_t(\bm{x})p_t(y\mid\bm{x}).
+\]
+Следовательно,
+\[
+    \nabla_{\bm{x}}\log p_t(\bm{x}\mid y)
+    =
+    \nabla_{\bm{x}}\log p_t(\bm{x})
+    +
+    \nabla_{\bm{x}}\log p_t(y\mid\bm{x}).
+\]
+Условную score-функцию можно приближать как
+\[
+    \bm{s}_{\text{guided}}
+    =
+    \bm{s}_\theta(\bm{x}_t,t)
+    +
+    w\nabla_{\bm{x}_t}
+    \log p_\phi(y\mid\bm{x}_t,t),
+\]
+где $p_\phi$ --- отдельно обученный классификатор зашумлённых данных,
+а $w$ --- сила управления.
+
+Недостатки:
+\begin{itemize}
+    \item требуется дополнительный классификатор;
+    \item классификатор должен работать на всех уровнях шума;
+    \item метод не всегда удобен для сложных условий, например текста.
+\end{itemize}
+
+\subsection{Classifier-free guidance}
+
+Одна модель обучается и в условном, и в безусловном режимах. Во время
+обучения условие с некоторой вероятностью заменяется пустым:
+\[
+    \bm{c}
+    \leftarrow
+    \varnothing.
+\]
+На этапе генерации выполняются два предсказания:
+\[
+    \bm{\eps}_{\text{cond}}
+    =
+    \bm{\eps}_\theta(\bm{x}_t,t,\bm{c}),
+\]
+\[
+    \bm{\eps}_{\text{uncond}}
+    =
+    \bm{\eps}_\theta(\bm{x}_t,t,\varnothing).
+\]
+Они объединяются:
+\[
+    \bm{\eps}_{\text{CFG}}
+    =
+    \bm{\eps}_{\text{uncond}}
+    +
+    w
+    \left(
+        \bm{\eps}_{\text{cond}}
+        -
+        \bm{\eps}_{\text{uncond}}
+    \right).
+\]
+
+Интерпретация параметра:
+\[
+    w=0
+    \quad\Rightarrow\quad
+    \text{безусловная генерация},
+\]
+\[
+    w=1
+    \quad\Rightarrow\quad
+    \text{обычное условное предсказание},
+\]
+\[
+    w>1
+    \quad\Rightarrow\quad
+    \text{усиленное следование условию}.
+\]
+
+Слишком большое $w$ может снижать разнообразие, усиливать артефакты и
+выводить модель за область распределения, встречавшуюся при обучении.
+
+\begin{algorithmbox}{Шаг генерации с classifier-free guidance}
+    \item Вычислить безусловное предсказание:
+    \[
+        \bm{\eps}_u
+        =
+        \bm{\eps}_\theta(\bm{x}_t,t,\varnothing).
+    \]
+    \item Вычислить условное предсказание:
+    \[
+        \bm{\eps}_c
+        =
+        \bm{\eps}_\theta(\bm{x}_t,t,\bm{c}).
+    \]
+    \item Объединить предсказания:
+    \[
+        \widehat{\bm{\eps}}
+        =
+        \bm{\eps}_u+w(\bm{\eps}_c-\bm{\eps}_u).
+    \]
+    \item Подставить $\widehat{\bm{\eps}}$ в формулу DDPM, DDIM или
+    другого численного решателя.
+\end{algorithmbox}
+
+\subsection{Латентные диффузионные модели}
+
+Пиксельная диффузия выполняет все шаги в пространстве изображений
+высокого разрешения, что вычислительно дорого.
+
+В латентной диффузии сначала обучается автоэнкодер:
+\[
+    \bm{z}_0=E(\bm{x}_0),
+    \qquad
+    \widehat{\bm{x}}_0=D(\bm{z}_0),
+\]
+где $E$ --- кодировщик, а $D$ --- декодировщик.
+
+Диффузионный процесс обучается в латентном пространстве:
+\[
+    \bm{z}_t
+    =
+    \sqrt{\overline{\alpha}_t}\bm{z}_0
+    +
+    \sqrt{1-\overline{\alpha}_t}\bm{\eps}.
+\]
+После обратной диффузии итоговый латентный код декодируется:
+\[
+    \widehat{\bm{x}}=D(\widehat{\bm{z}}_0).
+\]
+
+Преимущества:
+\begin{itemize}
+    \item меньшее пространственное разрешение;
+    \item более низкие затраты памяти;
+    \item более быстрое обучение и сэмплирование;
+    \item удаление части малозначимой пиксельной избыточности.
+\end{itemize}
+
+Недостаток заключается в том, что качество ограничивается
+автоэнкодером: потерянные при кодировании детали диффузионная модель
+обычно не может точно восстановить.
+
+\subsection{Расписания шума}
+
+Расписание определяет значения $\beta_t$ или, эквивалентно,
+отношение сигнал/шум.
+
+Для
+\[
+    \bm{x}_t
+    =
+    \sqrt{\overline{\alpha}_t}\bm{x}_0
+    +
+    \sqrt{1-\overline{\alpha}_t}\bm{\eps}
+\]
+отношение сигнал/шум можно определить как
+\[
+    \operatorname{SNR}(t)
+    =
+    \frac{\overline{\alpha}_t}
+         {1-\overline{\alpha}_t}.
+\]
+
+Используются:
+\begin{itemize}
+    \item линейные расписания $\beta_t$;
+    \item косинусные расписания $\overline{\alpha}_t$;
+    \item непрерывные расписания по $\sigma$ или log-SNR;
+    \item адаптированные веса функции потерь для разных уровней шума.
+\end{itemize}
+
+Слишком быстрое добавление шума может уничтожить полезный сигнал за
+малое число шагов, а слишком медленное увеличивает число необходимых
+итераций.
+
+\subsection{Сравнение основных способов предсказания}
+
+\begin{center}
+\begin{tabular}{p{0.16\textwidth}p{0.28\textwidth}p{0.46\textwidth}}
+\toprule
+\textbf{Цель сети} &
+\textbf{Определение} &
+\textbf{Восстановление других величин}\\
+\midrule
+$\bm{x}_0$ &
+Сеть предсказывает чистый объект &
+\[
+    \widehat{\bm{\eps}}
+    =
+    \frac{
+        \bm{x}_t-\sqrt{\overline{\alpha}_t}\widehat{\bm{x}}_0
+    }{
+        \sqrt{1-\overline{\alpha}_t}
+    }.
+\]\\
+\addlinespace
+$\bm{\eps}$ &
+Сеть предсказывает добавленный шум &
+\[
+    \widehat{\bm{x}}_0
+    =
+    \frac{
+        \bm{x}_t
+        -
+        \sqrt{1-\overline{\alpha}_t}\widehat{\bm{\eps}}
+    }{
+        \sqrt{\overline{\alpha}_t}
+    }.
+\]\\
+\addlinespace
+$\bm{v}$ &
+\[
+    \bm{v}
+    =
+    \sqrt{\overline{\alpha}_t}\bm{\eps}
+    -
+    \sqrt{1-\overline{\alpha}_t}\bm{x}_0
+\]
+&
+\[
+    \widehat{\bm{x}}_0
+    =
+    \sqrt{\overline{\alpha}_t}\bm{x}_t
+    -
+    \sqrt{1-\overline{\alpha}_t}\widehat{\bm{v}},
+\]
+\[
+    \widehat{\bm{\eps}}
+    =
+    \sqrt{1-\overline{\alpha}_t}\bm{x}_t
+    +
+    \sqrt{\overline{\alpha}_t}\widehat{\bm{v}}.
+\]\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Достоинства и ограничения диффузионных моделей}
+
+\paragraph{Достоинства.}
+\begin{itemize}
+    \item Стабильная регрессионная функция потерь.
+    \item Отсутствие обязательной состязательной оптимизации.
+    \item Хорошее покрытие распределения данных.
+    \item Гибкая условная генерация.
+    \item Возможность редактирования, восстановления пропусков,
+    суперразрешения и решения обратных задач.
+    \item Связь с вариационным выводом, score matching, SDE и ODE.
+\end{itemize}
+
+\paragraph{Ограничения.}
+\begin{itemize}
+    \item Последовательная многошаговая генерация.
+    \item Высокая стоимость многократного вызова денойзера.
+    \item Чувствительность к расписанию шума и численному решателю.
+    \item Компромисс между скоростью, разнообразием и качеством.
+    \item В условных моделях чрезмерно сильное guidance может создавать
+    артефакты.
+    \item В латентных моделях качество ограничено автоэнкодером.
+\end{itemize}
+
+% ================================================================
+\section{Связь трансформеров и диффузионных моделей}
+% ================================================================
+
+\subsection{Принципиальное различие}
+
+Трансформер определяет способ вычисления представлений:
+\[
+    \text{входная последовательность}
+    \longmapsto
+    \text{выходная последовательность}.
+\]
+Диффузионная модель определяет вероятностный процесс генерации:
+\[
+    \text{шум}
+    \longmapsto
+    \text{данные через последовательное удаление шума}.
+\]
+
+Поэтому:
+\begin{itemize}
+    \item трансформер может быть недиффузионным;
+    \item диффузионная модель может не содержать трансформера;
+    \item трансформер может использоваться как денойзер в
+    диффузионной модели;
+    \item текстовый трансформер может кодировать условие для
+    диффузионного генератора.
+\end{itemize}
+
+\subsection{Сравнительная таблица}
+
+\begin{center}
+\begin{tabular}{p{0.22\textwidth}p{0.35\textwidth}p{0.35\textwidth}}
+\toprule
+\textbf{Свойство} &
+\textbf{Авторегрессионный трансформер} &
+\textbf{Диффузионная модель}\\
+\midrule
+Базовый объект &
+Условное распределение следующего токена &
+Обратный переход от более шумного состояния к менее шумному\\
+\addlinespace
+Факторизация &
+\[
+    p(\bm{w})
+    =
+    \prod_t p(w_t\mid w_{<t})
+\]
+&
+\[
+    p_\theta(\bm{x}_{0:T})
+    =
+    p(\bm{x}_T)
+    \prod_t p_\theta(\bm{x}_{t-1}\mid\bm{x}_t)
+\]\\
+\addlinespace
+Обучение &
+Cross-entropy по токенам &
+MSE шума, score-функции, $\bm{x}_0$ или $\bm{v}$\\
+\addlinespace
+Порядок генерации &
+По одному токену &
+По одному временному шагу для всего объекта\\
+\addlinespace
+Параллельность одного шага &
+Обрабатывается контекст, но новый токен один &
+На шаге одновременно обновляются все координаты объекта\\
+\addlinespace
+Типичные данные &
+Текст и дискретные последовательности &
+Изображения, аудио, видео, непрерывные и структурированные данные\\
+\addlinespace
+Условие &
+Префикс, специальные токены, cross-attention &
+Конкатенация, cross-attention, classifier guidance, CFG\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Общая схема text-to-image модели}
+
+Типичная схема условной генерации изображения по тексту:
+\begin{enumerate}
+    \item текст разбивается на токены;
+    \item трансформерный кодировщик строит матрицу текстовых
+    представлений;
+    \item из стандартного нормального распределения генерируется
+    начальный латентный шум;
+    \item U-Net или Diffusion Transformer на каждом временном шаге
+    использует:
+    \begin{itemize}
+        \item текущий зашумлённый латентный код;
+        \item эмбеддинг времени;
+        \item текстовые признаки через cross-attention;
+    \end{itemize}
+    \item после удаления шума латентный код декодируется в изображение.
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    box/.style={
+        draw,
+        rounded corners,
+        minimum width=3.5cm,
+        minimum height=0.85cm,
+        align=center,
+        fill=blue!6
+    },
+    arrow/.style={-{Latex[length=2.5mm]},thick},
+    node distance=0.75cm and 1.2cm
+]
+\node[box] (text) {Текст};
+\node[box,right=of text] (tokens) {Токены};
+\node[box,right=of tokens] (encoder) {Трансформерный\\кодировщик};
+
+\node[box,below=1.5cm of tokens] (noise) {Латентный шум $\bm{z}_T$};
+\node[box,right=of noise] (denoiser) {U-Net или DiT\\с cross-attention};
+\node[box,right=of denoiser] (latent) {Чистый латент\\$\bm{z}_0$};
+\node[box,right=of latent] (decoder) {Декодер};
+\node[box,right=of decoder] (image) {Изображение};
+
+\draw[arrow] (text)--(tokens);
+\draw[arrow] (tokens)--(encoder);
+\draw[arrow] (noise)--(denoiser);
+\draw[arrow] (denoiser)--(latent);
+\draw[arrow] (latent)--(decoder);
+\draw[arrow] (decoder)--(image);
+\draw[arrow] (encoder.south) |- (denoiser.north);
+\end{tikzpicture}
+\caption{Совместное использование трансформера и латентной
+диффузионной модели.}
+\end{figure}
+
+% ================================================================
+\section{Краткая формульная памятка}
+% ================================================================
+
+\subsection*{Трансформер}
+
+\[
+    \bm{Q}=\bm{X}_Q\bm{W}^Q,\qquad
+    \bm{K}=\bm{X}_{KV}\bm{W}^K,\qquad
+    \bm{V}=\bm{X}_{KV}\bm{W}^V.
+\]
+
+\[
+    \operatorname{Attention}(\bm{Q},\bm{K},\bm{V})
+    =
+    \softmax\left(
+        \frac{\bm{Q}\bm{K}^{\top}}{\sqrt{d_k}}+\bm{M}
+    \right)\bm{V}.
+\]
+
+\[
+    \operatorname{MHA}
+    =
+    \operatorname{Concat}
+    (\operatorname{head}_1,\ldots,\operatorname{head}_h)\bm{W}^O.
+\]
+
+\[
+    \operatorname{FFN}(\bm{x})
+    =
+    \phi(\bm{x}\bm{W}_1+\bm{b}_1)\bm{W}_2+\bm{b}_2.
+\]
+
+\[
+    \bm{U}
+    =
+    \bm{X}
+    +
+    \operatorname{MHA}(\operatorname{LN}(\bm{X})),
+\]
+\[
+    \bm{Y}
+    =
+    \bm{U}
+    +
+    \operatorname{FFN}(\operatorname{LN}(\bm{U})).
+\]
+
+\[
+    p_\theta(w_{1:n})
+    =
+    \prod_{t=1}^{n}p_\theta(w_t\mid w_{<t}).
+\]
+
+\[
+    \mathcal{L}_{\text{AR}}
+    =
+    -\sum_t\log p_\theta(w_t\mid w_{<t}).
+\]
+
+\subsection*{DDPM}
+
+\[
+    \alpha_t=1-\beta_t,
+    \qquad
+    \overline{\alpha}_t=\prod_{s=1}^{t}\alpha_s.
+\]
+
+\[
+    q(\bm{x}_t\mid\bm{x}_{t-1})
+    =
+    \N(
+        \sqrt{\alpha_t}\bm{x}_{t-1},
+        \beta_t\bm{I}
+    ).
+\]
+
+\[
+    \bm{x}_t
+    =
+    \sqrt{\overline{\alpha}_t}\bm{x}_0
+    +
+    \sqrt{1-\overline{\alpha}_t}\bm{\eps}.
+\]
+
+\[
+    \widetilde{\beta}_t
+    =
+    \frac{1-\overline{\alpha}_{t-1}}
+         {1-\overline{\alpha}_t}\beta_t.
+\]
+
+\[
+    \widetilde{\bm{\mu}}_t
+    =
+    \frac{
+        \sqrt{\overline{\alpha}_{t-1}}\beta_t
+    }{
+        1-\overline{\alpha}_t
+    }\bm{x}_0
+    +
+    \frac{
+        \sqrt{\alpha_t}
+        (1-\overline{\alpha}_{t-1})
+    }{
+        1-\overline{\alpha}_t
+    }\bm{x}_t.
+\]
+
+\[
+    \widehat{\bm{x}}_0
+    =
+    \frac{
+        \bm{x}_t
+        -
+        \sqrt{1-\overline{\alpha}_t}
+        \bm{\eps}_\theta(\bm{x}_t,t)
+    }{
+        \sqrt{\overline{\alpha}_t}
+    }.
+\]
+
+\[
+    \bm{\mu}_\theta
+    =
+    \frac{1}{\sqrt{\alpha_t}}
+    \left(
+        \bm{x}_t
+        -
+        \frac{\beta_t}
+             {\sqrt{1-\overline{\alpha}_t}}
+        \bm{\eps}_\theta(\bm{x}_t,t)
+    \right).
+\]
+
+\[
+    \mathcal{L}_{\text{simple}}
+    =
+    \E
+    \left[
+        \|\bm{\eps}
+        -
+        \bm{\eps}_\theta(\bm{x}_t,t)\|^2
+    \right].
+\]
+
+\[
+    \bm{s}_\theta(\bm{x}_t,t)
+    =
+    -
+    \frac{
+        \bm{\eps}_\theta(\bm{x}_t,t)
+    }{
+        \sqrt{1-\overline{\alpha}_t}
+    }.
+\]
+
+\[
+    \bm{\eps}_{\text{CFG}}
+    =
+    \bm{\eps}_{\text{uncond}}
+    +
+    w
+    (\bm{\eps}_{\text{cond}}
+    -
+    \bm{\eps}_{\text{uncond}}).
+\]
+
+\subsection*{Непрерывная диффузия}
+
+\[
+    \dd\bm{X}_t
+    =
+    \bm{f}(\bm{X}_t,t)\dd t
+    +
+    g(t)\dd\bm{W}_t.
+\]
+
+Обратное SDE:
+\[
+    \dd\bm{X}_t
+    =
+    \left[
+        \bm{f}(\bm{X}_t,t)
+        -
+        g(t)^2\nabla_{\bm{x}}\log p_t(\bm{X}_t)
+    \right]\dd t
+    +
+    g(t)\dd\overline{\bm{W}}_t,
+\]
+где время идёт от $T$ к $0$.
+
+Probability flow ODE:
+\[
+    \frac{\dd\bm{X}_t}{\dd t}
+    =
+    \bm{f}(\bm{X}_t,t)
+    -
+    \frac{1}{2}g(t)^2
+    \nabla_{\bm{x}}\log p_t(\bm{X}_t).
+\]
+
+\end{document}

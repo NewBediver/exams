@@ -1,0 +1,3317 @@
+\documentclass[12pt,a4paper]{article}
+
+% ------------------------------------------------------------
+% Кодировка, язык и геометрия страницы
+% ------------------------------------------------------------
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{geometry}
+\geometry{
+    left=25mm,
+    right=20mm,
+    top=20mm,
+    bottom=20mm
+}
+
+% ------------------------------------------------------------
+% Математика
+% ------------------------------------------------------------
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+
+% ------------------------------------------------------------
+% Алгоритмы и рисунки
+% ------------------------------------------------------------
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc}
+
+% ------------------------------------------------------------
+% Гиперссылки внутри документа
+% ------------------------------------------------------------
+\usepackage[
+    colorlinks=true,
+    linkcolor=blue!50!black,
+    urlcolor=blue!50!black
+]{hyperref}
+
+% ------------------------------------------------------------
+% Оформление
+% ------------------------------------------------------------
+\setlength{\parindent}{1.25cm}
+\setlength{\parskip}{0.2em}
+\setlist[itemize]{topsep=0.3em,itemsep=0.2em}
+\setlist[enumerate]{topsep=0.3em,itemsep=0.2em}
+
+\floatname{algorithm}{Алгоритм}
+\algrenewcommand\algorithmicrequire{\textbf{Вход:}}
+\algrenewcommand\algorithmicensure{\textbf{Выход:}}
+\algrenewcommand\algorithmicfor{\textbf{для}}
+\algrenewcommand\algorithmicforall{\textbf{для всех}}
+\algrenewcommand\algorithmicwhile{\textbf{пока}}
+\algrenewcommand\algorithmicdo{\textbf{выполнять}}
+\algrenewcommand\algorithmicif{\textbf{если}}
+\algrenewcommand\algorithmicthen{\textbf{то}}
+\algrenewcommand\algorithmicelse{\textbf{иначе}}
+\algrenewcommand\algorithmicend{\textbf{конец}}
+\algrenewcommand\algorithmicreturn{\textbf{вернуть}}
+
+\tikzset{
+    block/.style={
+        draw,
+        rounded corners,
+        align=center,
+        minimum height=10mm,
+        minimum width=24mm,
+        fill=blue!5
+    },
+    fwd/.style={
+        -{Latex[length=2mm]},
+        thick,
+        blue!70!black
+    },
+    bwd/.style={
+        -{Latex[length=2mm]},
+        thick,
+        dashed,
+        red!70!black
+    }
+}
+
+% ------------------------------------------------------------
+% Теоремы
+% ------------------------------------------------------------
+\theoremstyle{plain}
+\newtheorem{theorem}{Теорема}[section]
+\newtheorem{lemma}[theorem]{Лемма}
+\newtheorem{proposition}[theorem]{Утверждение}
+\newtheorem{corollary}[theorem]{Следствие}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Определение}[section]
+\newtheorem{example}{Пример}[section]
+
+\theoremstyle{remark}
+\newtheorem{remark}{Замечание}[section]
+
+% ------------------------------------------------------------
+% Сокращения
+% ------------------------------------------------------------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\abs}[1]{\left| #1 \right|}
+\newcommand{\inner}[2]{\left\langle #1,#2 \right\rangle}
+\newcommand{\dd}{\,\mathrm{d}}
+\newcommand{\argmin}{\operatorname*{arg\,min}}
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\sign}{\operatorname{sign}}
+
+\title{Билет №97 \\ \small Глубокие нейронные сети. Градиентный спуск. Обратное распространение. (ИТМО)}
+\author{Сериков Владислав Александрович}
+\date{19 июля 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Постановка задачи обучения}
+% ============================================================
+
+Пусть дана обучающая выборка
+\[
+    \mathcal{D}
+    =
+    \left\{
+        \left(x_i,y_i\right)
+    \right\}_{i=1}^{N},
+\]
+где $x_i\in\R^{n_0}$ --- входной объект, а $y_i$ --- требуемый
+ответ. Нейронная сеть задаёт параметрическое отображение
+\[
+    f_\theta\colon \R^{n_0}\to\R^{n_L},
+\]
+где $\theta$ обозначает совокупность всех обучаемых весов и
+смещений.
+
+Для одного объекта определяется функция потерь
+\[
+    \ell\bigl(f_\theta(x_i),y_i\bigr),
+\]
+измеряющая отличие предсказания сети от правильного ответа.
+Обучение сети обычно формулируется как задача минимизации
+эмпирического риска:
+\[
+    \min_{\theta} F(\theta),
+\]
+где
+\[
+    F(\theta)
+    =
+    \frac{1}{N}
+    \sum_{i=1}^{N}
+    \ell\bigl(f_\theta(x_i),y_i\bigr)
+    +
+    \lambda\Omega(\theta).
+\]
+Здесь:
+
+\begin{itemize}
+    \item первая часть функционала измеряет ошибку на обучающей
+    выборке;
+    \item $\Omega(\theta)$ --- регуляризатор;
+    \item $\lambda\geq 0$ --- коэффициент регуляризации.
+\end{itemize}
+
+Например, при $L_2$-регуляризации весов
+\[
+    \Omega(\theta)
+    =
+    \frac{1}{2}
+    \sum_{l=1}^{L}
+    \norm{W^{(l)}}_F^2.
+\]
+
+Выборку обычно разделяют на три части:
+
+\begin{enumerate}
+    \item \textbf{обучающая выборка} используется для изменения
+    параметров;
+    \item \textbf{валидационная выборка} используется для выбора
+    архитектуры и гиперпараметров;
+    \item \textbf{тестовая выборка} используется для итоговой
+    независимой оценки качества.
+\end{enumerate}
+
+Важно различать три компонента обучения:
+
+\begin{itemize}
+    \item \textbf{прямое распространение} вычисляет предсказание и
+    значение функции потерь;
+    \item \textbf{обратное распространение} вычисляет производные
+    функции потерь по параметрам;
+    \item \textbf{алгоритм оптимизации}, например градиентный спуск,
+    использует производные для изменения параметров.
+\end{itemize}
+
+% ============================================================
+\section{Глубокие нейронные сети}
+% ============================================================
+
+\subsection{Искусственный нейрон}
+
+Искусственный нейрон принимает входной вектор
+$a\in\R^n$ и вычисляет
+\[
+    z=w^\top a+b,
+    \qquad
+    h=\varphi(z),
+\]
+где
+
+\begin{itemize}
+    \item $w\in\R^n$ --- вектор весов;
+    \item $b\in\R$ --- смещение;
+    \item $z$ --- предактивация;
+    \item $\varphi$ --- функция активации;
+    \item $h$ --- выход нейрона.
+\end{itemize}
+
+Смещение можно включить в вектор весов, дополнив вход единицей:
+\[
+    \widetilde{a}
+    =
+    \begin{pmatrix}
+        a\\
+        1
+    \end{pmatrix},
+    \qquad
+    \widetilde{w}
+    =
+    \begin{pmatrix}
+        w\\
+        b
+    \end{pmatrix},
+    \qquad
+    z=\widetilde{w}^{\top}\widetilde{a}.
+\]
+
+\subsection{Полносвязный слой}
+
+Пусть слой $l-1$ содержит $n_{l-1}$ выходов, а слой $l$ содержит
+$n_l$ нейронов. Тогда
+\[
+    W^{(l)}\in\R^{n_l\times n_{l-1}},
+    \qquad
+    b^{(l)}\in\R^{n_l}.
+\]
+
+Вычисления слоя имеют вид
+\[
+    z^{(l)}
+    =
+    W^{(l)}a^{(l-1)}+b^{(l)},
+    \qquad
+    a^{(l)}
+    =
+    \varphi_l\bigl(z^{(l)}\bigr).
+\]
+
+Здесь функция активации обычно применяется покомпонентно:
+\[
+    a_j^{(l)}
+    =
+    \varphi_l\bigl(z_j^{(l)}\bigr).
+\]
+
+\subsection{Многослойный перцептрон}
+
+Многослойный перцептрон, или MLP, представляет собой композицию
+слоёв:
+\[
+\begin{aligned}
+    a^{(0)} &= x,\\
+    z^{(1)} &= W^{(1)}a^{(0)}+b^{(1)},&
+    a^{(1)} &= \varphi_1\bigl(z^{(1)}\bigr),\\
+    z^{(2)} &= W^{(2)}a^{(1)}+b^{(2)},&
+    a^{(2)} &= \varphi_2\bigl(z^{(2)}\bigr),\\
+    &\vdotswithin{=}& &\vdotswithin{=}\\
+    z^{(L)} &= W^{(L)}a^{(L-1)}+b^{(L)},&
+    a^{(L)} &= \varphi_L\bigl(z^{(L)}\bigr).
+\end{aligned}
+\]
+
+Выход сети равен
+\[
+    \widehat{y}=a^{(L)}.
+\]
+
+Совокупность параметров:
+\[
+    \theta
+    =
+    \left\{
+        W^{(1)},b^{(1)},
+        \ldots,
+        W^{(L)},b^{(L)}
+    \right\}.
+\]
+
+Число параметров полносвязной сети:
+\[
+    P
+    =
+    \sum_{l=1}^{L}
+    \left(
+        n_l n_{l-1}+n_l
+    \right).
+\]
+
+Под \textbf{глубиной} обычно понимается число последовательных
+обучаемых преобразований, а под \textbf{шириной} --- число нейронов
+в слое. Строгой универсальной границы между неглубокими и глубокими
+сетями нет.
+
+\begin{center}
+\begin{tikzpicture}[node distance=15mm]
+    \node[block] (x) {$a^{(0)}=x$};
+    \node[block, right=of x] (l1)
+    {$z^{(1)}=W^{(1)}a^{(0)}+b^{(1)}$\\
+     $a^{(1)}=\varphi_1(z^{(1)})$};
+    \node[block, right=of l1] (l2)
+    {$\cdots$};
+    \node[block, right=of l2] (l3)
+    {$z^{(L)}=W^{(L)}a^{(L-1)}+b^{(L)}$\\
+     $a^{(L)}=\varphi_L(z^{(L)})$};
+    \node[block, right=of l3] (loss)
+    {$\ell(a^{(L)},y)$};
+
+    \draw[fwd] (x) -- node[above] {прямой проход} (l1);
+    \draw[fwd] (l1) -- (l2);
+    \draw[fwd] (l2) -- (l3);
+    \draw[fwd] (l3) -- (loss);
+
+    \draw[bwd] (loss) to[bend left=35]
+        node[below] {производные} (l3);
+    \draw[bwd] (l3) to[bend left=35] (l2);
+    \draw[bwd] (l2) to[bend left=35] (l1);
+    \draw[bwd] (l1) to[bend left=35] (x);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Роль нелинейности}
+
+Если все функции активации являются тождественными, то композиция
+любого числа слоёв остаётся аффинным отображением. Например,
+\[
+\begin{aligned}
+    W^{(2)}
+    \left(
+        W^{(1)}x+b^{(1)}
+    \right)
+    +b^{(2)}
+    &=
+    \left(
+        W^{(2)}W^{(1)}
+    \right)x
+    +
+    \left(
+        W^{(2)}b^{(1)}+b^{(2)}
+    \right)\\
+    &=\widetilde{W}x+\widetilde{b}.
+\end{aligned}
+\]
+
+Следовательно, без нелинейных функций активации увеличение глубины
+не увеличивает класс представимых функций: всю сеть можно заменить
+одним аффинным слоем.
+
+\subsection{Основные функции активации}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{
+    >{\raggedright\arraybackslash}p{0.16\textwidth}
+    >{\centering\arraybackslash}p{0.27\textwidth}
+    >{\centering\arraybackslash}p{0.25\textwidth}
+    X
+}
+\toprule
+\textbf{Название} &
+\textbf{Функция} &
+\textbf{Производная} &
+\textbf{Особенности}\\
+\midrule
+
+Линейная &
+$\varphi(z)=z$ &
+$\varphi'(z)=1$ &
+Используется, например, в выходном слое регрессии.\\[1ex]
+
+Сигмоида &
+$\displaystyle
+\sigma(z)=\frac{1}{1+e^{-z}}
+$ &
+$\sigma'(z)=\sigma(z)(1-\sigma(z))$ &
+Выход лежит в $(0,1)$. При больших $\abs{z}$ производная близка
+к нулю.\\[2ex]
+
+Гиперболический тангенс &
+$\varphi(z)=\tanh z$ &
+$\varphi'(z)=1-\tanh^2z$ &
+Выход лежит в $(-1,1)$, функция центрирована относительно нуля,
+но также насыщается.\\[1ex]
+
+ReLU &
+$\varphi(z)=\max(0,z)$ &
+$\varphi'(z)=
+\begin{cases}
+0,&z<0,\\
+1,&z>0
+\end{cases}$ &
+Проста и не насыщается при $z>0$. В точке $z=0$ производная не
+существует; программная реализация выбирает фиксированное значение,
+обычно $0$.\\[3ex]
+
+Leaky ReLU &
+$\varphi(z)=\max(\alpha z,z)$,
+$0<\alpha<1$ &
+$\varphi'(z)=
+\begin{cases}
+\alpha,&z<0,\\
+1,&z>0
+\end{cases}$ &
+Сохраняет ненулевую производную в отрицательной полуплоскости.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Выходной слой и функция потерь}
+
+\subsubsection{Регрессия}
+
+Для регрессии часто используют линейный выход:
+\[
+    \widehat{y}=z^{(L)}
+\]
+и среднеквадратичную ошибку
+\[
+    \ell(\widehat{y},y)
+    =
+    \frac{1}{2}
+    \norm{\widehat{y}-y}_2^2.
+\]
+
+Её градиент по выходу равен
+\[
+    \nabla_{\widehat{y}}\ell
+    =
+    \widehat{y}-y.
+\]
+
+\subsubsection{Бинарная классификация}
+
+Пусть последний слой формирует скалярный логит $z$. Вероятность
+положительного класса определяется как
+\[
+    p=\sigma(z).
+\]
+
+Бинарная перекрёстная энтропия:
+\[
+    \ell(p,y)
+    =
+    -y\log p-(1-y)\log(1-p),
+    \qquad y\in\{0,1\}.
+\]
+
+Производная потерь непосредственно по логиту:
+\[
+    \frac{\partial\ell}{\partial z}
+    =
+    p-y.
+\]
+
+\subsubsection{Многоклассовая классификация}
+
+Пусть $z=(z_1,\ldots,z_C)^\top$ --- логиты классов. Преобразование
+softmax задаётся формулой
+\[
+    p_j
+    =
+    \frac{e^{z_j}}
+    {\sum_{r=1}^{C}e^{z_r}}.
+\]
+
+Если $y$ --- one-hot-вектор правильного класса, то перекрёстная
+энтропия равна
+\[
+    \ell(p,y)
+    =
+    -\sum_{j=1}^{C}y_j\log p_j.
+\]
+
+Для численной устойчивости следует вычислять
+\[
+    c=\max_j z_j,
+    \qquad
+    p_j
+    =
+    \frac{e^{z_j-c}}
+    {\sum_{r=1}^{C}e^{z_r-c}}.
+\]
+Вычитание одной и той же константы из всех логитов не изменяет
+softmax.
+
+\subsection{Основные виды глубоких сетей}
+
+\begin{itemize}
+    \item \textbf{Полносвязные сети} применяют матричные аффинные
+    преобразования между всеми входами и выходами соседних слоёв.
+
+    \item \textbf{Свёрточные сети} используют локальные фильтры и
+    разделение весов между разными пространственными позициями.
+
+    \item \textbf{Рекуррентные сети} многократно применяют один и тот
+    же параметризованный переход к элементам последовательности.
+    Обратное распространение по развёрнутой рекуррентной сети
+    называется обратным распространением во времени.
+
+    \item \textbf{Остаточные сети} используют блоки вида
+    \[
+        h^{(l+1)}
+        =
+        h^{(l)}
+        +
+        F_l\bigl(h^{(l)}\bigr).
+    \]
+
+    \item \textbf{Сети с механизмом внимания} вычисляют
+    взвешенные комбинации представлений различных элементов
+    входной последовательности.
+\end{itemize}
+
+Во всех этих случаях вычисление градиента можно представить как
+обратный проход по вычислительному графу.
+
+% ============================================================
+\section{Производные многомерных функций}
+% ============================================================
+
+\subsection{Градиент и производная по направлению}
+
+Пусть $F\colon\R^d\to\R$ дифференцируема. Её градиент:
+\[
+    \nabla F(x)
+    =
+    \begin{pmatrix}
+        \frac{\partial F}{\partial x_1}\\
+        \vdots\\
+        \frac{\partial F}{\partial x_d}
+    \end{pmatrix}.
+\]
+
+Для направления $v\in\R^d$ производная по направлению равна
+\[
+    D_vF(x)
+    =
+    \lim_{t\to 0}
+    \frac{F(x+tv)-F(x)}{t}
+    =
+    \nabla F(x)^\top v.
+\]
+
+Линейная аппроксимация функции имеет вид
+\[
+    F(x+\Delta x)
+    =
+    F(x)
+    +
+    \nabla F(x)^\top\Delta x
+    +
+    o\bigl(\norm{\Delta x}\bigr).
+\]
+
+\begin{theorem}[Направление наискорейшего локального убывания]
+Пусть $F\colon\R^d\to\R$ дифференцируема в точке $x$ и
+$\nabla F(x)\neq 0$. Среди всех единичных направлений
+$v$, $\norm{v}_2=1$, производная по направлению минимальна при
+\[
+    v_*
+    =
+    -\frac{\nabla F(x)}{\norm{\nabla F(x)}_2}.
+\]
+Минимальное значение производной равно
+\[
+    D_{v_*}F(x)
+    =
+    -\norm{\nabla F(x)}_2.
+\]
+\end{theorem}
+
+\begin{proof}
+По формуле производной по направлению
+\[
+    D_vF(x)
+    =
+    \inner{\nabla F(x)}{v}.
+\]
+Из неравенства Коши--Буняковского следует
+\[
+    \inner{\nabla F(x)}{v}
+    \geq
+    -\norm{\nabla F(x)}_2\norm{v}_2.
+\]
+Так как $\norm{v}_2=1$, получаем
+\[
+    D_vF(x)
+    \geq
+    -\norm{\nabla F(x)}_2.
+\]
+Равенство в неравенстве Коши--Буняковского достигается тогда и
+только тогда, когда $v$ направлен противоположно градиенту:
+\[
+    v
+    =
+    -\frac{\nabla F(x)}
+    {\norm{\nabla F(x)}_2}.
+\]
+Следовательно, отрицательный градиент задаёт направление
+наискорейшего локального убывания функции в евклидовой норме.
+\end{proof}
+
+\subsection{Якобиан}
+
+Для отображения
+\[
+    g\colon\R^n\to\R^m,
+    \qquad
+    g(x)
+    =
+    \begin{pmatrix}
+        g_1(x)\\
+        \vdots\\
+        g_m(x)
+    \end{pmatrix},
+\]
+якобиан определяется как
+\[
+    J_g(x)
+    =
+    \frac{\partial g}{\partial x}
+    =
+    \begin{pmatrix}
+        \frac{\partial g_1}{\partial x_1}
+        &\cdots&
+        \frac{\partial g_1}{\partial x_n}\\
+        \vdots&&\vdots\\
+        \frac{\partial g_m}{\partial x_1}
+        &\cdots&
+        \frac{\partial g_m}{\partial x_n}
+    \end{pmatrix}
+    \in\R^{m\times n}.
+\]
+
+\begin{theorem}[Многомерное правило цепочки]
+Пусть $g\colon\R^n\to\R^m$ дифференцируема в точке $x$, а
+$h\colon\R^m\to\R$ дифференцируема в точке $g(x)$. Тогда композиция
+$F=h\circ g$ дифференцируема в точке $x$ и
+\[
+    \nabla F(x)
+    =
+    J_g(x)^\top
+    \nabla h\bigl(g(x)\bigr).
+\]
+\end{theorem}
+
+\begin{proof}
+Обозначим $y=g(x)$. Из дифференцируемости $g$ следует
+\[
+    g(x+\Delta x)
+    =
+    g(x)
+    +
+    J_g(x)\Delta x
+    +
+    r_g(\Delta x),
+\]
+где
+\[
+    \frac{\norm{r_g(\Delta x)}}{\norm{\Delta x}}
+    \longrightarrow 0
+    \quad
+    \text{при }
+    \Delta x\to 0.
+\]
+
+Положим
+\[
+    \Delta y
+    =
+    g(x+\Delta x)-g(x)
+    =
+    J_g(x)\Delta x+r_g(\Delta x).
+\]
+Поскольку линейное отображение ограничено,
+$\norm{\Delta y}=O(\norm{\Delta x})$.
+
+Из дифференцируемости $h$ следует
+\[
+    h(y+\Delta y)
+    =
+    h(y)
+    +
+    \nabla h(y)^\top\Delta y
+    +
+    r_h(\Delta y),
+\]
+где
+\[
+    r_h(\Delta y)
+    =
+    o\bigl(\norm{\Delta y}\bigr)
+    =
+    o\bigl(\norm{\Delta x}\bigr).
+\]
+
+Подставляя выражение для $\Delta y$, получаем
+\[
+\begin{aligned}
+    h(g(x+\Delta x))
+    &=
+    h(g(x))
+    +
+    \nabla h(g(x))^\top
+    J_g(x)\Delta x\\
+    &\quad+
+    \nabla h(g(x))^\top r_g(\Delta x)
+    +
+    r_h(\Delta y).
+\end{aligned}
+\]
+Два последних слагаемых имеют порядок
+$o(\norm{\Delta x})$. Следовательно,
+\[
+    F(x+\Delta x)
+    =
+    F(x)
+    +
+    \left(
+        J_g(x)^\top\nabla h(g(x))
+    \right)^\top
+    \Delta x
+    +
+    o(\norm{\Delta x}).
+\]
+По определению градиента
+\[
+    \nabla F(x)
+    =
+    J_g(x)^\top\nabla h(g(x)).
+\]
+\end{proof}
+
+% ============================================================
+\section{Градиентный спуск}
+% ============================================================
+
+\subsection{Основной алгоритм}
+
+Пусть требуется минимизировать дифференцируемую функцию
+\[
+    F\colon\R^d\to\R.
+\]
+Метод градиентного спуска строит последовательность
+\[
+    \theta_{k+1}
+    =
+    \theta_k
+    -
+    \eta_k\nabla F(\theta_k),
+\]
+где $\eta_k>0$ --- шаг, или скорость обучения.
+
+\begin{algorithm}[H]
+\caption{Полный градиентный спуск}
+\begin{algorithmic}[1]
+\Require начальная точка $\theta_0$, число итераций $K$,
+шаги $\eta_0,\ldots,\eta_{K-1}$
+\Ensure приближённое решение $\theta_K$
+\For{$k=0,\ldots,K-1$}
+    \State вычислить значение $F(\theta_k)$
+    \State вычислить полный градиент
+    $g_k\gets\nabla F(\theta_k)$
+    \If{выполнен критерий остановки}
+        \State \Return $\theta_k$
+    \EndIf
+    \State обновить параметры:
+    $\theta_{k+1}\gets\theta_k-\eta_k g_k$
+\EndFor
+\State \Return $\theta_K$
+\end{algorithmic}
+\end{algorithm}
+
+В качестве критериев остановки могут использоваться:
+
+\[
+    \norm{\nabla F(\theta_k)}\leq\varepsilon,
+\]
+\[
+    \abs{F(\theta_{k+1})-F(\theta_k)}
+    \leq
+    \varepsilon\max\{1,\abs{F(\theta_k)}\},
+\]
+ограничение на число итераций или отсутствие улучшения на
+валидационной выборке.
+
+\subsection{Минимальный одномерный пример}
+
+Рассмотрим
+\[
+    F(\theta)
+    =
+    \frac{1}{2}(\theta-3)^2.
+\]
+Тогда
+\[
+    F'(\theta)=\theta-3
+\]
+и шаг градиентного спуска равен
+\[
+\begin{aligned}
+    \theta_{k+1}
+    &=
+    \theta_k-\eta(\theta_k-3)\\
+    &=
+    (1-\eta)\theta_k+3\eta.
+\end{aligned}
+\]
+
+При $\theta_0=0$ и $\eta=0.5$:
+\[
+\begin{aligned}
+    \theta_1&=1.5,\\
+    \theta_2&=2.25,\\
+    \theta_3&=2.625,\\
+    \theta_4&=2.8125.
+\end{aligned}
+\]
+
+\begin{center}
+\begin{tikzpicture}[x=1.7cm,y=1cm]
+    \draw[-{Latex[length=2mm]}] (-0.25,0) -- (3.45,0)
+        node[right] {$\theta$};
+
+    \foreach \x/\lab in {
+        0/{\theta_0},
+        1.5/{\theta_1},
+        2.25/{\theta_2},
+        2.625/{\theta_3},
+        3/{\theta_*}
+    }{
+        \draw (\x,0.08)--(\x,-0.08);
+        \node[below] at (\x,-0.08) {$\lab$};
+    }
+
+    \draw[fwd] (0,0.20) to[bend left=25] (1.5,0.20);
+    \draw[fwd] (1.5,0.20) to[bend left=25] (2.25,0.20);
+    \draw[fwd] (2.25,0.20) to[bend left=25] (2.625,0.20);
+\end{tikzpicture}
+\end{center}
+
+Ошибка относительно оптимума удовлетворяет равенству
+\[
+    \theta_{k+1}-3
+    =
+    (1-\eta)(\theta_k-3).
+\]
+Поэтому сходимость имеет место тогда, когда
+\[
+    \abs{1-\eta}<1,
+    \qquad
+    0<\eta<2.
+\]
+
+При слишком малом шаге сходимость медленная. При слишком большом
+шаге итерации могут колебаться или расходиться.
+
+\subsection{Гладкость функции}
+
+\begin{definition}
+Дифференцируемая функция $F\colon\R^d\to\R$ называется
+$L$-гладкой, если её градиент является липшицевым:
+\[
+    \norm{\nabla F(x)-\nabla F(y)}_2
+    \leq
+    L\norm{x-y}_2
+\]
+для любых $x,y\in\R^d$.
+\end{definition}
+
+Константа $L$ ограничивает скорость изменения градиента. Большое
+значение $L$ соответствует возможности высокой кривизны функции и
+обычно требует меньшего шага градиентного спуска.
+
+\begin{lemma}[Лемма о спуске]
+Пусть $F\colon\R^d\to\R$ является $L$-гладкой. Тогда для любых
+$x,y\in\R^d$
+\[
+    F(y)
+    \leq
+    F(x)
+    +
+    \nabla F(x)^\top(y-x)
+    +
+    \frac{L}{2}\norm{y-x}_2^2.
+\]
+\end{lemma}
+
+\begin{proof}
+Рассмотрим функцию одной переменной
+\[
+    \phi(t)
+    =
+    F\bigl(x+t(y-x)\bigr),
+    \qquad t\in[0,1].
+\]
+По основной теореме анализа
+\[
+\begin{aligned}
+    F(y)-F(x)
+    &=
+    \phi(1)-\phi(0)\\
+    &=
+    \int_0^1\phi'(t)\dd t\\
+    &=
+    \int_0^1
+    \nabla F\bigl(x+t(y-x)\bigr)^\top
+    (y-x)\dd t.
+\end{aligned}
+\]
+
+Добавим и вычтем $\nabla F(x)$:
+\[
+\begin{aligned}
+    F(y)-F(x)
+    &=
+    \nabla F(x)^\top(y-x)\\
+    &\quad+
+    \int_0^1
+    \left[
+        \nabla F(x+t(y-x))-\nabla F(x)
+    \right]^\top
+    (y-x)\dd t.
+\end{aligned}
+\]
+
+По неравенству Коши--Буняковского и $L$-гладкости
+\[
+\begin{aligned}
+    &
+    \left[
+        \nabla F(x+t(y-x))-\nabla F(x)
+    \right]^\top
+    (y-x)\\
+    &\leq
+    \norm{
+        \nabla F(x+t(y-x))-\nabla F(x)
+    }
+    \norm{y-x}\\
+    &\leq
+    Lt\norm{y-x}^2.
+\end{aligned}
+\]
+
+Следовательно,
+\[
+\begin{aligned}
+    F(y)-F(x)
+    &\leq
+    \nabla F(x)^\top(y-x)
+    +
+    \int_0^1Lt\norm{y-x}^2\dd t\\
+    &=
+    \nabla F(x)^\top(y-x)
+    +
+    \frac{L}{2}\norm{y-x}^2.
+\end{aligned}
+\]
+\end{proof}
+
+\begin{corollary}[Убывание функции при одном шаге]
+Если $F$ является $L$-гладкой и
+\[
+    x^+=x-\eta\nabla F(x),
+\]
+то
+\[
+    F(x^+)
+    \leq
+    F(x)
+    -
+    \eta
+    \left(
+        1-\frac{L\eta}{2}
+    \right)
+    \norm{\nabla F(x)}_2^2.
+\]
+В частности, если
+\[
+    0<\eta<\frac{2}{L},
+\]
+то при $\nabla F(x)\neq 0$ значение функции строго уменьшается.
+\end{corollary}
+
+\begin{proof}
+В лемме о спуске положим
+\[
+    y=x-\eta\nabla F(x).
+\]
+Тогда
+\[
+    y-x=-\eta\nabla F(x),
+\]
+и поэтому
+\[
+\begin{aligned}
+    F(y)
+    &\leq
+    F(x)
+    -
+    \eta\norm{\nabla F(x)}^2
+    +
+    \frac{L\eta^2}{2}
+    \norm{\nabla F(x)}^2\\
+    &=
+    F(x)
+    -
+    \eta
+    \left(
+        1-\frac{L\eta}{2}
+    \right)
+    \norm{\nabla F(x)}^2.
+\end{aligned}
+\]
+\end{proof}
+
+\subsection{Сходимость в невыпуклом случае}
+
+Функция потерь глубокой нейронной сети обычно невыпукла. Поэтому
+градиентный спуск в общем случае не гарантирует нахождение
+глобального минимума. Можно, однако, получить гарантию приближения
+к стационарной точке.
+
+\begin{theorem}[Сходимость градиента к нулю]
+Пусть $F\colon\R^d\to\R$ является $L$-гладкой и ограничена снизу:
+\[
+    F_{\inf}
+    =
+    \inf_{x\in\R^d}F(x)>-\infty.
+\]
+Пусть последовательность определяется градиентным спуском
+\[
+    x_{k+1}=x_k-\eta\nabla F(x_k)
+\]
+с постоянным шагом
+\[
+    0<\eta<\frac{2}{L}.
+\]
+Тогда:
+
+\begin{enumerate}
+    \item последовательность $F(x_k)$ не возрастает;
+    \item
+    \[
+        \sum_{k=0}^{\infty}
+        \norm{\nabla F(x_k)}_2^2<\infty;
+    \]
+    \item
+    \[
+        \norm{\nabla F(x_k)}_2\longrightarrow 0;
+    \]
+    \item для любого $K\geq 1$
+    \[
+        \min_{0\leq k<K}
+        \norm{\nabla F(x_k)}_2^2
+        \leq
+        \frac{
+            F(x_0)-F_{\inf}
+        }{
+            \eta
+            \left(
+                1-\frac{L\eta}{2}
+            \right)K
+        }.
+    \]
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+По следствию из леммы о спуске
+\[
+    F(x_{k+1})
+    \leq
+    F(x_k)
+    -
+    c\norm{\nabla F(x_k)}^2,
+\]
+где
+\[
+    c
+    =
+    \eta
+    \left(
+        1-\frac{L\eta}{2}
+    \right)>0.
+\]
+Отсюда
+\[
+    F(x_{k+1})\leq F(x_k),
+\]
+то есть последовательность значений функции не возрастает.
+
+Перенесём слагаемые:
+\[
+    c\norm{\nabla F(x_k)}^2
+    \leq
+    F(x_k)-F(x_{k+1}).
+\]
+Суммируя от $k=0$ до $K-1$, получаем телескопическую сумму:
+\[
+\begin{aligned}
+    c\sum_{k=0}^{K-1}
+    \norm{\nabla F(x_k)}^2
+    &\leq
+    \sum_{k=0}^{K-1}
+    \left(
+        F(x_k)-F(x_{k+1})
+    \right)\\
+    &=
+    F(x_0)-F(x_K)\\
+    &\leq
+    F(x_0)-F_{\inf}.
+\end{aligned}
+\]
+Следовательно,
+\[
+    \sum_{k=0}^{K-1}
+    \norm{\nabla F(x_k)}^2
+    \leq
+    \frac{F(x_0)-F_{\inf}}{c}.
+\]
+Правая часть не зависит от $K$. Переходя к пределу
+$K\to\infty$, получаем
+\[
+    \sum_{k=0}^{\infty}
+    \norm{\nabla F(x_k)}^2<\infty.
+\]
+
+Члены сходящегося ряда из неотрицательных чисел стремятся к нулю,
+поэтому
+\[
+    \norm{\nabla F(x_k)}^2\to 0.
+\]
+
+Наконец,
+\[
+    K
+    \min_{0\leq k<K}
+    \norm{\nabla F(x_k)}^2
+    \leq
+    \sum_{k=0}^{K-1}
+    \norm{\nabla F(x_k)}^2.
+\]
+Используя полученную оценку суммы, имеем
+\[
+    \min_{0\leq k<K}
+    \norm{\nabla F(x_k)}^2
+    \leq
+    \frac{
+        F(x_0)-F_{\inf}
+    }{
+        cK
+    }.
+\]
+Подстановка значения $c$ завершает доказательство.
+\end{proof}
+
+\begin{remark}
+Теорема утверждает сходимость нормы градиента к нулю, но не
+гарантирует:
+
+\begin{itemize}
+    \item сходимость самих точек $x_k$;
+    \item достижение глобального минимума;
+    \item отличие найденной стационарной точки от седловой точки
+    или локального максимума.
+\end{itemize}
+\end{remark}
+
+\begin{remark}
+Для сетей с ReLU функция потерь может быть недифференцируема на
+границах линейных областей. Поэтому приведённая теорема в буквальном
+виде относится к гладким функциям. На практике в точках излома
+используется выбранное значение субградиента.
+\end{remark}
+
+\subsection{Скорость сходимости для выпуклой функции}
+
+\begin{definition}
+Функция $F\colon\R^d\to\R$ называется выпуклой, если для любых
+$x,y\in\R^d$ и $\alpha\in[0,1]$
+\[
+    F(\alpha x+(1-\alpha)y)
+    \leq
+    \alpha F(x)+(1-\alpha)F(y).
+\]
+Если $F$ дифференцируема, выпуклость эквивалентна условию
+\[
+    F(y)
+    \geq
+    F(x)+\nabla F(x)^\top(y-x)
+\]
+для всех $x,y$.
+\end{definition}
+
+\begin{theorem}[Скорость градиентного спуска в выпуклом случае]
+Пусть $F\colon\R^d\to\R$ выпукла, $L$-гладка и имеет точку
+минимума $x_*$. Пусть
+\[
+    x_{k+1}
+    =
+    x_k-\frac{1}{L}\nabla F(x_k).
+\]
+Тогда для любого $k\geq 1$
+\[
+    F(x_k)-F(x_*)
+    \leq
+    \frac{
+        L\norm{x_0-x_*}_2^2
+    }{
+        2k
+    }.
+\]
+\end{theorem}
+
+\begin{proof}
+Обозначим
+\[
+    g_k=\nabla F(x_k).
+\]
+Из выпуклости следует
+\[
+    F(x_k)-F(x_*)
+    \leq
+    g_k^\top(x_k-x_*).
+\]
+
+Рассмотрим расстояние до минимума после одного шага:
+\[
+\begin{aligned}
+    \norm{x_{k+1}-x_*}^2
+    &=
+    \norm{
+        x_k-\frac{1}{L}g_k-x_*
+    }^2\\
+    &=
+    \norm{x_k-x_*}^2
+    -
+    \frac{2}{L}
+    g_k^\top(x_k-x_*)
+    +
+    \frac{1}{L^2}\norm{g_k}^2.
+\end{aligned}
+\]
+
+Следовательно,
+\[
+\begin{aligned}
+    \frac{L}{2}
+    \left(
+        \norm{x_k-x_*}^2
+        -
+        \norm{x_{k+1}-x_*}^2
+    \right)
+    &=
+    g_k^\top(x_k-x_*)
+    -
+    \frac{1}{2L}\norm{g_k}^2\\
+    &\geq
+    F(x_k)-F(x_*)
+    -
+    \frac{1}{2L}\norm{g_k}^2.
+\end{aligned}
+\]
+
+По лемме о спуске при шаге $1/L$
+\[
+    F(x_{k+1})
+    \leq
+    F(x_k)-\frac{1}{2L}\norm{g_k}^2.
+\]
+Поэтому
+\[
+    F(x_k)-F(x_*)
+    -
+    \frac{1}{2L}\norm{g_k}^2
+    \geq
+    F(x_{k+1})-F(x_*).
+\]
+Значит,
+\[
+    F(x_{k+1})-F(x_*)
+    \leq
+    \frac{L}{2}
+    \left(
+        \norm{x_k-x_*}^2
+        -
+        \norm{x_{k+1}-x_*}^2
+    \right).
+\]
+
+Суммируем это неравенство по $k=0,\ldots,K-1$:
+\[
+\begin{aligned}
+    \sum_{k=0}^{K-1}
+    \left(
+        F(x_{k+1})-F(x_*)
+    \right)
+    &\leq
+    \frac{L}{2}
+    \left(
+        \norm{x_0-x_*}^2
+        -
+        \norm{x_K-x_*}^2
+    \right)\\
+    &\leq
+    \frac{L}{2}\norm{x_0-x_*}^2.
+\end{aligned}
+\]
+
+Значения функции не возрастают, поэтому
+\[
+    F(x_{k+1})-F(x_*)
+    \geq
+    F(x_K)-F(x_*)
+\]
+для всех $k<K$. Следовательно,
+\[
+    K\left(F(x_K)-F(x_*)\right)
+    \leq
+    \frac{L}{2}\norm{x_0-x_*}^2.
+\]
+Деление на $K$ завершает доказательство.
+\end{proof}
+
+\subsection{Стохастический и мини-пакетный градиентный спуск}
+
+Пусть
+\[
+    F(\theta)
+    =
+    \frac{1}{N}
+    \sum_{i=1}^{N}F_i(\theta).
+\]
+
+Полный градиент:
+\[
+    \nabla F(\theta)
+    =
+    \frac{1}{N}
+    \sum_{i=1}^{N}\nabla F_i(\theta).
+\]
+
+Вычисление полного градиента может быть дорого при большом $N$.
+В стохастическом градиентном спуске на каждой итерации выбирается
+случайный объект $i_k$:
+\[
+    \theta_{k+1}
+    =
+    \theta_k
+    -
+    \eta_k\nabla F_{i_k}(\theta_k).
+\]
+
+Если $i_k$ равномерно распределён на
+$\{1,\ldots,N\}$, то
+\[
+\begin{aligned}
+    \E_{i_k}
+    \left[
+        \nabla F_{i_k}(\theta)
+    \right]
+    &=
+    \sum_{i=1}^{N}
+    \frac{1}{N}\nabla F_i(\theta)\\
+    &=
+    \nabla F(\theta).
+\end{aligned}
+\]
+Таким образом, стохастический градиент является несмещённой оценкой
+полного градиента.
+
+На практике используется мини-пакет
+\[
+    B_k\subseteq\{1,\ldots,N\},
+    \qquad
+    \abs{B_k}=m,
+\]
+и оценка
+\[
+    g_{B_k}(\theta)
+    =
+    \frac{1}{m}
+    \sum_{i\in B_k}
+    \nabla F_i(\theta).
+\]
+
+Обновление:
+\[
+    \theta_{k+1}
+    =
+    \theta_k-\eta_k g_{B_k}(\theta_k).
+\]
+
+Если отдельные градиенты выбираются независимо и
+\[
+    \E\norm{\nabla F_i(\theta)-\nabla F(\theta)}^2
+    =
+    \sigma^2,
+\]
+то для среднего по $m$ независимым объектам
+\[
+    \E\norm{
+        g_{B_k}(\theta)-\nabla F(\theta)
+    }^2
+    =
+    \frac{\sigma^2}{m}.
+\]
+Увеличение размера мини-пакета уменьшает дисперсию оценки градиента,
+но увеличивает стоимость одной итерации.
+
+\begin{definition}
+\textbf{Эпоха} --- обработка количества объектов, равного размеру
+всей обучающей выборки. Если размер мини-пакета равен $m$, одна эпоха
+содержит приблизительно $N/m$ итераций.
+\end{definition}
+
+\begin{algorithm}[H]
+\caption{Обучение мини-пакетным градиентным спуском}
+\begin{algorithmic}[1]
+\Require данные $\mathcal{D}$, параметры $\theta$, число эпох $E$,
+размер пакета $m$, скорости обучения $\eta_t$
+\Ensure обученные параметры $\theta$
+\For{$e=1,\ldots,E$}
+    \State случайно перемешать обучающую выборку
+    \State разбить выборку на мини-пакеты $B_1,\ldots,B_s$
+    \For{$j=1,\ldots,s$}
+        \State выполнить прямой проход для объектов из $B_j$
+        \State вычислить среднюю функцию потерь
+        \[
+            F_{B_j}(\theta)
+            =
+            \frac{1}{\abs{B_j}}
+            \sum_{i\in B_j}
+            \ell(f_\theta(x_i),y_i)
+        \]
+        \State с помощью обратного распространения вычислить
+        $g\gets\nabla_\theta F_{B_j}(\theta)$
+        \State обновить параметры:
+        $\theta\gets\theta-\eta_t g$
+    \EndFor
+    \State оценить функцию потерь и качество на валидационной выборке
+\EndFor
+\State \Return $\theta$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Выбор скорости обучения}
+
+Основные стратегии:
+
+\begin{itemize}
+    \item постоянный шаг $\eta_k=\eta$;
+    \item ступенчатое уменьшение шага;
+    \item экспоненциальное уменьшение:
+    \[
+        \eta_k=\eta_0\gamma^k,
+        \qquad 0<\gamma<1;
+    \]
+    \item полиномиальное уменьшение:
+    \[
+        \eta_k
+        =
+        \frac{\eta_0}{(1+\alpha k)^p};
+    \]
+    \item периодическое изменение;
+    \item предварительный разогрев, при котором шаг постепенно
+    увеличивается в начале обучения.
+\end{itemize}
+
+Признаки слишком большого шага:
+
+\begin{itemize}
+    \item функция потерь растёт или становится \texttt{NaN};
+    \item нормы весов и градиентов быстро увеличиваются;
+    \item значение функции сильно колеблется.
+\end{itemize}
+
+Признаки слишком малого шага:
+
+\begin{itemize}
+    \item функция потерь уменьшается крайне медленно;
+    \item градиенты ненулевые, но параметры почти не меняются;
+    \item обучение быстро выходит на длинное плато.
+\end{itemize}
+
+\subsection{Метод момента}
+
+Метод момента сглаживает направления последовательных градиентов.
+
+\begin{enumerate}
+    \item Инициализировать $v_0=0$.
+    \item На итерации $k$ вычислить градиент $g_k$.
+    \item Обновить накопленный момент:
+    \[
+        v_{k+1}
+        =
+        \beta v_k+(1-\beta)g_k,
+        \qquad 0\leq\beta<1.
+    \]
+    \item Обновить параметры:
+    \[
+        \theta_{k+1}
+        =
+        \theta_k-\eta v_{k+1}.
+    \]
+\end{enumerate}
+
+Момент накапливает устойчивую составляющую градиента и подавляет
+быстро меняющую знак составляющую.
+
+\subsection{Adam}
+
+Adam использует экспоненциальные средние градиента и квадрата
+градиента. Все операции над векторами выполняются покомпонентно.
+
+\begin{enumerate}
+    \item Инициализировать
+    \[
+        m_0=0,
+        \qquad
+        v_0=0.
+    \]
+    \item На итерации $t$ вычислить $g_t=\nabla F_{B_t}(\theta_{t-1})$.
+    \item Обновить первый момент:
+    \[
+        m_t
+        =
+        \beta_1m_{t-1}
+        +
+        (1-\beta_1)g_t.
+    \]
+    \item Обновить второй момент:
+    \[
+        v_t
+        =
+        \beta_2v_{t-1}
+        +
+        (1-\beta_2)g_t\odot g_t.
+    \]
+    \item Выполнить коррекцию начального смещения:
+    \[
+        \widehat{m}_t
+        =
+        \frac{m_t}{1-\beta_1^t},
+        \qquad
+        \widehat{v}_t
+        =
+        \frac{v_t}{1-\beta_2^t}.
+    \]
+    \item Обновить параметры:
+    \[
+        \theta_t
+        =
+        \theta_{t-1}
+        -
+        \eta
+        \frac{\widehat{m}_t}
+        {\sqrt{\widehat{v}_t}+\varepsilon}.
+    \]
+\end{enumerate}
+
+Второй момент масштабирует шаг отдельно для каждой координаты.
+Параметр $\varepsilon>0$ предотвращает деление на ноль.
+
+% ============================================================
+\section{Вычислительный граф}
+% ============================================================
+
+\subsection{Определение}
+
+Вычислительный граф --- ориентированный ациклический граф, в котором:
+
+\begin{itemize}
+    \item входные вершины содержат исходные данные и параметры;
+    \item внутренние вершины соответствуют элементарным операциям;
+    \item рёбра описывают зависимости между результатами операций;
+    \item выходная вершина содержит значение функции потерь.
+\end{itemize}
+
+Например,
+\[
+    u=wx+b,
+    \qquad
+    a=\varphi(u),
+    \qquad
+    \mathcal{L}=\frac{1}{2}(a-y)^2
+\]
+можно представить графом
+\[
+    (w,x)\longrightarrow wx
+    \longrightarrow wx+b
+    \longrightarrow \varphi(wx+b)
+    \longrightarrow
+    \frac{1}{2}(a-y)^2.
+\]
+
+\subsection{Прямой и обратный режимы автоматического
+дифференцирования}
+
+В \textbf{прямом режиме} вместе с каждым промежуточным значением
+распространяется его производная по выбранному входу. Такой режим
+удобен, когда входов мало, а выходов много.
+
+В \textbf{обратном режиме} сначала вычисляются и сохраняются
+промежуточные значения, после чего от скалярного выхода к входам
+распространяются сопряжённые величины. Этот режим удобен, когда
+выход скалярный, а параметров много. Именно такая ситуация
+возникает при обучении нейронных сетей.
+
+Для вершины $v$ определим сопряжённую величину
+\[
+    \overline{v}
+    =
+    \nabla_v\mathcal{L}.
+\]
+
+Если
+\[
+    v=g(u_1,\ldots,u_r),
+\]
+то вклад вершины $v$ в сопряжённую величину её родителя $u_j$ равен
+\[
+    \overline{u_j}
+    \mathrel{+}=
+    \left(
+        \frac{\partial v}{\partial u_j}
+    \right)^\top
+    \overline{v}.
+\]
+
+Знак $\mathrel{+}=$ важен: если величина используется несколькими
+последующими операциями, градиенты по всем путям складываются.
+
+\begin{algorithm}[H]
+\caption{Обратный режим дифференцирования вычислительного графа}
+\begin{algorithmic}[1]
+\Require вычислительный граф с параметрами $\theta$ и скалярным
+выходом $\mathcal{L}$
+\Ensure градиенты $\nabla_\theta\mathcal{L}$
+\State упорядочить вершины топологически
+\ForAll{вершин $v_i$ в прямом топологическом порядке}
+    \State вычислить и сохранить значение $v_i$
+\EndFor
+\ForAll{вершин $v_i$}
+    \State $\overline{v_i}\gets 0$
+\EndFor
+\State $\overline{\mathcal{L}}\gets 1$
+\ForAll{вершин $v_i$ в обратном топологическом порядке}
+    \ForAll{непосредственных родителей $u$ вершины $v_i$}
+        \State
+        \[
+            \overline{u}
+            \gets
+            \overline{u}
+            +
+            \left(
+                \frac{\partial v_i}{\partial u}
+            \right)^\top
+            \overline{v_i}
+        \]
+    \EndFor
+\EndFor
+\State \Return сопряжённые величины параметров
+$\overline{\theta}=\nabla_\theta\mathcal{L}$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{theorem}[Корректность обратного накопления]
+Пусть вычислительный граф является конечным ориентированным
+ациклическим графом со скалярным выходом $\mathcal{L}$. Пусть все
+локальные операции дифференцируемы в рассматриваемой точке. Тогда
+алгоритм обратного режима вычисляет для каждой вершины $v$ точную
+производную
+\[
+    \overline{v}
+    =
+    \nabla_v\mathcal{L}.
+\]
+\end{theorem}
+
+\begin{proof}
+Рассмотрим вершину $v$ и множество её непосредственных потомков
+$\operatorname{Ch}(v)$. Любой ориентированный путь от $v$ к
+$\mathcal{L}$ должен сначала пройти через одного из непосредственных
+потомков $c\in\operatorname{Ch}(v)$.
+
+По многомерному правилу цепочки полный градиент по $v$ равен сумме
+вкладов всех непосредственных потомков:
+\[
+    \nabla_v\mathcal{L}
+    =
+    \sum_{c\in\operatorname{Ch}(v)}
+    \left(
+        \frac{\partial c}{\partial v}
+    \right)^\top
+    \nabla_c\mathcal{L}.
+\]
+
+Проведём индукцию по обратному топологическому порядку.
+
+Для выходной вершины
+\[
+    \overline{\mathcal{L}}
+    =
+    \frac{\partial\mathcal{L}}
+    {\partial\mathcal{L}}
+    =
+    1,
+\]
+поэтому база индукции выполнена.
+
+Предположим, что к моменту обработки вершины $v$ для всех её
+потомков уже вычислены точные величины
+\[
+    \overline{c}
+    =
+    \nabla_c\mathcal{L}.
+\]
+Это верно, поскольку в обратном топологическом порядке потомки
+обрабатываются раньше родителей.
+
+При обработке всех потомков в $\overline{v}$ последовательно
+добавляются величины
+\[
+    \left(
+        \frac{\partial c}{\partial v}
+    \right)^\top
+    \overline{c}.
+\]
+После учёта всех потомков
+\[
+\begin{aligned}
+    \overline{v}
+    &=
+    \sum_{c\in\operatorname{Ch}(v)}
+    \left(
+        \frac{\partial c}{\partial v}
+    \right)^\top
+    \overline{c}\\
+    &=
+    \sum_{c\in\operatorname{Ch}(v)}
+    \left(
+        \frac{\partial c}{\partial v}
+    \right)^\top
+    \nabla_c\mathcal{L}\\
+    &=
+    \nabla_v\mathcal{L}.
+\end{aligned}
+\]
+Следовательно, по индукции утверждение справедливо для всех вершин.
+\end{proof}
+
+% ============================================================
+\section{Обратное распространение в многослойном перцептроне}
+% ============================================================
+
+\subsection{Обозначения}
+
+Пусть
+\[
+    a^{(0)}=x,
+\]
+а для $l=1,\ldots,L$
+\[
+    z^{(l)}
+    =
+    W^{(l)}a^{(l-1)}+b^{(l)},
+    \qquad
+    a^{(l)}
+    =
+    \varphi_l(z^{(l)}).
+\]
+
+Пусть функция потерь для одного объекта равна
+\[
+    \mathcal{L}
+    =
+    \ell(a^{(L)},y).
+\]
+
+Определим ошибку слоя, или локальный градиент по предактивации:
+\[
+    \delta^{(l)}
+    =
+    \nabla_{z^{(l)}}\mathcal{L}.
+\]
+
+\subsection{Основные формулы}
+
+\begin{theorem}[Формулы обратного распространения]
+Предположим, что все функции активации и функция потерь
+дифференцируемы в рассматриваемой точке. Тогда:
+
+\begin{enumerate}
+    \item для выходного слоя
+    \[
+        \delta^{(L)}
+        =
+        \nabla_{a^{(L)}}\ell
+        \odot
+        \varphi_L'\bigl(z^{(L)}\bigr);
+    \]
+
+    \item для скрытых слоёв
+    \[
+        \delta^{(l)}
+        =
+        \left(
+            W^{(l+1)}
+        \right)^\top
+        \delta^{(l+1)}
+        \odot
+        \varphi_l'\bigl(z^{(l)}\bigr),
+    \]
+    где $l=L-1,\ldots,1$;
+
+    \item градиенты по весам равны
+    \[
+        \nabla_{W^{(l)}}\mathcal{L}
+        =
+        \delta^{(l)}
+        \left(
+            a^{(l-1)}
+        \right)^\top;
+    \]
+
+    \item градиенты по смещениям равны
+    \[
+        \nabla_{b^{(l)}}\mathcal{L}
+        =
+        \delta^{(l)}.
+    \]
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Для покомпонентной функции активации введём диагональную матрицу
+\[
+    D^{(l)}
+    =
+    \diag\left(
+        \varphi_l'(z_1^{(l)}),
+        \ldots,
+        \varphi_l'(z_{n_l}^{(l)})
+    \right).
+\]
+Тогда дифференциал активации равен
+\[
+    \dd a^{(l)}
+    =
+    D^{(l)}\dd z^{(l)}.
+\]
+
+Начнём с выходного слоя. Дифференциал функции потерь:
+\[
+    \dd\mathcal{L}
+    =
+    \left(
+        \nabla_{a^{(L)}}\ell
+    \right)^\top
+    \dd a^{(L)}.
+\]
+Так как
+\[
+    \dd a^{(L)}
+    =
+    D^{(L)}\dd z^{(L)},
+\]
+получаем
+\[
+\begin{aligned}
+    \dd\mathcal{L}
+    &=
+    \left(
+        \nabla_{a^{(L)}}\ell
+    \right)^\top
+    D^{(L)}
+    \dd z^{(L)}\\
+    &=
+    \left(
+        D^{(L)}
+        \nabla_{a^{(L)}}\ell
+    \right)^\top
+    \dd z^{(L)}.
+\end{aligned}
+\]
+Следовательно,
+\[
+    \delta^{(L)}
+    =
+    D^{(L)}
+    \nabla_{a^{(L)}}\ell
+    =
+    \nabla_{a^{(L)}}\ell
+    \odot
+    \varphi_L'(z^{(L)}).
+\]
+
+Рассмотрим теперь слой $l+1$. Его предактивация:
+\[
+    z^{(l+1)}
+    =
+    W^{(l+1)}a^{(l)}+b^{(l+1)}.
+\]
+Полный дифференциал:
+\[
+\begin{aligned}
+    \dd z^{(l+1)}
+    &=
+    \dd W^{(l+1)}a^{(l)}
+    +
+    W^{(l+1)}\dd a^{(l)}
+    +
+    \dd b^{(l+1)}.
+\end{aligned}
+\]
+
+Часть дифференциала функции потерь, проходящая через этот слой:
+\[
+    \dd\mathcal{L}
+    =
+    \left(
+        \delta^{(l+1)}
+    \right)^\top
+    \dd z^{(l+1)}.
+\]
+Подставим выражение для $\dd z^{(l+1)}$:
+\[
+\begin{aligned}
+    \dd\mathcal{L}
+    &=
+    \left(
+        \delta^{(l+1)}
+    \right)^\top
+    \dd W^{(l+1)}a^{(l)}\\
+    &\quad+
+    \left(
+        \delta^{(l+1)}
+    \right)^\top
+    W^{(l+1)}\dd a^{(l)}\\
+    &\quad+
+    \left(
+        \delta^{(l+1)}
+    \right)^\top
+    \dd b^{(l+1)}.
+\end{aligned}
+\]
+
+Слагаемое, содержащее $\dd a^{(l)}$, преобразуется следующим
+образом:
+\[
+\begin{aligned}
+    \left(
+        \delta^{(l+1)}
+    \right)^\top
+    W^{(l+1)}\dd a^{(l)}
+    &=
+    \left[
+        \left(
+            W^{(l+1)}
+        \right)^\top
+        \delta^{(l+1)}
+    \right]^\top
+    \dd a^{(l)}\\
+    &=
+    \left[
+        D^{(l)}
+        \left(
+            W^{(l+1)}
+        \right)^\top
+        \delta^{(l+1)}
+    \right]^\top
+    \dd z^{(l)}.
+\end{aligned}
+\]
+
+Следовательно,
+\[
+    \delta^{(l)}
+    =
+    D^{(l)}
+    \left(
+        W^{(l+1)}
+    \right)^\top
+    \delta^{(l+1)}.
+\]
+Поскольку $D^{(l)}$ диагональна, это эквивалентно
+\[
+    \delta^{(l)}
+    =
+    \left(
+        W^{(l+1)}
+    \right)^\top
+    \delta^{(l+1)}
+    \odot
+    \varphi_l'(z^{(l)}).
+\]
+
+Осталось получить градиенты по параметрам. Для любого слоя
+\[
+    z^{(l)}
+    =
+    W^{(l)}a^{(l-1)}+b^{(l)}
+\]
+и
+\[
+    \dd\mathcal{L}
+    =
+    \left(
+        \delta^{(l)}
+    \right)^\top
+    \dd z^{(l)}.
+\]
+Часть, зависящая от матрицы весов:
+\[
+    \left(
+        \delta^{(l)}
+    \right)^\top
+    \dd W^{(l)}a^{(l-1)}.
+\]
+Используя скалярное произведение Фробениуса,
+\[
+    \left(
+        \delta^{(l)}
+    \right)^\top
+    \dd W^{(l)}a^{(l-1)}
+    =
+    \inner{
+        \delta^{(l)}
+        (a^{(l-1)})^\top
+    }{
+        \dd W^{(l)}
+    }_F.
+\]
+По определению градиента
+\[
+    \nabla_{W^{(l)}}\mathcal{L}
+    =
+    \delta^{(l)}
+    (a^{(l-1)})^\top.
+\]
+
+Аналогично,
+\[
+    \left(
+        \delta^{(l)}
+    \right)^\top
+    \dd b^{(l)}
+\]
+даёт
+\[
+    \nabla_{b^{(l)}}\mathcal{L}
+    =
+    \delta^{(l)}.
+\]
+\end{proof}
+
+\subsection{Алгоритм обратного распространения}
+
+\begin{algorithm}[H]
+\caption{Обратное распространение для одного объекта}
+\begin{algorithmic}[1]
+\Require вход $x$, ответ $y$, параметры
+$\{W^{(l)},b^{(l)}\}_{l=1}^{L}$
+\Ensure значение потерь и градиенты по всем параметрам
+\State $a^{(0)}\gets x$
+\For{$l=1,\ldots,L$}
+    \State
+    $z^{(l)}
+    \gets
+    W^{(l)}a^{(l-1)}+b^{(l)}$
+    \State
+    $a^{(l)}
+    \gets
+    \varphi_l(z^{(l)})$
+    \State сохранить $z^{(l)}$ и $a^{(l)}$
+\EndFor
+\State
+$\mathcal{L}\gets\ell(a^{(L)},y)$
+\State
+\[
+    \delta^{(L)}
+    \gets
+    \nabla_{a^{(L)}}\ell
+    \odot
+    \varphi_L'(z^{(L)})
+\]
+\For{$l=L,L-1,\ldots,1$}
+    \State
+    \[
+        \nabla_{W^{(l)}}\mathcal{L}
+        \gets
+        \delta^{(l)}
+        (a^{(l-1)})^\top
+    \]
+    \State
+    \[
+        \nabla_{b^{(l)}}\mathcal{L}
+        \gets
+        \delta^{(l)}
+    \]
+    \If{$l>1$}
+        \State
+        \[
+            \delta^{(l-1)}
+            \gets
+            (W^{(l)})^\top\delta^{(l)}
+            \odot
+            \varphi_{l-1}'(z^{(l-1)})
+        \]
+    \EndIf
+\EndFor
+\State \Return $\mathcal{L}$ и все градиенты
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Softmax и перекрёстная энтропия}
+
+\begin{proposition}
+Пусть
+\[
+    p_j
+    =
+    \frac{e^{z_j}}
+    {\sum_{r=1}^{C}e^{z_r}},
+\]
+а $y\in\R^C$ удовлетворяет условиям
+\[
+    y_j\geq 0,
+    \qquad
+    \sum_{j=1}^{C}y_j=1.
+\]
+Для функции потерь
+\[
+    \ell(z,y)
+    =
+    -\sum_{j=1}^{C}y_j\log p_j
+\]
+градиент по логитам равен
+\[
+    \nabla_z\ell=p-y.
+\]
+\end{proposition}
+
+\begin{proof}
+Имеем
+\[
+    \log p_j
+    =
+    z_j
+    -
+    \log
+    \left(
+        \sum_{r=1}^{C}e^{z_r}
+    \right).
+\]
+Поэтому
+\[
+\begin{aligned}
+    \ell(z,y)
+    &=
+    -\sum_{j=1}^{C}y_jz_j
+    +
+    \sum_{j=1}^{C}y_j
+    \log
+    \left(
+        \sum_{r=1}^{C}e^{z_r}
+    \right)\\
+    &=
+    -y^\top z
+    +
+    \log
+    \left(
+        \sum_{r=1}^{C}e^{z_r}
+    \right),
+\end{aligned}
+\]
+так как $\sum_jy_j=1$.
+
+Для координаты $z_k$
+\[
+\begin{aligned}
+    \frac{\partial\ell}{\partial z_k}
+    &=
+    -y_k
+    +
+    \frac{e^{z_k}}
+    {\sum_{r=1}^{C}e^{z_r}}\\
+    &=
+    -y_k+p_k.
+\end{aligned}
+\]
+Следовательно,
+\[
+    \nabla_z\ell=p-y.
+\]
+\end{proof}
+
+Таким образом, при использовании softmax и перекрёстной энтропии
+не требуется явно строить полный якобиан softmax:
+\[
+    \delta^{(L)}=p-y.
+\]
+
+\subsection{Матричная форма для мини-пакета}
+
+Пусть мини-пакет содержит $m$ объектов, записанных по столбцам:
+\[
+    A^{(0)}
+    =
+    X
+    \in\R^{n_0\times m}.
+\]
+Тогда прямой проход:
+\[
+    Z^{(l)}
+    =
+    W^{(l)}A^{(l-1)}
+    +
+    b^{(l)}\mathbf{1}_m^\top,
+\]
+\[
+    A^{(l)}
+    =
+    \varphi_l(Z^{(l)}).
+\]
+
+Обозначим матрицу ошибок слоя:
+\[
+    \Delta^{(l)}
+    =
+    \begin{pmatrix}
+        \delta_1^{(l)}&
+        \cdots&
+        \delta_m^{(l)}
+    \end{pmatrix}.
+\]
+
+Тогда
+\[
+    \Delta^{(l)}
+    =
+    \left(
+        W^{(l+1)}
+    \right)^\top
+    \Delta^{(l+1)}
+    \odot
+    \varphi_l'(Z^{(l)}).
+\]
+
+Если функция потерь усредняется по пакету, то
+\[
+    \nabla_{W^{(l)}}F_B
+    =
+    \frac{1}{m}
+    \Delta^{(l)}
+    \left(
+        A^{(l-1)}
+    \right)^\top,
+\]
+\[
+    \nabla_{b^{(l)}}F_B
+    =
+    \frac{1}{m}
+    \Delta^{(l)}\mathbf{1}_m.
+\]
+
+Размерности:
+\[
+\begin{aligned}
+    \Delta^{(l)}
+    &\in\R^{n_l\times m},\\
+    A^{(l-1)}
+    &\in\R^{n_{l-1}\times m},\\
+    \Delta^{(l)}(A^{(l-1)})^\top
+    &\in\R^{n_l\times n_{l-1}}.
+\end{aligned}
+\]
+
+\subsection{Численный пример одного шага обучения}
+
+Рассмотрим сеть с одним скрытым ReLU-нейроном:
+\[
+    z^{(1)}=W^{(1)}x+b^{(1)},
+    \qquad
+    a^{(1)}=\operatorname{ReLU}(z^{(1)}),
+\]
+\[
+    \widehat{y}
+    =
+    z^{(2)}
+    =
+    W^{(2)}a^{(1)}+b^{(2)}.
+\]
+
+Пусть
+\[
+    x=
+    \begin{pmatrix}
+        2\\
+        1
+    \end{pmatrix},
+    \qquad
+    y=1,
+\]
+\[
+    W^{(1)}
+    =
+    \begin{pmatrix}
+        0.5&-0.25
+    \end{pmatrix},
+    \qquad
+    b^{(1)}=0,
+\]
+\[
+    W^{(2)}=1.2,
+    \qquad
+    b^{(2)}=-0.1.
+\]
+
+Функция потерь:
+\[
+    \mathcal{L}
+    =
+    \frac{1}{2}(\widehat{y}-y)^2.
+\]
+
+\subsubsection*{Шаг 1. Прямое распространение}
+
+\[
+\begin{aligned}
+    z^{(1)}
+    &=
+    0.5\cdot 2-0.25\cdot 1\\
+    &=0.75,
+\end{aligned}
+\]
+\[
+    a^{(1)}
+    =
+    \operatorname{ReLU}(0.75)
+    =
+    0.75.
+\]
+
+Выход:
+\[
+\begin{aligned}
+    \widehat{y}
+    &=
+    1.2\cdot 0.75-0.1\\
+    &=0.8.
+\end{aligned}
+\]
+
+Потери:
+\[
+    \mathcal{L}
+    =
+    \frac{1}{2}(0.8-1)^2
+    =
+    0.02.
+\]
+
+\subsubsection*{Шаг 2. Ошибка выходного слоя}
+
+Так как выход линейный,
+\[
+    \delta^{(2)}
+    =
+    \frac{\partial\mathcal{L}}
+    {\partial z^{(2)}}
+    =
+    \widehat{y}-y
+    =
+    -0.2.
+\]
+
+Градиенты параметров второго слоя:
+\[
+    \frac{\partial\mathcal{L}}{\partial W^{(2)}}
+    =
+    \delta^{(2)}a^{(1)}
+    =
+    -0.2\cdot 0.75
+    =
+    -0.15,
+\]
+\[
+    \frac{\partial\mathcal{L}}{\partial b^{(2)}}
+    =
+    \delta^{(2)}
+    =
+    -0.2.
+\]
+
+\subsubsection*{Шаг 3. Ошибка скрытого слоя}
+
+Поскольку $z^{(1)}=0.75>0$,
+\[
+    \operatorname{ReLU}'(z^{(1)})=1.
+\]
+Следовательно,
+\[
+\begin{aligned}
+    \delta^{(1)}
+    &=
+    W^{(2)}\delta^{(2)}
+    \operatorname{ReLU}'(z^{(1)})\\
+    &=
+    1.2\cdot(-0.2)\cdot 1\\
+    &=
+    -0.24.
+\end{aligned}
+\]
+
+Градиенты первого слоя:
+\[
+\begin{aligned}
+    \frac{\partial\mathcal{L}}{\partial W^{(1)}}
+    &=
+    \delta^{(1)}x^\top\\
+    &=
+    -0.24
+    \begin{pmatrix}
+        2&1
+    \end{pmatrix}\\
+    &=
+    \begin{pmatrix}
+        -0.48&-0.24
+    \end{pmatrix},
+\end{aligned}
+\]
+\[
+    \frac{\partial\mathcal{L}}{\partial b^{(1)}}
+    =
+    -0.24.
+\]
+
+\subsubsection*{Шаг 4. Обновление параметров}
+
+Пусть $\eta=0.1$. Тогда
+\[
+\begin{aligned}
+    W_{\mathrm{new}}^{(1)}
+    &=
+    W^{(1)}
+    -
+    \eta
+    \frac{\partial\mathcal{L}}{\partial W^{(1)}}\\
+    &=
+    \begin{pmatrix}
+        0.5&-0.25
+    \end{pmatrix}
+    -
+    0.1
+    \begin{pmatrix}
+        -0.48&-0.24
+    \end{pmatrix}\\
+    &=
+    \begin{pmatrix}
+        0.548&-0.226
+    \end{pmatrix},
+\end{aligned}
+\]
+\[
+    b_{\mathrm{new}}^{(1)}
+    =
+    0-0.1(-0.24)
+    =
+    0.024,
+\]
+\[
+    W_{\mathrm{new}}^{(2)}
+    =
+    1.2-0.1(-0.15)
+    =
+    1.215,
+\]
+\[
+    b_{\mathrm{new}}^{(2)}
+    =
+    -0.1-0.1(-0.2)
+    =
+    -0.08.
+\]
+
+\subsubsection*{Шаг 5. Проверка результата}
+
+Новая скрытая предактивация:
+\[
+\begin{aligned}
+    z_{\mathrm{new}}^{(1)}
+    &=
+    0.548\cdot 2
+    -
+    0.226\cdot 1
+    +
+    0.024\\
+    &=
+    0.894.
+\end{aligned}
+\]
+
+Новый выход:
+\[
+\begin{aligned}
+    \widehat{y}_{\mathrm{new}}
+    &=
+    1.215\cdot 0.894-0.08\\
+    &=
+    1.00621.
+\end{aligned}
+\]
+
+Новые потери:
+\[
+\begin{aligned}
+    \mathcal{L}_{\mathrm{new}}
+    &=
+    \frac{1}{2}(1.00621-1)^2\\
+    &\approx
+    1.93\cdot 10^{-5}.
+\end{aligned}
+\]
+
+В данном примере один шаг уменьшил потери с $0.02$ приблизительно
+до $1.93\cdot 10^{-5}$.
+
+% ============================================================
+\section{Проблемы обучения глубоких сетей}
+% ============================================================
+
+\subsection{Исчезающие и взрывающиеся градиенты}
+
+Пусть
+\[
+    D^{(l)}
+    =
+    \diag\left(
+        \varphi_l'(z^{(l)})
+    \right).
+\]
+Из формул обратного распространения следует
+\[
+\begin{aligned}
+    \delta^{(l)}
+    &=
+    D^{(l)}
+    (W^{(l+1)})^\top
+    D^{(l+1)}
+    (W^{(l+2)})^\top
+    \cdots\\
+    &\qquad\cdots
+    D^{(L)}
+    \nabla_{a^{(L)}}\ell.
+\end{aligned}
+\]
+
+Для спектральной нормы
+\[
+\begin{aligned}
+    \norm{\delta^{(l)}}
+    &\leq
+    \norm{\nabla_{a^{(L)}}\ell}
+    \prod_{r=l}^{L}\norm{D^{(r)}}
+    \prod_{r=l+1}^{L}\norm{W^{(r)}}.
+\end{aligned}
+\]
+
+Если большинство множителей имеет норму меньше единицы, градиент
+экспоненциально уменьшается при распространении к первым слоям.
+Это называется \textbf{исчезновением градиента}.
+
+Если произведение норм быстро растёт, возникает
+\textbf{взрыв градиента}.
+
+Для сигмоиды
+\[
+    0<\sigma'(z)\leq\frac{1}{4}.
+\]
+Поэтому многократное умножение на производные сигмоиды может быстро
+уменьшать градиент, особенно если нейроны находятся в насыщении.
+
+Основные способы борьбы:
+
+\begin{itemize}
+    \item подходящая инициализация весов;
+    \item ReLU и её модификации;
+    \item нормализация промежуточных представлений;
+    \item остаточные связи;
+    \item ограничение нормы градиента;
+    \item архитектуры со специальными путями передачи информации.
+\end{itemize}
+
+\subsection{Инициализация весов}
+
+Если все веса слоя инициализировать одинаково, нейроны будут
+получать одинаковые градиенты и сохранять одинаковые параметры.
+Поэтому веса инициализируются случайно.
+
+Рассмотрим
+\[
+    z_j
+    =
+    \sum_{i=1}^{n_{\mathrm{in}}}W_{ji}a_i.
+\]
+Пусть $W_{ji}$ и $a_i$ независимы, имеют нулевые средние и одинаковые
+вторые моменты. Тогда приближённо
+\[
+    \E[z_j^2]
+    =
+    n_{\mathrm{in}}
+    \E[W_{ji}^2]
+    \E[a_i^2].
+\]
+
+Чтобы масштаб активаций не увеличивался и не уменьшался от слоя к
+слою, следует выбирать дисперсию весов обратно пропорционально
+числу входов.
+
+\subsubsection{Инициализация Xavier}
+
+Для линейных слоёв и функций, работающих в приблизительно линейном
+режиме, используется
+\[
+    \operatorname{Var}(W_{ji})
+    =
+    \frac{2}
+    {n_{\mathrm{in}}+n_{\mathrm{out}}}.
+\]
+
+Нормальный вариант:
+\[
+    W_{ji}
+    \sim
+    \mathcal{N}
+    \left(
+        0,
+        \frac{2}
+        {n_{\mathrm{in}}+n_{\mathrm{out}}}
+    \right).
+\]
+
+Равномерный вариант:
+\[
+    W_{ji}
+    \sim
+    U\left[
+        -\sqrt{\frac{6}
+        {n_{\mathrm{in}}+n_{\mathrm{out}}}},
+        \sqrt{\frac{6}
+        {n_{\mathrm{in}}+n_{\mathrm{out}}}}
+    \right].
+\]
+
+\subsubsection{Инициализация He}
+
+Для ReLU приблизительно половина симметрично распределённых
+предактиваций обнуляется. Для сохранения второго момента используется
+\[
+    \operatorname{Var}(W_{ji})
+    =
+    \frac{2}{n_{\mathrm{in}}}.
+\]
+
+Нормальный вариант:
+\[
+    W_{ji}
+    \sim
+    \mathcal{N}
+    \left(
+        0,
+        \frac{2}{n_{\mathrm{in}}}
+    \right).
+\]
+
+Равномерный вариант:
+\[
+    W_{ji}
+    \sim
+    U\left[
+        -\sqrt{\frac{6}{n_{\mathrm{in}}}},
+        \sqrt{\frac{6}{n_{\mathrm{in}}}}
+    \right].
+\]
+
+Смещения часто инициализируют нулями.
+
+\subsection{Мёртвые ReLU}
+
+Если для нейрона ReLU
+\[
+    z<0
+\]
+на всех поступающих объектах, то
+\[
+    \operatorname{ReLU}(z)=0,
+    \qquad
+    \operatorname{ReLU}'(z)=0.
+\]
+Градиент его входных весов становится нулевым, и нейрон может
+перестать обучаться.
+
+Возможные меры:
+
+\begin{itemize}
+    \item уменьшение скорости обучения;
+    \item корректная инициализация;
+    \item Leaky ReLU или параметрическая ReLU;
+    \item нормализация активаций.
+\end{itemize}
+
+\subsection{Нормализация}
+
+Для мини-пакета скалярных активаций
+$u_1,\ldots,u_m$ batch normalization вычисляет
+\[
+    \mu_B
+    =
+    \frac{1}{m}
+    \sum_{i=1}^{m}u_i,
+\]
+\[
+    \sigma_B^2
+    =
+    \frac{1}{m}
+    \sum_{i=1}^{m}
+    (u_i-\mu_B)^2,
+\]
+\[
+    \widehat{u}_i
+    =
+    \frac{u_i-\mu_B}
+    {\sqrt{\sigma_B^2+\varepsilon}},
+\]
+\[
+    y_i
+    =
+    \gamma\widehat{u}_i+\beta.
+\]
+
+Параметры $\gamma$ и $\beta$ обучаются вместе с остальной сетью.
+На этапе применения модели используются накопленные оценки
+статистик обучающей выборки.
+
+Layer normalization использует аналогичную нормализацию, но
+вычисляет статистики по признакам одного объекта, а не по объектам
+мини-пакета.
+
+\subsection{Остаточные связи}
+
+В остаточном блоке
+\[
+    h^{(l+1)}
+    =
+    h^{(l)}
+    +
+    F_l(h^{(l)}).
+\]
+Якобиан блока:
+\[
+    \frac{\partial h^{(l+1)}}{\partial h^{(l)}}
+    =
+    I+J_{F_l}(h^{(l)}).
+\]
+
+При обратном распространении
+\[
+    \nabla_{h^{(l)}}\mathcal{L}
+    =
+    \left(
+        I+J_{F_l}(h^{(l)})
+    \right)^\top
+    \nabla_{h^{(l+1)}}\mathcal{L}.
+\]
+Слагаемое с единичной матрицей создаёт прямой путь передачи
+градиента между слоями.
+
+\subsection{Ограничение нормы градиента}
+
+При взрыве градиента можно заменить $g$ на
+\[
+    \widetilde{g}
+    =
+    g\cdot
+    \min
+    \left(
+        1,
+        \frac{\tau}{\norm{g}_2}
+    \right),
+\]
+где $\tau>0$ --- максимально допустимая норма.
+
+Если $\norm{g}\leq\tau$, градиент не изменяется. Если
+$\norm{g}>\tau$, его направление сохраняется, а норма становится
+равной $\tau$.
+
+\subsection{Регуляризация}
+
+\subsubsection{$L_2$-регуляризация}
+
+Пусть
+\[
+    F_{\mathrm{reg}}(\theta)
+    =
+    F(\theta)
+    +
+    \frac{\lambda}{2}\norm{\theta}_2^2.
+\]
+Тогда
+\[
+    \nabla F_{\mathrm{reg}}(\theta)
+    =
+    \nabla F(\theta)+\lambda\theta.
+\]
+
+Шаг обычного градиентного спуска:
+\[
+\begin{aligned}
+    \theta_{k+1}
+    &=
+    \theta_k
+    -
+    \eta
+    \left(
+        \nabla F(\theta_k)+\lambda\theta_k
+    \right)\\
+    &=
+    (1-\eta\lambda)\theta_k
+    -
+    \eta\nabla F(\theta_k).
+\end{aligned}
+\]
+
+\subsubsection{Dropout}
+
+Во время обучения для активаций генерируется случайная маска
+\[
+    m_i\sim\operatorname{Bernoulli}(1-p),
+\]
+после чего используется
+\[
+    \widetilde{a}
+    =
+    \frac{m\odot a}{1-p}.
+\]
+Множитель $1/(1-p)$ сохраняет математическое ожидание активации:
+\[
+    \E[\widetilde{a}]=a.
+\]
+На этапе применения сети случайная маска не используется.
+
+\subsubsection{Ранняя остановка}
+
+Обучение останавливают, если качество на валидационной выборке не
+улучшается заданное число эпох. При этом сохраняют параметры,
+соответствующие лучшему валидационному результату.
+
+\subsubsection{Другие методы}
+
+\begin{itemize}
+    \item увеличение и преобразование обучающих данных;
+    \item ограничение нормы весов;
+    \item добавление шума;
+    \item уменьшение размера модели;
+    \item усреднение предсказаний нескольких моделей.
+\end{itemize}
+
+% ============================================================
+\section{Проверка и отладка обратного распространения}
+% ============================================================
+
+\subsection{Численная проверка градиента}
+
+Для координаты $\theta_j$ центральная разность имеет вид
+\[
+    g_j^{\mathrm{num}}
+    =
+    \frac{
+        F(\theta+\varepsilon e_j)
+        -
+        F(\theta-\varepsilon e_j)
+    }{
+        2\varepsilon
+    },
+\]
+где $e_j$ --- $j$-й базисный вектор.
+
+Аналитический градиент:
+\[
+    g_j^{\mathrm{analytic}}
+    =
+    \frac{\partial F}{\partial\theta_j}.
+\]
+
+Относительная ошибка:
+\[
+    r_j
+    =
+    \frac{
+        \abs{
+            g_j^{\mathrm{analytic}}
+            -
+            g_j^{\mathrm{num}}
+        }
+    }{
+        \abs{g_j^{\mathrm{analytic}}}
+        +
+        \abs{g_j^{\mathrm{num}}}
+        +
+        \delta
+    },
+\]
+где $\delta>0$ предотвращает деление на ноль.
+
+\begin{algorithm}[H]
+\caption{Проверка градиента конечными разностями}
+\begin{algorithmic}[1]
+\Require параметры $\theta$, функция $F$, аналитический градиент
+$g$, малое число $\varepsilon$
+\Ensure оценка корректности градиента
+\State отключить dropout и другие случайные преобразования
+\State зафиксировать небольшой мини-пакет
+\State вычислить аналитический градиент
+$g\gets\nabla_\theta F(\theta)$
+\State выбрать несколько координат $j$
+\ForAll{выбранных координат $j$}
+    \State
+    $\theta^+\gets\theta+\varepsilon e_j$
+    \State
+    $\theta^-\gets\theta-\varepsilon e_j$
+    \State
+    \[
+        g_j^{\mathrm{num}}
+        \gets
+        \frac{
+            F(\theta^+)-F(\theta^-)
+        }{
+            2\varepsilon
+        }
+    \]
+    \State сравнить $g_j^{\mathrm{num}}$ и $g_j$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+Проверку желательно выполнять:
+
+\begin{itemize}
+    \item в арифметике повышенной точности;
+    \item на маленькой сети и малом пакете;
+    \item вдали от точек недифференцируемости ReLU;
+    \item только для части координат, поскольку метод требует
+    дополнительных прямых проходов.
+\end{itemize}
+
+\subsection{Проверка размерностей}
+
+Для каждого слоя должны выполняться соотношения
+\[
+\begin{aligned}
+    W^{(l)}
+    &\in\R^{n_l\times n_{l-1}},\\
+    a^{(l-1)}
+    &\in\R^{n_{l-1}},\\
+    z^{(l)},a^{(l)},\delta^{(l)}
+    &\in\R^{n_l},\\
+    \nabla_{W^{(l)}}\mathcal{L}
+    &\in\R^{n_l\times n_{l-1}},\\
+    \nabla_{b^{(l)}}\mathcal{L}
+    &\in\R^{n_l}.
+\end{aligned}
+\]
+
+Формула
+\[
+    \nabla_{W^{(l)}}\mathcal{L}
+    =
+    \delta^{(l)}(a^{(l-1)})^\top
+\]
+является внешним произведением векторов и автоматически имеет
+размер матрицы весов.
+
+\subsection{Полезные диагностические величины}
+
+Во время обучения следует отслеживать:
+
+\begin{itemize}
+    \item потери на обучающей и валидационной выборках;
+    \item норму градиента
+    \[
+        \norm{\nabla_\theta F};
+    \]
+    \item нормы параметров;
+    \item долю нулевых активаций ReLU;
+    \item распределение активаций и предактиваций;
+    \item долю правильных ответов или другую целевую метрику;
+    \item наличие значений \texttt{NaN} и бесконечностей.
+\end{itemize}
+
+Типичные признаки ошибок:
+
+\begin{itemize}
+    \item \textbf{потери не меняются}: слишком малый шаг, нулевые
+    градиенты, отсоединённый вычислительный граф;
+
+    \item \textbf{потери сразу становятся \texttt{NaN}}:
+    слишком большой шаг, переполнение экспоненты, логарифм нуля,
+    деление на ноль;
+
+    \item \textbf{обучающая ошибка уменьшается, а валидационная
+    растёт}: переобучение;
+
+    \item \textbf{обе ошибки велики}: недостаточная мощность модели,
+    плохая оптимизация, неверные признаки или ошибки реализации.
+\end{itemize}
+
+% ============================================================
+\section{Вычислительная сложность}
+% ============================================================
+
+Для полносвязного слоя
+\[
+    z^{(l)}
+    =
+    W^{(l)}a^{(l-1)}+b^{(l)}
+\]
+стоимость матрично-векторного умножения равна
+\[
+    O(n_l n_{l-1}).
+\]
+
+Стоимость полного прямого прохода:
+\[
+    O\left(
+        \sum_{l=1}^{L}
+        n_l n_{l-1}
+    \right).
+\]
+
+При обратном проходе выполняются умножения
+\[
+    (W^{(l)})^\top\delta^{(l)}
+\]
+и внешние произведения
+\[
+    \delta^{(l)}(a^{(l-1)})^\top.
+\]
+Их суммарная асимптотическая сложность имеет тот же порядок:
+\[
+    O\left(
+        \sum_{l=1}^{L}
+        n_l n_{l-1}
+    \right).
+\]
+
+Обратный режим особенно эффективен потому, что за один обратный
+проход вычисляет производные скалярной функции потерь по всем
+параметрам сети.
+
+Во время стандартного обратного распространения необходимо хранить
+активации и предактивации прямого прохода. Требуемая память для
+активаций одного объекта имеет порядок
+\[
+    O\left(
+        \sum_{l=0}^{L}n_l
+    \right),
+\]
+не считая памяти для параметров. Для мини-пакета размера $m$ объём
+памяти для активаций увеличивается приблизительно в $m$ раз.
+
+Если памяти недостаточно, часть промежуточных результатов можно не
+хранить, а повторно вычислять во время обратного прохода. Это
+уменьшает расход памяти ценой дополнительных вычислений.
+
+% ============================================================
+\section{Практический цикл обучения}
+% ============================================================
+
+Полный процесс обучения глубокой нейронной сети можно организовать
+следующим образом.
+
+\begin{enumerate}
+    \item \textbf{Подготовить данные.}
+    \begin{itemize}
+        \item разделить данные на обучающую, валидационную и
+        тестовую части;
+        \item нормализовать числовые признаки;
+        \item определить представление категориальных признаков;
+        \item исключить утечку информации между частями выборки.
+    \end{itemize}
+
+    \item \textbf{Выбрать архитектуру.}
+    \begin{itemize}
+        \item определить число слоёв и их ширину;
+        \item выбрать функции активации;
+        \item определить выходной слой в соответствии с задачей.
+    \end{itemize}
+
+    \item \textbf{Выбрать функцию потерь.}
+    \begin{itemize}
+        \item среднеквадратичная ошибка для регрессии;
+        \item бинарная перекрёстная энтропия для двух классов;
+        \item softmax и перекрёстная энтропия для нескольких классов.
+    \end{itemize}
+
+    \item \textbf{Инициализировать параметры.}
+    \begin{itemize}
+        \item Xavier для линейных или близких к линейным активаций;
+        \item He для ReLU;
+        \item смещения обычно инициализировать нулями.
+    \end{itemize}
+
+    \item \textbf{Выбрать алгоритм оптимизации.}
+    \begin{itemize}
+        \item мини-пакетный SGD;
+        \item SGD с моментом;
+        \item Adam или другой адаптивный метод.
+    \end{itemize}
+
+    \item \textbf{На каждом мини-пакете выполнить:}
+    \begin{enumerate}
+        \item прямое распространение;
+        \item вычисление потерь;
+        \item обратное распространение;
+        \item при необходимости ограничение нормы градиента;
+        \item обновление параметров.
+    \end{enumerate}
+
+    \item \textbf{Контролировать обучение.}
+    \begin{itemize}
+        \item сравнивать обучающую и валидационную ошибки;
+        \item отслеживать нормы градиентов;
+        \item корректировать скорость обучения;
+        \item применять раннюю остановку.
+    \end{itemize}
+
+    \item \textbf{После выбора модели} один раз оценить итоговое
+    качество на тестовой выборке.
+\end{enumerate}
+
+% ============================================================
+\section{Ключевые различия понятий}
+% ============================================================
+
+\begin{center}
+\begin{tabularx}{\textwidth}{
+    >{\raggedright\arraybackslash}p{0.25\textwidth}
+    X
+    X
+}
+\toprule
+\textbf{Понятие} &
+\textbf{Назначение} &
+\textbf{Результат}\\
+\midrule
+
+Прямое распространение &
+Последовательное вычисление слоёв сети &
+Предсказание, промежуточные активации и значение потерь\\
+
+Обратное распространение &
+Применение правила цепочки в обратном порядке &
+Градиенты функции потерь по параметрам\\
+
+Градиентный спуск &
+Изменение параметров в направлении уменьшения функции &
+Новая точка пространства параметров\\
+
+Автоматическое дифференцирование &
+Систематическое дифференцирование программы, заданной
+вычислительным графом &
+Производные без ручного раскрытия полной символьной формулы\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Обратное распространение не является самостоятельным методом
+оптимизации. Оно только вычисляет градиент
+\[
+    \nabla_\theta F(\theta).
+\]
+Градиентный спуск использует этот градиент:
+\[
+    \theta_{k+1}
+    =
+    \theta_k-\eta_k\nabla_\theta F(\theta_k).
+\]
+
+% ============================================================
+\section{Итоговые формулы}
+% ============================================================
+
+\subsection*{Прямой проход}
+
+\[
+    a^{(0)}=x,
+\]
+\[
+    z^{(l)}
+    =
+    W^{(l)}a^{(l-1)}+b^{(l)},
+\]
+\[
+    a^{(l)}
+    =
+    \varphi_l(z^{(l)}).
+\]
+
+\subsection*{Обратный проход}
+
+\[
+    \delta^{(L)}
+    =
+    \nabla_{a^{(L)}}\ell
+    \odot
+    \varphi_L'(z^{(L)}),
+\]
+\[
+    \delta^{(l)}
+    =
+    (W^{(l+1)})^\top
+    \delta^{(l+1)}
+    \odot
+    \varphi_l'(z^{(l)}).
+\]
+
+\subsection*{Градиенты параметров}
+
+\[
+    \nabla_{W^{(l)}}\mathcal{L}
+    =
+    \delta^{(l)}(a^{(l-1)})^\top,
+\]
+\[
+    \nabla_{b^{(l)}}\mathcal{L}
+    =
+    \delta^{(l)}.
+\]
+
+\subsection*{Обновление градиентным спуском}
+
+\[
+    W^{(l)}
+    \gets
+    W^{(l)}
+    -
+    \eta
+    \nabla_{W^{(l)}}F,
+\]
+\[
+    b^{(l)}
+    \gets
+    b^{(l)}
+    -
+    \eta
+    \nabla_{b^{(l)}}F.
+\]
+
+\subsection*{Softmax и перекрёстная энтропия}
+
+\[
+    p=\softmax(z),
+    \qquad
+    \ell=-\sum_jy_j\log p_j,
+\]
+\[
+    \nabla_z\ell=p-y.
+\]
+
+\subsection*{Главная логическая цепочка обучения}
+
+\[
+\boxed{
+\text{данные}
+\longrightarrow
+\text{прямой проход}
+\longrightarrow
+\text{потери}
+\longrightarrow
+\text{обратный проход}
+\longrightarrow
+\text{градиент}
+\longrightarrow
+\text{обновление параметров}
+}
+\]
+
+\end{document}
